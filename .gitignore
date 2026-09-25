@@ -1,0 +1,29 @@
+# Visual Studio files and folders
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs and intermediate files
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.ilk
+*.pdb
+*.obj
+*.idb
+*.tlog
+*.lastbuildstate
+*.log
+Matsuri .636e5a65/
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
