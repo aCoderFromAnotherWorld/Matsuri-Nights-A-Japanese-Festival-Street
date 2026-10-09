@@ -1095,10 +1095,10 @@ public:
             // 5. Interior Floors, Ceiling & 14-Step Staircase (when inside footprint)
             if (newL.x > bMinX && newL.x < bMaxX && newL.z > bMinZ && newL.z < bMaxZ)
             {
-                // Staircase zone: X in [-3.60, -0.55], Z in [-4.15, -2.85]
-                if (newL.x >= -3.60f && newL.x <= -0.55f && newL.z >= -4.15f && newL.z <= -2.85f && newL.y <= 6.2f)
+                // Staircase zone: X in [-2.00, +0.85], Z in [-4.15, -2.85]
+                if (newL.x >= -2.00f && newL.x <= 0.85f && newL.z >= -4.15f && newL.z <= -2.85f && newL.y <= 6.2f)
                 {
-                    float stairT = (-0.55f - newL.x) / 2.95f;
+                    float stairT = (0.75f - newL.x) / 2.70f;
                     stairT = std::clamp(stairT, 0.0f, 1.0f);
                     float stairFloorY = glm::mix(0.20f, 4.30f, stairT);
                     float targetEyeY = stairFloorY + 1.45f;
@@ -1107,17 +1107,23 @@ public:
                 // Second Floor
                 else if (newL.y >= 3.6f)
                 {
-                    // Guardrail collision along open stairwell edge (Z = -2.85m, between X = -3.45m and X = -0.55m)
-                    if (oldL.z >= -2.85f && newL.z < -2.85f + radius && newL.x >= -3.45f && newL.x <= -0.55f)
+                    // Guardrail collision along open bedroom stairwell edge (Z = -2.85m, between X = -1.95m and X = +0.75m)
+                    if (oldL.z >= -2.85f && newL.z < -2.85f + radius && newL.x >= -1.95f && newL.x <= 0.75f)
                     {
-                        newL.z = -2.85f + radius; // Solid guardrail stops player from falling off edge
+                        newL.z = -2.85f + radius; // Solid guardrail stops player from falling off bedroom edge
                     }
 
-                    // Stairwell vertical opening is strictly between X = -3.40m and -0.55m
-                    bool inStairwellShaft = (newL.x >= -3.40f && newL.x <= -0.55f && newL.z >= -4.15f && newL.z <= -2.85f);
+                    // Guardrail collision across the front end of the stairwell (X = +0.75m, between Z = -4.15m and Z = -2.85m)
+                    if (oldL.x >= 0.75f && newL.x < 0.75f + radius && newL.z >= -4.15f && newL.z <= -2.85f)
+                    {
+                        newL.x = 0.75f + radius; // Stops player from walking into stairwell from front floor area
+                    }
+
+                    // Stairwell vertical opening is strictly between X = -1.95m and +0.75m
+                    bool inStairwellShaft = (newL.x >= -1.95f && newL.x <= 0.75f && newL.z >= -4.15f && newL.z <= -2.85f);
                     if (!inStairwellShaft)
                     {
-                        newL.y = std::max(newL.y, 4.30f + 1.45f); // 5.75m standing height on 2nd floor tatami & landing
+                        newL.y = std::max(newL.y, 4.30f + 1.45f); // 5.75m standing height on 2nd floor tatami & landing gallery
                     }
                     newL.y = std::min(newL.y, 7.80f);
                 }

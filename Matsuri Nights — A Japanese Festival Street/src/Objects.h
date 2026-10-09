@@ -1303,10 +1303,11 @@ public:
         // =========================================================
         // 4. AUTHENTIC 14-STEP WOODEN STAIRCASE (Hakokaidan)
         // =========================================================
-        // Ascends along wall from X = -0.60 to X = -3.60, along Z = -3.50
+        // Ascends along right wall from X = +0.75 (ground living area) to X = -1.95 (upper landing gallery)
+        // Leaving a generous 1.75m spacious landing gallery between the top step and the back corner wall
         const int numSteps = 14;
-        const float stairX0 = -0.60f;
-        const float stairX1 = -3.60f;
+        const float stairX0 = 0.75f;
+        const float stairX1 = -1.95f;
         const float stairY0 = 0.20f;
         const float stairY1 = 4.30f;
         const float stepWidth = 1.05f;
@@ -1347,7 +1348,7 @@ public:
                 underBlock->color = timber;
                 root->addChild(underBlock);
 
-                // Brass Drawer Pull on Cabinet Side
+                // Brass Drawer Pull on Cabinet Side facing room
                 if (k % 2 == 0 && underH > 0.4f)
                 {
                     auto pull = std::make_shared<SceneNode>(name + "_DrawerPull_" + std::to_string(k));
@@ -1396,7 +1397,7 @@ public:
         newelBot->color = darkWood;
         root->addChild(newelBot);
 
-        // Top Newel Post
+        // Top Newel Post at the Landing Entrance
         auto newelTop = std::make_shared<SceneNode>(name + "_NewelTop");
         newelTop->mesh = &meshes.cube;
         newelTop->transform.position = glm::vec3(stairX1, stairY1 + 0.50f, -3.50f + stepWidth * 0.48f);
@@ -1442,73 +1443,66 @@ public:
         // 5. SECOND FLOOR: BEDROOM (Shinshitsu) & FURNISHINGS
         // =========================================================
         // Full Second Floor Tatami Floor System (top walking surface exactly Y = 4.30m)
-        // 1. Main Bedroom Tatami Slab (spanning Z from -2.90m to +4.15m across full X from -3.70m to +3.70m)
+        // 1. Main Bedroom Tatami Slab (spanning Z from -2.85m to +4.15m across full X from -3.70m to +3.70m)
         auto floor2Main = std::make_shared<SceneNode>(name + "_Floor2TatamiMain");
         floor2Main->mesh = &meshes.cube;
-        floor2Main->transform.position = glm::vec3(0.0f, 4.22f, 0.625f);
-        floor2Main->transform.scale = glm::vec3(7.40f, 0.16f, 7.05f);
+        floor2Main->transform.position = glm::vec3(0.0f, 4.22f, 0.65f);
+        floor2Main->transform.scale = glm::vec3(7.40f, 0.16f, 7.00f);
         floor2Main->color = tatamiColor;
         root->addChild(floor2Main);
 
-        // 2. Stair Top Landing Tatami Slab (seamlessly meets the top step at X = -3.50m, leaving zero gap!)
+        // 2. Spacious Upper Stair Landing Gallery (from X = -3.70m to -1.95m across Z in [-4.15m, -2.85m])
+        // Generous 1.75m x 1.30m open landing providing ample standing room with clear walkthrough into bedroom!
         auto floor2Landing = std::make_shared<SceneNode>(name + "_Floor2TatamiLanding");
         floor2Landing->mesh = &meshes.cube;
-        floor2Landing->transform.position = glm::vec3(-3.55f, 4.22f, -3.525f);
-        floor2Landing->transform.scale = glm::vec3(0.32f, 0.16f, 1.25f);
+        floor2Landing->transform.position = glm::vec3(-2.825f, 4.22f, -3.50f);
+        floor2Landing->transform.scale = glm::vec3(1.75f, 0.16f, 1.30f);
         floor2Landing->color = tatamiColor;
         root->addChild(floor2Landing);
 
-        // 3. Front Floor Area beside stairwell (from X = -0.55m to +3.70m along Z = -3.525m)
+        // 3. Front Floor Area ahead of stairwell opening (from X = +0.75m to +3.70m along Z = -3.50m)
         auto floor2Front = std::make_shared<SceneNode>(name + "_Floor2TatamiFront");
         floor2Front->mesh = &meshes.cube;
-        floor2Front->transform.position = glm::vec3(1.575f, 4.22f, -3.525f);
-        floor2Front->transform.scale = glm::vec3(4.25f, 0.16f, 1.25f);
+        floor2Front->transform.position = glm::vec3(2.225f, 4.22f, -3.50f);
+        floor2Front->transform.scale = glm::vec3(2.95f, 0.16f, 1.30f);
         floor2Front->color = tatamiColor;
         root->addChild(floor2Front);
 
-        // Cedar Threshold Beam at edge of stairwell
-        auto stairSill = std::make_shared<SceneNode>(name + "_StairSill");
-        stairSill->mesh = &meshes.cube;
-        stairSill->transform.position = glm::vec3(-0.55f, 4.32f, -3.525f);
-        stairSill->transform.scale = glm::vec3(0.10f, 0.08f, 1.25f);
-        stairSill->color = darkWood;
-        root->addChild(stairSill);
-
         // Authentic Japanese Balustrade Guardrail around Upper Stairwell Opening
-        // Top handrail beam along open bedroom edge
+        // Long side guardrail along bedroom edge (Z = -2.88m, from X = -1.95m to X = +0.75m, length = 2.70m)
         auto guardTopRail = std::make_shared<SceneNode>(name + "_StairGuardTopRail");
         guardTopRail->mesh = &meshes.cube;
-        guardTopRail->transform.position = glm::vec3(-2.00f, 5.15f, -2.88f);
-        guardTopRail->transform.scale = glm::vec3(2.95f, 0.07f, 0.07f);
+        guardTopRail->transform.position = glm::vec3(-0.60f, 5.15f, -2.88f);
+        guardTopRail->transform.scale = glm::vec3(2.72f, 0.07f, 0.07f);
         guardTopRail->color = darkWood;
         root->addChild(guardTopRail);
 
-        // Bottom base rail along floor
         auto guardBotRail = std::make_shared<SceneNode>(name + "_StairGuardBotRail");
         guardBotRail->mesh = &meshes.cube;
-        guardBotRail->transform.position = glm::vec3(-2.00f, 4.36f, -2.88f);
-        guardBotRail->transform.scale = glm::vec3(2.95f, 0.07f, 0.07f);
+        guardBotRail->transform.position = glm::vec3(-0.60f, 4.36f, -2.88f);
+        guardBotRail->transform.scale = glm::vec3(2.72f, 0.07f, 0.07f);
         guardBotRail->color = darkWood;
         root->addChild(guardBotRail);
 
-        // End corner newel posts
-        auto guardPostStart = std::make_shared<SceneNode>(name + "_StairGuardPostStart");
-        guardPostStart->mesh = &meshes.cube;
-        guardPostStart->transform.position = glm::vec3(-0.55f, 4.75f, -2.88f);
-        guardPostStart->transform.scale = glm::vec3(0.08f, 0.88f, 0.08f);
-        guardPostStart->color = darkWood;
-        root->addChild(guardPostStart);
+        // Corner newel post at the landing entrance
+        auto guardPostLanding = std::make_shared<SceneNode>(name + "_StairGuardPostLanding");
+        guardPostLanding->mesh = &meshes.cube;
+        guardPostLanding->transform.position = glm::vec3(-1.95f, 4.75f, -2.88f);
+        guardPostLanding->transform.scale = glm::vec3(0.08f, 0.88f, 0.08f);
+        guardPostLanding->color = darkWood;
+        root->addChild(guardPostLanding);
 
-        auto guardPostEnd = std::make_shared<SceneNode>(name + "_StairGuardPostEnd");
-        guardPostEnd->mesh = &meshes.cube;
-        guardPostEnd->transform.position = glm::vec3(-3.45f, 4.75f, -2.88f);
-        guardPostEnd->transform.scale = glm::vec3(0.08f, 0.88f, 0.08f);
-        guardPostEnd->color = darkWood;
-        root->addChild(guardPostEnd);
+        // Corner newel post at the front edge of the stairwell
+        auto guardPostFront = std::make_shared<SceneNode>(name + "_StairGuardPostFront");
+        guardPostFront->mesh = &meshes.cube;
+        guardPostFront->transform.position = glm::vec3(0.75f, 4.75f, -2.88f);
+        guardPostFront->transform.scale = glm::vec3(0.08f, 0.88f, 0.08f);
+        guardPostFront->color = darkWood;
+        root->addChild(guardPostFront);
 
-        // Vertical cedar balusters evenly spaced along the guardrail
+        // Vertical cedar balusters along the bedroom guardrail
         for (int gb = 0; gb < 6; ++gb) {
-            float gbx = -0.95f - (float)gb * 0.42f;
+            float gbx = -1.60f + (float)gb * 0.40f;
             auto bal = std::make_shared<SceneNode>(name + "_StairGuardBal_" + std::to_string(gb));
             bal->mesh = &meshes.cylinder;
             bal->transform.position = glm::vec3(gbx, 4.75f, -2.88f);
@@ -1516,6 +1510,46 @@ public:
             bal->color = darkWood;
             root->addChild(bal);
         }
+
+        // Front end guardrail across the front opening (at X = +0.75m, from Z = -2.88m to Z = -4.15m)
+        auto guardFrontEndTop = std::make_shared<SceneNode>(name + "_StairGuardFrontTop");
+        guardFrontEndTop->mesh = &meshes.cube;
+        guardFrontEndTop->transform.position = glm::vec3(0.75f, 5.15f, -3.515f);
+        guardFrontEndTop->transform.scale = glm::vec3(0.07f, 0.07f, 1.25f);
+        guardFrontEndTop->color = darkWood;
+        root->addChild(guardFrontEndTop);
+
+        auto guardFrontEndBot = std::make_shared<SceneNode>(name + "_StairGuardFrontBot");
+        guardFrontEndBot->mesh = &meshes.cube;
+        guardFrontEndBot->transform.position = glm::vec3(0.75f, 4.36f, -3.515f);
+        guardFrontEndBot->transform.scale = glm::vec3(0.07f, 0.07f, 1.25f);
+        guardFrontEndBot->color = darkWood;
+        root->addChild(guardFrontEndBot);
+
+        auto guardPostWall = std::make_shared<SceneNode>(name + "_StairGuardPostWall");
+        guardPostWall->mesh = &meshes.cube;
+        guardPostWall->transform.position = glm::vec3(0.75f, 4.75f, -4.14f);
+        guardPostWall->transform.scale = glm::vec3(0.08f, 0.88f, 0.08f);
+        guardPostWall->color = darkWood;
+        root->addChild(guardPostWall);
+
+        for (int fb = 0; fb < 3; ++fb) {
+            float fbz = -3.15f - (float)fb * 0.35f;
+            auto balF = std::make_shared<SceneNode>(name + "_StairGuardFrontBal_" + std::to_string(fb));
+            balF->mesh = &meshes.cylinder;
+            balF->transform.position = glm::vec3(0.75f, 4.75f, fbz);
+            balF->transform.scale = glm::vec3(0.035f, 0.72f, 0.035f);
+            balF->color = darkWood;
+            root->addChild(balF);
+        }
+
+        // Cedar Threshold Beam at front edge of stairwell
+        auto stairSill = std::make_shared<SceneNode>(name + "_StairSill");
+        stairSill->mesh = &meshes.cube;
+        stairSill->transform.position = glm::vec3(0.75f, 4.32f, -3.515f);
+        stairSill->transform.scale = glm::vec3(0.10f, 0.08f, 1.25f);
+        stairSill->color = darkWood;
+        root->addChild(stairSill);
 
         // Second floor exterior walls
         auto floor2WallBack = std::make_shared<SceneNode>(name + "_F2WallBack");
@@ -1808,12 +1842,12 @@ public:
         // Dedicated Corner Flower Stand (Kada) & Ikebana Vase on Second Floor
         auto flowerStand = std::make_shared<SceneNode>(name + "_F2FlowerStand");
         flowerStand->mesh = &meshes.cube;
-        flowerStand->transform.position = glm::vec3(-3.25f, 4.60f, -1.80f);
+        flowerStand->transform.position = glm::vec3(-3.25f, 4.60f, -0.20f);
         flowerStand->transform.scale = glm::vec3(0.45f, 0.60f, 0.45f);
         flowerStand->color = darkWood;
         root->addChild(flowerStand);
 
-        auto f2Ikebana = createIkebanaVase(meshes, name + "_F2Ikebana", glm::vec3(-3.25f, 4.90f, -1.80f), 0.70f, 2);
+        auto f2Ikebana = createIkebanaVase(meshes, name + "_F2Ikebana", glm::vec3(-3.25f, 4.90f, -0.20f), 0.70f, 2);
         root->addChild(f2Ikebana);
 
         // REALISTIC SECOND FLOOR LAMPS:

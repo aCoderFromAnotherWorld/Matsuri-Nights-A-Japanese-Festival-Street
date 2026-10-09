@@ -12,6 +12,35 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Machiya Townhouse Staircase Relocation & Spacious 2nd Floor Landing Gallery Clearance
+
+#### 1. Staircase Repositioning & Upper Floor Landing Clearance Fix
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Issues Resolved:**
+  * **Cramped Stairwell Arrival:** The staircase run was previously positioned ascending towards $X = -3.60\text{m}$ along $Z = -3.50\text{m}$. With the exterior perimeter corner wall located at $X = -3.70\text{m}$, there was only $10\text{cm}$ ($0.10\text{m}$) of clearance between the top stair tread and the solid back wall.
+  * **Player Pinch & Immobility:** With player collision radius ($0.35\text{m}$), the player became immediately pinched against the back corner wall upon climbing the top step, unable to turn or step onto the second floor bedroom tatami.
+* **Solutions Implemented:**
+  * **Forward Relocation of Staircase Run:**
+    * Relocated the 14-step staircase run along $Z = -3.50\text{m}$ from $[X = -0.60\text{m} \to -3.60\text{m}]$ forward to $[X = +0.75\text{m} \to -1.95\text{m}]$.
+    * The foot of the stairs starts conveniently near the ground-floor living area ($X = +0.75\text{m}$); the top step finishes at $X = -1.95\text{m}$.
+    * Clearance between the top tread and the exterior back wall ($X = -3.70\text{m}$) is now a generous **$1.75\text{m}$ (over 5.7 feet)**, creating a wide, open walkway.
+  * **Spacious 2nd Floor Landing Gallery (`floor2Landing`):**
+    * Created an expansive tatami landing gallery spanning $X \in [-3.70\text{m}, -1.95\text{m}]$, $Z \in [-4.15\text{m}, -2.85\text{m}]$ ($1.75\text{m} \times 1.30\text{m}$) at $Y = 4.22\text{m}$ with top surface at $Y = 4.30\text{m}$, meeting the top stair tread flush.
+    * Floor ahead of the stair foot (`floor2Front`) spans $X \in [+0.75\text{m}, +3.70\text{m}]$, $Z \in [-4.15\text{m}, -2.85\text{m}]$.
+    * Unobstructed egress: Along $Z > -2.88\text{m}$, the entire $1.75\text{m}$ width of the landing gallery is open into the master bedroom with zero guardrails, walls, or obstacles.
+  * **Cedar Balustrade Guardrail Overhaul:**
+    * Reconfigured the longitudinal cedar balustrade along the stairwell opening edge at $Z = -2.88\text{m}$ from $X = -1.95\text{m}$ to $X = +0.75\text{m}$ ($2.70\text{m}$ length), complete with top rail, bottom rail, landing newel post, front newel post, and 6 turned vertical balusters.
+    * Added a transverse front-end guardrail across $X = +0.75\text{m}$ from $Z = -2.88\text{m}$ to $Z = -4.15\text{m}$ ($1.27\text{m}$ width) with an anchor wall post and 3 balusters to prevent players from falling into the lower stair run from the second floor.
+  * **Walkway Clearance:**
+    * Repositioned the upper-floor decorative flower stand and Ikebana vase (`f2Ikebana`) from $Z = -1.80\text{m}$ to $Z = -0.20\text{m}$ against the center back wall, keeping the landing gallery completely clear of furniture.
+  * **Collision Kinematics & Solid Guardrail Updates (`Scene::resolveCollision`):**
+    * Adjusted the staircase climbing bounding volume to $X \in [-2.00\text{m}, +0.85\text{m}]$, $Z \in [-4.15\text{m}, -2.85\text{m}]$.
+    * Updated parametric height interpolation: `stairT = (0.75f - newL.x) / 2.70f`, seamlessly elevating player eye height from ground level ($1.65\text{m}$) to upper floor ($5.75\text{m}$) when climbing, and stepping down smoothly when descending.
+    * Landing zone ($X \le -1.95\text{m}$, $Z \in [-4.15\text{m}, -2.85\text{m}]$) is recognized as solid 2nd floor, locking player eye height at $5.75\text{m}$.
+    * Added solid blocking collision along the balustrades at $Z = -2.85\text{m}$ and $X = +0.75\text{m}$, preventing accidental falls into the open stairwell.
+
+---
+
 ### [2026-10-10] — Machiya Townhouse Bug Fixes & Refinements: Windows Architecture, Stairwell-Floor Connection, and Fully Connected Floral Anatomy
 
 #### 1. Windows Architecture, Wall Cutouts & Dual-Track Sliding Mechanics Fix
