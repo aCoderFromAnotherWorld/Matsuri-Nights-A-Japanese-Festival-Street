@@ -12,6 +12,67 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Organic Curved Botanical Foliage (Leaves, Petals, Evergreen Pads), Sculpted Sakura Blossom Clouds, Multi-Tree Street Population & Articulated Biomechanical Human Rigs
+
+#### 1. Procedural Botanical Curve Generators (`Curves.h`, `Primitives.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Curves.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Curves.h), [`Matsuri Nights — A Japanese Festival Street/src/Primitives.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Primitives.h)
+* **Mathematical Foundations & Implementation:**
+  * **Botanical Curved 3D Leaf Mesh (`Curves::createCurvedLeafMesh`):** Replaced flat rectangular boxes with smooth botanical 3D leaf surfaces governed by parametric longitudinal parabolic arching ($\Delta y_{\text{arch}} = h_{\text{arch}} \cdot \sin(\pi u)$), natural teardrop width expansion ($w(u) = w_{\max} \cdot \sin(\pi u) \cdot (1.0 - 0.25u)$), transversal cupping fold angle ($\Delta y_{\text{cup}} = |v| \cdot \sin(\theta_{\text{cup}})$), smooth analytical vertex normals, seamless $(u,v)$ UV coordinate mapping, and double-sided triangle indices for realistic two-sided rendering.
+  * **Organic Cupped Flower Petal Mesh (`Curves::createCurvedPetalMesh`):** Parametric concave cupped petal geometry featuring radial curvature, scalloped organic tips, and smooth double-sided normal generation.
+  * **Multi-Lobed Sakura Blossom Canopy Mesh (`Curves::createSakuraBlossomLobe`):** Replaced primitive geometric spheres with organic cherry blossom cloud lobes perturbed by procedural spherical harmonics and billow ripples:
+    $$R(\theta, \phi) = r \cdot \left(1.0 + 0.18 \sin(5\phi)\cos(3\theta) + 0.10 \sin(3\phi)\sin(4\theta) + 0.06 \cos(7\theta)\right)$$
+    Producing fluffy, organic, clustered floral canopies that catch light naturally.
+  * **Layered Tiered Pine Needle Cluster Mesh (`Curves::createPineNeedleClusterMesh`):** Tiered radial evergreen foliage pads designed for traditional Japanese bonsai trees and window garden shrubbery.
+
+#### 2. Fully Connected Organic Floral Anatomy (`Objects.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Features:**
+  * **Window Planter Box Gardens (`createWindowPlanterBox`):** Replaced primitive spheres and cylinders with `pineCluster` shrub bases, swept 3D Bézier stems, botanical `curvedLeaf` meshes sprouting naturally along stem curves, and 4-petal floral rosettes composed of cupped `curvedPetal` petals seamlessly attached to stem tips.
+  * **Cascading Kokedama Moss Balls (`createHangingKokedama`):** Added botanical `curvedLeaf` foliage along swept 3D Bézier vines and cupped blossom rosettes at vine terminations.
+  * **Ikebana Flower Arrangements (`createIkebanaVase`):** Replaced flat box leaves with botanical `curvedLeaf` meshes aligned to the tangent vectors of Shin, Soe, Hikae, and Accent living line stems; replaced sphere blooms with multi-petal rosettes using `curvedPetal` attached rigidly to calyx bases without spatial gaps.
+  * **Gnarled Bonsai Trees (`createBonsaiTree`):** Sculpted branch foliage clouds replaced with tiered `pineCluster` evergreen pads oriented naturally along the swept *Moyogi* serpentine branches.
+
+#### 3. Sakura Tree Enhancements & Avenue-Wide Population (`Objects.h`, `Scene.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Features:**
+  * **Sculpted Sakura Canopy Lobes:** Replaced all 22 canopy spheres on every Sakura tree with organic `sakuraBlossomLobe` clusters.
+  * **Botanical Leaf Sprigs:** Embedded 9 fresh green botanical leaf sprigs (`curvedLeaf`) along primary and secondary bough junctions, capturing authentic spring Sakura blossoming aesthetics where tender leaves emerge alongside blossoms.
+  * **Cupped Falling Petals:** Updated falling petal particle system to instantiate parametric `curvedPetal` meshes drifting and tumbling in the wind.
+  * **Multi-Tree Street & Courtyard Population:** Expanded from a single tree to 7 distinct, fully instantiated Sakura trees across the festival grounds:
+    1. **Grand Shrine Sakura Tree:** $X = -5.8\text{m}, Z = -22.0\text{m}$ (Scale: 1.15, Rotation: $15^\circ$, Tone: $0.00$)
+    2. **Festival Stage / Plaza Sakura Tree:** $X = +6.8\text{m}, Z = -26.5\text{m}$ (Scale: 1.05, Rotation: $135^\circ$, Tone: $+0.25$)
+    3. **Left Courtyard Garden Gap (between Machiya L1 & L2):** $X = -10.8\text{m}, Z = +5.0\text{m}$ (Scale: 0.95, Rotation: $75^\circ$, Tone: $-0.20$)
+    4. **Right Courtyard Garden Gap (between Machiya R1 & R2):** $X = +10.8\text{m}, Z = +5.0\text{m}$ (Scale: 0.95, Rotation: $210^\circ$, Tone: $+0.30$)
+    5. **South Entrance Avenue West:** $X = -5.6\text{m}, Z = +28.0\text{m}$ (Scale: 0.90, Rotation: $40^\circ$, Tone: $-0.15$)
+    6. **South Entrance Avenue East:** $X = +5.6\text{m}, Z = +27.0\text{m}$ (Scale: 0.92, Rotation: $190^\circ$, Tone: $+0.15$)
+    7. **North Torii Sacred Grove:** $X = -5.8\text{m}, Z = -31.5\text{m}$ (Scale: 0.85, Rotation: $290^\circ$, Tone: $-0.10$)
+  * Trees feature individual scale, azimuth rotation, trunk lean, and subtle petal color tone variation (ranging from pale white-pink to rich sakura rose). All trees are integrated into the Bark texture mapping and particle wind drift simulation.
+
+#### 4. Articulated Anatomical Human Models & Biomechanical Kinematics (`Curves.h`, `Primitives.h`, `Objects.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Curves.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Curves.h), [`Matsuri Nights — A Japanese Festival Street/src/Primitives.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Primitives.h), [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Features:**
+  * **Procedural Anatomical Geometry Generators:**
+    * **Sculpted Human Head (`createHumanHeadMesh`):** Anatomical facial contours with chin, tapered jaw, cheekbone structure, nasal bridge, eye sockets, and lips.
+    * **Contoured Human Torso (`createHumanTorsoMesh`):** Chest flare, waist taper, and authentic traditional crossed kimono/yukata collar (*Eri*).
+    * **Articulated Muscle Limb Segments (`createArticulatedLimbMesh`):** Limb mesh with rounded joint pivot condyle at $Y = 0$, anatomical muscle bulge (quadriceps/gastrocnemius or biceps/brachioradialis), and smooth distal taper.
+    * **Contoured Hands (`createHandMesh`):** Palm and fingers.
+    * **Japanese Geta Sandals (`createGetaFootMesh`):** Contoured wooden platform (*Dai*) with dual elevated teeth (*Ha*) sitting flush at ground level.
+  * **Articulated Walking Crowd Kinematics (`CrowdGroup`):**
+    * Hierarchical joint rig: Pelvis $\to$ Thighs $\to$ Shins $\to$ Geta Feet; Torso $\to$ Shoulders $\to$ Upper Arms $\to$ Forearms $\to$ Hands; Head.
+    * Forward/backward hip swing: $\theta_{\text{hip}} = \sin(\omega t) \times 24^\circ$.
+    * Natural biomechanical knee flexion (backward bending only):
+      $$\theta_{\text{knee}} = \max\left(0, -\theta_{\text{hip}} \times 1.35\right)$$
+    * Natural arm swing with biomechanical forward elbow flexion:
+      $$\theta_{\text{elbow}} = 18^\circ + \max\left(0, \theta_{\text{arm}} \times 0.65\right)$$
+  * **Articulated Stall Vendors (`VendorFigure`):**
+    * Equipped with Happi coat torso, Hachimaki headband head, articulated legs, and articulated upper/lower arms holding cooking utensils with live stirring/flipping kinematics.
+  * **Articulated Stage Magician (`Magician`):**
+    * Sculpted wizard head, cape torso, boots, articulated limbs with wand-wielding arm animating levitation spells.
+  * **Articulated Audience Spectators (`AudienceGroup`):**
+    * 6 seated spectators on Mousen benches with realistic horizontal thigh resting angle ($-85^\circ$), vertical shin drop ($+85^\circ$), wooden Geta feet on the floor, upright torsos, and contoured hands resting comfortably on knees.
+
+---
+
 ### [2026-10-10] — Implementation of Mathematical Curves Architecture & Organic Swept Geometries (Splines, Bézier Curves, Bishop Frames, Swept Tubes, Curved Beams & Ropes)
 
 #### 1. Mathematical Curves & Swept Geometry Architecture (`Curves.h`, `Primitives.h`, `SceneNode.h`)

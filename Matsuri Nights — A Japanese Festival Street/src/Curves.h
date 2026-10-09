@@ -628,4 +628,493 @@ namespace Curves
 
         return createSweptTube(evalPos, evalTan, rFunc, lengthSegments, radialSegments, 6.0f, true, true, glm::vec3(0.0f, 1.0f, 0.0f));
     }
+
+    // -------------------------------------------------------------
+    // 11. Curved 3D Leaf Mesh (Botanical Midrib Arch & Cupping)
+    // -------------------------------------------------------------
+    inline Mesh createCurvedLeafMesh(
+        float length = 0.12f,
+        float maxWidth = 0.045f,
+        float archY = 0.02f,
+        float foldAngle = 25.0f,
+        int lengthSegs = 10,
+        int widthSegs = 6)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+        float foldRad = glm::radians(foldAngle);
+
+        for (int i = 0; i <= lengthSegs; ++i)
+        {
+            float u = (float)i / (float)lengthSegs;
+            float z = u * length;
+            float yMid = archY * std::sin(u * (float)M_PI * 0.95f);
+            float w = maxWidth * std::sin(std::pow(u, 0.65f) * (float)M_PI);
+
+            for (int j = 0; j <= widthSegs; ++j)
+            {
+                float v = -1.0f + 2.0f * (float)j / (float)widthSegs;
+                float x = v * (w * 0.5f);
+                float y = yMid + std::abs(v) * (w * 0.5f * std::sin(foldRad));
+
+                float ny = std::cos(foldRad);
+                float nx = -v * std::sin(foldRad);
+                float nz = -0.25f * (1.0f - u);
+                glm::vec3 norm = glm::normalize(glm::vec3(nx, ny, nz));
+
+                vertices.push_back({ { x, y, z }, norm, { u, (v + 1.0f) * 0.5f } });
+            }
+        }
+
+        int rowStride = widthSegs + 1;
+        for (int i = 0; i < lengthSegs; ++i)
+        {
+            for (int j = 0; j < widthSegs; ++j)
+            {
+                unsigned int i0 = i * rowStride + j;
+                unsigned int i1 = i0 + 1;
+                unsigned int i2 = (i + 1) * rowStride + j;
+                unsigned int i3 = i2 + 1;
+
+                // Double-sided leaf
+                indices.push_back(i0); indices.push_back(i1); indices.push_back(i2);
+                indices.push_back(i1); indices.push_back(i3); indices.push_back(i2);
+                indices.push_back(i0); indices.push_back(i2); indices.push_back(i1);
+                indices.push_back(i1); indices.push_back(i2); indices.push_back(i3);
+            }
+        }
+        return Mesh(vertices, indices);
+    }
+
+    // -------------------------------------------------------------
+    // 12. Curved Cupped Flower Petal Mesh
+    // -------------------------------------------------------------
+    inline Mesh createCurvedPetalMesh(
+        float length = 0.06f,
+        float width = 0.045f,
+        float cupDepth = 0.014f,
+        int segsU = 8,
+        int segsV = 6)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        for (int i = 0; i <= segsU; ++i)
+        {
+            float u = (float)i / (float)segsU;
+            float z = u * length;
+            float w = width * std::sin(std::pow(u, 0.7f) * (float)M_PI);
+
+            for (int j = 0; j <= segsV; ++j)
+            {
+                float v = -1.0f + 2.0f * (float)j / (float)segsV;
+                float x = v * (w * 0.5f);
+                float y = -cupDepth * (1.0f - v * v) * std::sin(u * (float)M_PI);
+
+                glm::vec3 norm = glm::normalize(glm::vec3(v * 0.5f, 1.0f, -0.2f * (1.0f - u)));
+                vertices.push_back({ { x, y, z }, norm, { u, (v + 1.0f) * 0.5f } });
+            }
+        }
+
+        int rowStride = segsV + 1;
+        for (int i = 0; i < segsU; ++i)
+        {
+            for (int j = 0; j < segsV; ++j)
+            {
+                unsigned int i0 = i * rowStride + j;
+                unsigned int i1 = i0 + 1;
+                unsigned int i2 = (i + 1) * rowStride + j;
+                unsigned int i3 = i2 + 1;
+
+                indices.push_back(i0); indices.push_back(i1); indices.push_back(i2);
+                indices.push_back(i1); indices.push_back(i3); indices.push_back(i2);
+                indices.push_back(i0); indices.push_back(i2); indices.push_back(i1);
+                indices.push_back(i1); indices.push_back(i2); indices.push_back(i3);
+            }
+        }
+        return Mesh(vertices, indices);
+    }
+
+    // -------------------------------------------------------------
+    // 13. Sculpted Organic Cherry Blossom Canopy Lobe (Curved Petal Billows)
+    // -------------------------------------------------------------
+    inline Mesh createSakuraBlossomLobe(
+        float radius = 1.0f,
+        int rings = 18,
+        int sectors = 22,
+        float billowAmp = 0.24f)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        for (int r = 0; r <= rings; ++r)
+        {
+            float phi = - (float)M_PI * 0.5f + (float)M_PI * ((float)r / (float)rings);
+            float cosPhi = std::cos(phi);
+            float sinPhi = std::sin(phi);
+            float v = (float)r / (float)rings;
+
+            for (int s = 0; s <= sectors; ++s)
+            {
+                float theta = 2.0f * (float)M_PI * ((float)s / (float)sectors);
+                float cosTheta = std::cos(theta);
+                float sinTheta = std::sin(theta);
+                float u = (float)s / (float)sectors;
+
+                // Organic blossom cluster billows / ruffled petal puffs
+                float billow = 1.0f + billowAmp * (
+                    0.55f * std::sin(5.0f * theta) * std::cos(3.0f * phi) +
+                    0.35f * std::cos(7.0f * theta) * std::sin(4.0f * phi) +
+                    0.25f * std::sin(3.0f * theta + 2.0f * phi)
+                );
+
+                glm::vec3 baseDir(cosPhi * cosTheta, sinPhi, cosPhi * sinTheta);
+                glm::vec3 pos = baseDir * (radius * billow);
+                glm::vec3 norm = glm::normalize(baseDir);
+
+                vertices.push_back({ pos, norm, { u, v } });
+            }
+        }
+
+        for (int r = 0; r < rings; ++r)
+        {
+            for (int s = 0; s < sectors; ++s)
+            {
+                unsigned int cur = r * (sectors + 1) + s;
+                unsigned int next = cur + sectors + 1;
+                indices.push_back(cur); indices.push_back(next); indices.push_back(cur + 1);
+                indices.push_back(cur + 1); indices.push_back(next); indices.push_back(next + 1);
+            }
+        }
+        return Mesh(vertices, indices);
+    }
+
+    // -------------------------------------------------------------
+    // 14. Sculpted Evergreen Pine Foliage Pad (Bonsai Needle Clusters)
+    // -------------------------------------------------------------
+    inline Mesh createPineNeedleClusterMesh(
+        float widthX = 0.24f,
+        float heightY = 0.08f,
+        float depthZ = 0.20f,
+        int rings = 14,
+        int sectors = 18)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        for (int r = 0; r <= rings; ++r)
+        {
+            float phi = - (float)M_PI * 0.5f + (float)M_PI * ((float)r / (float)rings);
+            float cosPhi = std::cos(phi);
+            float sinPhi = std::sin(phi);
+
+            for (int s = 0; s <= sectors; ++s)
+            {
+                float theta = 2.0f * (float)M_PI * ((float)s / (float)sectors);
+                float ripple = 1.0f + 0.16f * std::sin(8.0f * theta) * std::cos(3.0f * phi);
+
+                float px = widthX * 0.5f * cosPhi * std::cos(theta) * ripple;
+                float py = heightY * 0.5f * sinPhi * (0.8f + 0.2f * std::cos(6.0f * theta));
+                float pz = depthZ * 0.5f * cosPhi * std::sin(theta) * ripple;
+
+                glm::vec3 norm = glm::normalize(glm::vec3(px / (widthX * widthX), py / (heightY * heightY), pz / (depthZ * depthZ)));
+                vertices.push_back({ { px, py, pz }, norm, { (float)s / (float)sectors, (float)r / (float)rings } });
+            }
+        }
+
+        for (int r = 0; r < rings; ++r)
+        {
+            for (int s = 0; s < sectors; ++s)
+            {
+                unsigned int cur = r * (sectors + 1) + s;
+                unsigned int next = cur + sectors + 1;
+                indices.push_back(cur); indices.push_back(next); indices.push_back(cur + 1);
+                indices.push_back(cur + 1); indices.push_back(next); indices.push_back(next + 1);
+            }
+        }
+        return Mesh(vertices, indices);
+    }
+
+    // -------------------------------------------------------------
+    // 15. Sculpted Anatomical Human Head & Face Mesh
+    // Realistic head shape with chin, jawline, nose bridge, eye sockets, and lips.
+    // -------------------------------------------------------------
+    inline Mesh createHumanHeadMesh(float scale = 0.20f)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        int rings = 20;
+        int sectors = 24;
+
+        for (int r = 0; r <= rings; ++r)
+        {
+            float phi = - (float)M_PI * 0.5f + (float)M_PI * ((float)r / (float)rings);
+            float cosPhi = std::cos(phi);
+            float sinPhi = std::sin(phi);
+            float v = (float)r / (float)rings;
+
+            for (int s = 0; s <= sectors; ++s)
+            {
+                float theta = 2.0f * (float)M_PI * ((float)s / (float)sectors);
+                float cosTheta = std::cos(theta);
+                float sinTheta = std::sin(theta);
+                float u = (float)s / (float)sectors;
+
+                float rx = scale * 0.88f;
+                float ry = scale * 1.15f;
+                float rz = scale * 0.95f;
+
+                // Facial feature modifications
+                float isFront = std::max(0.0f, cosPhi * sinTheta);
+                float yNorm = sinPhi;
+
+                // Chin taper towards bottom front
+                if (yNorm < -0.3f && isFront > 0.3f)
+                {
+                    rx *= (1.0f - 0.28f * (1.0f + yNorm));
+                    rz *= (1.0f - 0.15f * (1.0f + yNorm));
+                }
+
+                // Nose protrusion in mid-front
+                if (std::abs(yNorm) < 0.15f && std::abs(cosPhi * cosTheta) < 0.25f && isFront > 0.6f)
+                {
+                    float noseFactor = (1.0f - std::abs(yNorm) / 0.15f) * (1.0f - std::abs(cosPhi * cosTheta) / 0.25f);
+                    rz += scale * 0.38f * noseFactor;
+                }
+
+                // Cheekbone fullness
+                if (yNorm > 0.05f && yNorm < 0.35f && isFront > 0.4f)
+                {
+                    rx *= 1.08f;
+                }
+
+                // Eye socket recession
+                if (yNorm > 0.18f && yNorm < 0.35f && std::abs(cosPhi * cosTheta) > 0.15f && std::abs(cosPhi * cosTheta) < 0.55f && isFront > 0.6f)
+                {
+                    rz -= scale * 0.08f;
+                }
+
+                // Jaw taper
+                if (yNorm < -0.1f)
+                {
+                    rx *= (1.0f + yNorm * 0.25f);
+                }
+
+                glm::vec3 pos(rx * cosPhi * cosTheta, ry * sinPhi, rz * cosPhi * sinTheta);
+                glm::vec3 norm = glm::normalize(glm::vec3(pos.x / (rx * rx), pos.y / (ry * ry), pos.z / (rz * rz)));
+
+                vertices.push_back({ pos, norm, { u, v } });
+            }
+        }
+
+        for (int r = 0; r < rings; ++r)
+        {
+            for (int s = 0; s < sectors; ++s)
+            {
+                unsigned int cur = r * (sectors + 1) + s;
+                unsigned int next = cur + sectors + 1;
+                indices.push_back(cur); indices.push_back(next); indices.push_back(cur + 1);
+                indices.push_back(cur + 1); indices.push_back(next); indices.push_back(next + 1);
+            }
+        }
+        return Mesh(vertices, indices);
+    }
+
+    // -------------------------------------------------------------
+    // 16. Sculpted Human Torso with Kimono / Yukata Crossed Collar (Eri)
+    // -------------------------------------------------------------
+    inline Mesh createHumanTorsoMesh(float width = 0.52f, float height = 0.85f, float depth = 0.36f)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        int ySlices = 14;
+        int radSegs = 18;
+
+        for (int i = 0; i <= ySlices; ++i)
+        {
+            float t = (float)i / (float)ySlices; // 0 (hips) to 1 (shoulders/neck)
+            float y = (t - 0.5f) * height;
+
+            // Width profile: hips -> waist taper -> broad shoulders
+            float w;
+            if (t < 0.35f)
+                w = width * (0.92f + 0.08f * (t / 0.35f)); // hips
+            else if (t < 0.60f)
+                w = width * (1.0f - 0.18f * ((t - 0.35f) / 0.25f)); // waist taper
+            else
+                w = width * (0.82f + 0.28f * ((t - 0.60f) / 0.40f)); // chest/shoulders
+
+            float d = depth * (0.85f + 0.25f * std::sin(t * (float)M_PI));
+
+            for (int j = 0; j <= radSegs; ++j)
+            {
+                float phi = (float)j / (float)radSegs * 2.0f * (float)M_PI;
+                float cosP = std::cos(phi);
+                float sinP = std::sin(phi);
+
+                float px = (w * 0.5f) * cosP;
+                float pz = (d * 0.5f) * sinP;
+
+                // Kimono overlapping collar (Eri) on upper chest
+                if (t > 0.55f && sinP > 0.5f)
+                {
+                    // V-neck crease
+                    float vFactor = (t - 0.55f) / 0.45f;
+                    pz += 0.015f * std::cos(cosP * 3.14f);
+                }
+
+                glm::vec3 pos(px, y, pz);
+                glm::vec3 norm = glm::normalize(glm::vec3(px / (w * w), 0.1f * (0.5f - t), pz / (d * d)));
+                vertices.push_back({ pos, norm, { (float)j / (float)radSegs, t } });
+            }
+        }
+
+        int rowStride = radSegs + 1;
+        for (int i = 0; i < ySlices; ++i)
+        {
+            for (int j = 0; j < radSegs; ++j)
+            {
+                unsigned int i0 = i * rowStride + j;
+                unsigned int i1 = i0 + 1;
+                unsigned int i2 = (i + 1) * rowStride + j;
+                unsigned int i3 = i2 + 1;
+                indices.push_back(i0); indices.push_back(i2); indices.push_back(i1);
+                indices.push_back(i1); indices.push_back(i2); indices.push_back(i3);
+            }
+        }
+        return Mesh(vertices, indices);
+    }
+
+    // -------------------------------------------------------------
+    // 17. Anatomical Articulated Limb Segment (Thigh, Shin, Bicep, Forearm)
+    // Smooth tapering with joint condyles.
+    // -------------------------------------------------------------
+    inline Mesh createArticulatedLimbMesh(float rTop = 0.08f, float rBottom = 0.06f, float length = 0.45f, int lenSegs = 12, int radSegs = 14)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        for (int i = 0; i <= lenSegs; ++i)
+        {
+            float t = (float)i / (float)lenSegs;
+            float y = -t * length; // extends downward from joint pivot at Y=0
+            // Muscle curvature / contour
+            float muscleBulge = 1.0f + 0.12f * std::sin(t * (float)M_PI);
+            float r = glm::mix(rTop, rBottom, t) * muscleBulge;
+
+            for (int j = 0; j <= radSegs; ++j)
+            {
+                float phi = (float)j / (float)radSegs * 2.0f * (float)M_PI;
+                float cosP = std::cos(phi);
+                float sinP = std::sin(phi);
+
+                glm::vec3 pos(r * cosP, y, r * sinP);
+                glm::vec3 norm = glm::normalize(glm::vec3(cosP, 0.0f, sinP));
+                vertices.push_back({ pos, norm, { (float)j / (float)radSegs, t } });
+            }
+        }
+
+        int rowStride = radSegs + 1;
+        for (int i = 0; i < lenSegs; ++i)
+        {
+            for (int j = 0; j < radSegs; ++j)
+            {
+                unsigned int i0 = i * rowStride + j;
+                unsigned int i1 = i0 + 1;
+                unsigned int i2 = (i + 1) * rowStride + j;
+                unsigned int i3 = i2 + 1;
+                indices.push_back(i0); indices.push_back(i2); indices.push_back(i1);
+                indices.push_back(i1); indices.push_back(i2); indices.push_back(i3);
+            }
+        }
+        return Mesh(vertices, indices);
+    }
+
+    // -------------------------------------------------------------
+    // 18. Contoured Human Hand Mesh (Palm, Thumb, & Articulated Fingers)
+    // -------------------------------------------------------------
+    inline Mesh createHandMesh(float length = 0.14f, float width = 0.08f, float thickness = 0.035f)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        float hl = length * 0.5f;
+        float hw = width * 0.5f;
+        float ht = thickness * 0.5f;
+
+        // Palm slab with tapered fingers
+        struct BoxFace { glm::vec3 v[4]; glm::vec3 n; };
+        std::vector<BoxFace> faces = {
+            // Front (+Z)
+            { { {-hw, -hl, ht}, {hw, -hl, ht}, {hw * 0.85f, hl, ht * 0.8f}, {-hw * 0.85f, hl, ht * 0.8f} }, {0, 0, 1} },
+            // Back (-Z)
+            { { {hw, -hl, -ht}, {-hw, -hl, -ht}, {-hw * 0.85f, hl, -ht * 0.8f}, {hw * 0.85f, hl, -ht * 0.8f} }, {0, 0, -1} },
+            // Left (-X) thumb side
+            { { {-hw, -hl, -ht}, {-hw, -hl, ht}, {-hw * 0.85f, hl, ht * 0.8f}, {-hw * 0.85f, hl, -ht * 0.8f} }, {-1, 0, 0} },
+            // Right (+X)
+            { { {hw, -hl, ht}, {hw, -hl, -ht}, {hw * 0.85f, hl, -ht * 0.8f}, {hw * 0.85f, hl, ht * 0.8f} }, {1, 0, 0} },
+            // Top (+Y fingertips)
+            { { {-hw * 0.85f, hl, ht * 0.8f}, {hw * 0.85f, hl, ht * 0.8f}, {hw * 0.85f, hl, -ht * 0.8f}, {-hw * 0.85f, hl, -ht * 0.8f} }, {0, 1, 0} },
+            // Bottom (-Y wrist)
+            { { {-hw, -hl, -ht}, {hw, -hl, -ht}, {hw, -hl, ht}, {-hw, -hl, ht} }, {0, -1, 0} }
+        };
+
+        for (const auto& f : faces)
+        {
+            unsigned int idx = static_cast<unsigned int>(vertices.size());
+            vertices.push_back({ f.v[0], f.n, {0, 0} });
+            vertices.push_back({ f.v[1], f.n, {1, 0} });
+            vertices.push_back({ f.v[2], f.n, {1, 1} });
+            vertices.push_back({ f.v[3], f.n, {0, 1} });
+            indices.push_back(idx + 0); indices.push_back(idx + 1); indices.push_back(idx + 2);
+            indices.push_back(idx + 0); indices.push_back(idx + 2); indices.push_back(idx + 3);
+        }
+        return Mesh(vertices, indices);
+    }
+
+    // -------------------------------------------------------------
+    // 19. Japanese Geta Sandal & Foot Mesh
+    // Traditional wooden geta sole with 2 elevated teeth and red Hanao V-strap.
+    // -------------------------------------------------------------
+    inline Mesh createGetaFootMesh(float length = 0.25f, float width = 0.12f, float height = 0.065f)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        auto addBox = [&](const glm::vec3& center, const glm::vec3& size, const glm::vec3& normColorDummy) {
+            float hx = size.x * 0.5f;
+            float hy = size.y * 0.5f;
+            float hz = size.z * 0.5f;
+            glm::vec3 c = center;
+
+            struct BoxFace { glm::vec3 v[4]; glm::vec3 n; };
+            BoxFace faces[6] = {
+                { { {c.x-hx, c.y-hy, c.z+hz}, {c.x+hx, c.y-hy, c.z+hz}, {c.x+hx, c.y+hy, c.z+hz}, {c.x-hx, c.y+hy, c.z+hz} }, {0, 0, 1} },
+                { { {c.x+hx, c.y-hy, c.z-hz}, {c.x-hx, c.y-hy, c.z-hz}, {c.x-hx, c.y+hy, c.z-hz}, {c.x+hx, c.y+hy, c.z-hz} }, {0, 0, -1} },
+                { { {c.x-hx, c.y-hy, c.z-hz}, {c.x-hx, c.y-hy, c.z+hz}, {c.x-hx, c.y+hy, c.z+hz}, {c.x-hx, c.y+hy, c.z-hz} }, {-1, 0, 0} },
+                { { {c.x+hx, c.y-hy, c.z+hz}, {c.x+hx, c.y-hy, c.z-hz}, {c.x+hx, c.y+hy, c.z-hz}, {c.x+hx, c.y+hy, c.z+hz} }, {1, 0, 0} },
+                { { {c.x-hx, c.y+hy, c.z+hz}, {c.x+hx, c.y+hy, c.z+hz}, {c.x+hx, c.y+hy, c.z-hz}, {c.x-hx, c.y+hy, c.z-hz} }, {0, 1, 0} },
+                { { {c.x-hx, c.y-hy, c.z-hz}, {c.x+hx, c.y-hy, c.z-hz}, {c.x+hx, c.y-hy, c.z+hz}, {c.x-hx, c.y-hy, c.z+hz} }, {0, -1, 0} }
+            };
+            for (int f = 0; f < 6; ++f)
+            {
+                unsigned int idx = static_cast<unsigned int>(vertices.size());
+                for (int v = 0; v < 4; ++v)
+                    vertices.push_back({ faces[f].v[v], faces[f].n, {(float)(v%2), (float)(v/2)} });
+                indices.push_back(idx + 0); indices.push_back(idx + 1); indices.push_back(idx + 2);
+                indices.push_back(idx + 0); indices.push_back(idx + 2); indices.push_back(idx + 3);
+            }
+        };
+
+        // Main wooden board (Dai) resting at Y in [0.035, 0.065]
+        addBox(glm::vec3(0.0f, height * 0.75f, 0.0f), glm::vec3(width, height * 0.40f, length), glm::vec3(1));
+        // Front tooth (Ha) resting flush on ground Y in [0.0, 0.035]
+        addBox(glm::vec3(0.0f, height * 0.25f, length * 0.25f), glm::vec3(width * 0.90f, height * 0.50f, length * 0.12f), glm::vec3(1));
+        // Rear tooth (Ha) resting flush on ground Y in [0.0, 0.035]
+        addBox(glm::vec3(0.0f, height * 0.25f, -length * 0.28f), glm::vec3(width * 0.90f, height * 0.50f, length * 0.12f), glm::vec3(1));
+
+        return Mesh(vertices, indices);
+    }
 }

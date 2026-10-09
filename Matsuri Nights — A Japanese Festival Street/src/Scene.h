@@ -31,7 +31,8 @@ public:
     std::unique_ptr<GroundObject> ground;
     std::vector<std::unique_ptr<MachiyaBuilding>> buildings;
     std::unique_ptr<ToriiGate> toriiGate;
-    std::unique_ptr<SakuraTree> sakuraTree;
+    std::vector<std::unique_ptr<SakuraTree>> sakuraTrees;
+    SakuraTree* sakuraTree = nullptr;
     std::vector<std::unique_ptr<StreetLanternSpan>> lanternSpans;
     std::vector<LanternObject*> lanterns;
     std::unique_ptr<TakoyakiStall> takoyakiStall;
@@ -166,9 +167,38 @@ public:
         toriiGate = std::make_unique<ToriiGate>(meshes, glm::vec3(0.0f, 0.0f, -32.0f));
         rootNode->addChild(toriiGate->root);
 
-        // 4. Sakura Tree (with falling petals)
-        sakuraTree = std::make_unique<SakuraTree>(meshes, glm::vec3(-5.8f, 0.0f, -22.0f));
-        rootNode->addChild(sakuraTree->root);
+        // 4. Diverse Cherry Trees (populated on both sides of roads and in the center gaps of Machiya houses)
+        struct TreePlacement {
+            glm::vec3 pos;
+            float scale;
+            float rotY;
+            float leanAngle;
+            float blossomTone;
+        };
+        std::vector<TreePlacement> treeConfigs = {
+            // 1. Grand Shrine Sakura Tree (West side plaza curb)
+            { glm::vec3(-5.8f, 0.0f, -22.0f), 1.15f,  15.0f,  0.0f,  0.00f },
+            // 2. Festival Stage / Plaza Sakura Tree (East side plaza curb)
+            { glm::vec3( 6.8f, 0.0f, -26.5f), 1.05f, 135.0f, -1.5f,  0.25f },
+            // 3. Left Courtyard Garden Gap (between Machiya L1 & L2)
+            { glm::vec3(-10.8f, 0.0f,  5.0f), 0.95f,  75.0f,  1.2f, -0.20f },
+            // 4. Right Courtyard Garden Gap (between Machiya R1 & R2)
+            { glm::vec3( 10.8f, 0.0f,  5.0f), 0.95f, 210.0f, -1.0f,  0.30f },
+            // 5. South Entrance Avenue West (framing street entrance)
+            { glm::vec3(-5.6f, 0.0f,  28.0f), 0.90f,  40.0f,  1.2f, -0.15f },
+            // 6. South Entrance Avenue East (framing street entrance)
+            { glm::vec3( 5.6f, 0.0f,  27.0f), 0.92f, 190.0f, -1.2f,  0.15f },
+            // 7. North Torii Sacred Grove Sakura Tree
+            { glm::vec3(-5.8f, 0.0f, -31.5f), 0.85f, 290.0f,  0.5f, -0.10f }
+        };
+
+        for (const auto& tc : treeConfigs)
+        {
+            auto tree = std::make_unique<SakuraTree>(meshes, tc.pos, tc.scale, tc.rotY, tc.leanAngle, tc.blossomTone);
+            rootNode->addChild(tree->root);
+            sakuraTrees.push_back(std::move(tree));
+        }
+        sakuraTree = sakuraTrees[0].get();
 
         // 5. Street Lantern Spans (Cedar poles on both curbs, sagging catenary ropes, and aligned lanterns)
         // Clear of stalls (Z = 6.0), magic stage (Z in [-21.8, -16.2]), and audience (Z in [-14.5, -12.7])
@@ -354,26 +384,27 @@ public:
             assignTorii(assignTorii, toriiGate->root);
         }
 
-        // 4. Sakura Blossom Tree
-        if (sakuraTree && sakuraTree->root)
+        // 4. Sakura Blossom Trees
+        auto assignTree = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
+            if (!node) return;
+            if (node->name.find("Trunk") != std::string::npos || node->name.find("Branch") != std::string::npos || node->name.find("Bough") != std::string::npos || node->name.find("Root") != std::string::npos)
+            {
+                node->texture = &texBark;
+                node->textureTiling = 2.0f;
+                node->shininess = 12.0f;
+                node->specularStrength = 0.15f;
+            }
+            else if (node->name.find("Blossom") != std::string::npos || node->name.find("Petal") != std::string::npos || node->name.find("Leaf") != std::string::npos)
+            {
+                node->texture = nullptr;
+            }
+            for (auto& ch : node->children)
+                self(self, ch);
+        };
+        for (auto& tree : sakuraTrees)
         {
-            auto assignTree = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
-                if (!node) return;
-                if (node->name.find("Trunk") != std::string::npos || node->name.find("Branch") != std::string::npos || node->name.find("Bough") != std::string::npos || node->name.find("Root") != std::string::npos)
-                {
-                    node->texture = &texBark;
-                    node->textureTiling = 2.0f;
-                    node->shininess = 12.0f;
-                    node->specularStrength = 0.15f;
-                }
-                else if (node->name.find("Blossom") != std::string::npos || node->name.find("Petal") != std::string::npos)
-                {
-                    node->texture = nullptr;
-                }
-                for (auto& ch : node->children)
-                    self(self, ch);
-            };
-            assignTree(assignTree, sakuraTree->root);
+            if (tree && tree->root)
+                assignTree(assignTree, tree->root);
         }
 
         // 5. Street Lantern Spans
@@ -894,7 +925,8 @@ public:
             totalTime += dt;
 
             // Update all complex moving objects
-            sakuraTree->update(totalTime, dt);
+            for (auto& tree : sakuraTrees)
+                tree->update(totalTime, dt);
 
             for (auto& span : lanternSpans)
                 span->update(totalTime);

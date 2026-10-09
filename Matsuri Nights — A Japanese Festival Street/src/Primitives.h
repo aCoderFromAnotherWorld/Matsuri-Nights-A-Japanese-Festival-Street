@@ -378,4 +378,69 @@ public:
     {
         return Curves::createCatenaryRope(halfSpan, yPole, sag, radius, lengthSegments, radialSegments);
     }
+
+    static Mesh createCurvedLeaf(
+        float length = 0.12f,
+        float maxWidth = 0.045f,
+        float archY = 0.02f,
+        float foldAngle = 25.0f,
+        int lengthSegs = 10,
+        int widthSegs = 6)
+    {
+        return Curves::createCurvedLeafMesh(length, maxWidth, archY, foldAngle, lengthSegs, widthSegs);
+    }
+
+    static Mesh createCurvedPetal(
+        float length = 0.06f,
+        float width = 0.045f,
+        float cupDepth = 0.014f,
+        int segsU = 8,
+        int segsV = 6)
+    {
+        return Curves::createCurvedPetalMesh(length, width, cupDepth, segsU, segsV);
+    }
+
+    static Mesh createSakuraBlossomLobe(
+        float radius = 1.0f,
+        int rings = 18,
+        int sectors = 22,
+        float billowAmp = 0.24f)
+    {
+        return Curves::createSakuraBlossomLobe(radius, rings, sectors, billowAmp);
+    }
+
+    static Mesh createPineNeedleCluster(
+        float widthX = 0.24f,
+        float heightY = 0.08f,
+        float depthZ = 0.20f,
+        int rings = 14,
+        int sectors = 18)
+    {
+        return Curves::createPineNeedleClusterMesh(widthX, heightY, depthZ, rings, sectors);
+    }
+
+    static Mesh createHumanHead(float scale = 0.20f)
+    {
+        return Curves::createHumanHeadMesh(scale);
+    }
+
+    static Mesh createHumanTorso(float width = 0.52f, float height = 0.85f, float depth = 0.36f)
+    {
+        return Curves::createHumanTorsoMesh(width, height, depth);
+    }
+
+    static Mesh createArticulatedLimb(float rTop = 0.08f, float rBottom = 0.06f, float length = 0.45f, int lenSegs = 12, int radSegs = 14)
+    {
+        return Curves::createArticulatedLimbMesh(rTop, rBottom, length, lenSegs, radSegs);
+    }
+
+    static Mesh createHand(float length = 0.14f, float width = 0.08f, float thickness = 0.035f)
+    {
+        return Curves::createHandMesh(length, width, thickness);
+    }
+
+    static Mesh createGetaFoot(float length = 0.25f, float width = 0.12f, float height = 0.065f)
+    {
+        return Curves::createGetaFootMesh(length, width, height);
+    }
 };

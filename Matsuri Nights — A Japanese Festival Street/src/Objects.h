@@ -36,6 +36,22 @@ struct SceneMeshes
     Mesh kokedamaVineCurved1;
     Mesh kokedamaVineCurved2;
 
+    // Botanical Curve Meshes
+    Mesh curvedLeaf;
+    Mesh curvedPetal;
+    Mesh sakuraCanopyLobe;
+    Mesh pineCluster;
+
+    // Anatomical Articulated Human Meshes
+    Mesh humanHead;
+    Mesh humanTorso;
+    Mesh limbThigh;
+    Mesh limbShin;
+    Mesh limbUpperArm;
+    Mesh limbForearm;
+    Mesh humanHand;
+    Mesh getaFoot;
+
     void init()
     {
         cube = Primitives::createCube(1.0f);
@@ -91,6 +107,22 @@ struct SceneMeshes
         kokedamaVineCurved2 = Primitives::createBezierTube(
             Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { -0.02f, -0.07f, 0.03f }, { -0.05f, -0.17f, 0.05f }, { -0.03f, -0.27f, 0.06f }),
             0.016f, 0.009f, 18, 12, 1.0f, true, true);
+
+        // 7. Botanical Curve Meshes (curved leaves, cupped petals, organic blossom billows, pine pads)
+        curvedLeaf = Primitives::createCurvedLeaf(0.12f, 0.045f, 0.02f, 25.0f, 10, 6);
+        curvedPetal = Primitives::createCurvedPetal(0.065f, 0.048f, 0.016f, 8, 6);
+        sakuraCanopyLobe = Primitives::createSakuraBlossomLobe(1.0f, 18, 22, 0.24f);
+        pineCluster = Primitives::createPineNeedleCluster(0.24f, 0.08f, 0.20f, 14, 18);
+
+        // 8. Anatomical Articulated Human Meshes (contoured face, kimono collar torso, articulated limbs, geta)
+        humanHead = Primitives::createHumanHead(0.20f);
+        humanTorso = Primitives::createHumanTorso(0.52f, 0.85f, 0.36f);
+        limbThigh = Primitives::createArticulatedLimb(0.09f, 0.07f, 0.42f, 12, 14);
+        limbShin = Primitives::createArticulatedLimb(0.07f, 0.055f, 0.42f, 12, 14);
+        limbUpperArm = Primitives::createArticulatedLimb(0.075f, 0.06f, 0.38f, 10, 14);
+        limbForearm = Primitives::createArticulatedLimb(0.06f, 0.048f, 0.36f, 10, 14);
+        humanHand = Primitives::createHand(0.14f, 0.08f, 0.035f);
+        getaFoot = Primitives::createGetaFoot(0.25f, 0.12f, 0.065f);
     }
 };
 
@@ -229,9 +261,9 @@ inline std::shared_ptr<SceneNode> createBonsaiTree(SceneMeshes& meshes, const st
     };
     for (int p = 0; p < 5; ++p) {
         auto pad = std::make_shared<SceneNode>(prefix + "_FoliagePad_" + std::to_string(p));
-        pad->mesh = &meshes.sphere;
+        pad->mesh = &meshes.pineCluster;
         pad->transform.position = pads[p].offset;
-        pad->transform.scale = pads[p].scale;
+        pad->transform.scale = glm::vec3(pads[p].scale.x / 0.24f, pads[p].scale.y / 0.08f, pads[p].scale.z / 0.20f);
         pad->color = pads[p].col;
         root->addChild(pad);
     }
@@ -273,19 +305,19 @@ inline std::shared_ptr<SceneNode> createWindowPlanterBox(SceneMeshes& meshes, co
     soil->color = soilCol;
     root->addChild(soil);
 
-    // Green Foliage Leaves / Shrub Mounds
+    // Green Foliage Leaves / Shrub Mounds (Sculpted Evergreen Pine Pads & Botanical clusters)
     int numMounds = (int)(width / 0.32f) + 1;
     for (int m = 0; m < numMounds; ++m) {
         float mz = -width * 0.45f + (float)m * (width * 0.90f / (float)(std::max(1, numMounds - 1)));
         auto leafMound = std::make_shared<SceneNode>(prefix + "_Leaves_" + std::to_string(m));
-        leafMound->mesh = &meshes.sphere;
-        leafMound->transform.position = glm::vec3(0.0f, 0.24f, mz);
-        leafMound->transform.scale = glm::vec3(0.24f, 0.12f, 0.26f);
+        leafMound->mesh = &meshes.pineCluster;
+        leafMound->transform.position = glm::vec3(0.0f, 0.22f, mz);
+        leafMound->transform.scale = glm::vec3(1.1f, 1.3f, 1.2f);
         leafMound->color = foliage;
         root->addChild(leafMound);
     }
 
-    // Diverse Colorful Flower Blooms & Stems (Fully Connected Floral Anatomy)
+    // Diverse Colorful Flower Blooms & Stems (Fully Connected Floral Anatomy with Curves)
     glm::vec4 flowerPalette[5] = { flowerRed, flowerYellow, flowerPink, flowerWhite, flowerPurple };
     glm::vec4 stemGreen(0.20f, 0.48f, 0.18f, 1.0f);
     glm::vec4 stamenGold(0.98f, 0.88f, 0.22f, 1.0f);
@@ -296,46 +328,66 @@ inline std::shared_ptr<SceneNode> createWindowPlanterBox(SceneMeshes& meshes, co
         float bloomY = 0.30f + ((f % 2) * 0.04f);
         float stemH = bloomY - 0.18f;
 
+        // Group entire floral specimen under parent node for 100% rigid connection
+        auto flowerGroup = std::make_shared<SceneNode>(prefix + "_FlowerGroup_" + std::to_string(f));
+        flowerGroup->transform.position = glm::vec3(fx, 0.18f, fz);
+        root->addChild(flowerGroup);
+
         // Natural curved green stem rooted directly in the soil
         auto stem = std::make_shared<SceneNode>(prefix + "_FlowerStem_" + std::to_string(f));
         stem->mesh = (f % 2 == 0) ? &meshes.planterStemCurvedA : &meshes.planterStemCurvedB;
-        stem->transform.position = glm::vec3(fx, 0.18f, fz);
         stem->transform.scale = glm::vec3(1.0f, stemH / 0.15f, 1.0f);
         stem->color = stemGreen;
-        root->addChild(stem);
+        flowerGroup->addChild(stem);
 
-        // Green foliage leaves attached along the stem
+        // 3D Curved Botanical Leaves sprouting naturally from the stem
         auto leaf1 = std::make_shared<SceneNode>(prefix + "_FlowerLeafA_" + std::to_string(f));
-        leaf1->mesh = &meshes.cube;
-        leaf1->transform.position = glm::vec3(fx + 0.02f, 0.22f, fz + 0.01f);
-        leaf1->transform.rotation = glm::vec3(15.0f, (float)(f * 45 % 360), -30.0f);
-        leaf1->transform.scale = glm::vec3(0.01f, 0.045f, 0.022f);
+        leaf1->mesh = &meshes.curvedLeaf;
+        leaf1->transform.position = glm::vec3(0.015f, 0.04f, 0.01f);
+        leaf1->transform.rotation = glm::vec3(20.0f, (float)(f * 60 % 360), -35.0f);
+        leaf1->transform.scale = glm::vec3(0.55f);
         leaf1->color = foliage;
-        root->addChild(leaf1);
+        flowerGroup->addChild(leaf1);
+
+        auto leaf2 = std::make_shared<SceneNode>(prefix + "_FlowerLeafB_" + std::to_string(f));
+        leaf2->mesh = &meshes.curvedLeaf;
+        leaf2->transform.position = glm::vec3(-0.015f, 0.07f, -0.01f);
+        leaf2->transform.rotation = glm::vec3(-15.0f, (float)((f * 60 + 180) % 360), 30.0f);
+        leaf2->transform.scale = glm::vec3(0.48f);
+        leaf2->color = foliage;
+        flowerGroup->addChild(leaf2);
+
+        // Blossom tip at local Y = stemH
+        glm::vec3 tipLocal(0.0f, stemH, 0.0f);
 
         // Green calyx cup cradling the base of the flower bloom
         auto calyx = std::make_shared<SceneNode>(prefix + "_FlowerCalyx_" + std::to_string(f));
         calyx->mesh = &meshes.cylinder;
-        calyx->transform.position = glm::vec3(fx, bloomY - 0.025f, fz);
+        calyx->transform.position = tipLocal - glm::vec3(0.0f, 0.01f, 0.0f);
         calyx->transform.scale = glm::vec3(0.035f, 0.02f, 0.035f);
         calyx->color = stemGreen;
-        root->addChild(calyx);
+        flowerGroup->addChild(calyx);
 
-        // Colorful spherical flower bloom
-        auto bloom = std::make_shared<SceneNode>(prefix + "_Flower_" + std::to_string(f));
-        bloom->mesh = &meshes.sphere;
-        bloom->transform.position = glm::vec3(fx, bloomY, fz);
-        bloom->transform.scale = glm::vec3(0.065f, 0.055f, 0.065f);
-        bloom->color = flowerPalette[f % 5];
-        root->addChild(bloom);
+        // 4 Cupped curved flower petals arranged in a rosette
+        for (int p = 0; p < 4; ++p) {
+            float pAngle = (float)p * 90.0f;
+            float pr = glm::radians(pAngle);
+            auto petal = std::make_shared<SceneNode>(prefix + "_Petal_" + std::to_string(f) + "_" + std::to_string(p));
+            petal->mesh = &meshes.curvedPetal;
+            petal->transform.position = tipLocal + glm::vec3(std::cos(pr) * 0.015f, 0.005f, std::sin(pr) * 0.015f);
+            petal->transform.rotation = glm::vec3(25.0f, pAngle, 0.0f);
+            petal->transform.scale = glm::vec3(0.85f);
+            petal->color = flowerPalette[f % 5];
+            flowerGroup->addChild(petal);
+        }
 
         // Golden stamen center nestled atop the petals
         auto stamen = std::make_shared<SceneNode>(prefix + "_FlowerStamen_" + std::to_string(f));
         stamen->mesh = &meshes.sphere;
-        stamen->transform.position = glm::vec3(fx, bloomY + 0.022f, fz);
-        stamen->transform.scale = glm::vec3(0.024f, 0.020f, 0.024f);
+        stamen->transform.position = tipLocal + glm::vec3(0.0f, 0.015f, 0.0f);
+        stamen->transform.scale = glm::vec3(0.028f, 0.022f, 0.028f);
         stamen->color = stamenGold;
-        root->addChild(stamen);
+        flowerGroup->addChild(stamen);
     }
 
     return root;
@@ -374,19 +426,46 @@ inline std::shared_ptr<SceneNode> createHangingKokedama(SceneMeshes& meshes, con
     for (int v = 0; v < 4; ++v) {
         float angle = (float)v * 90.0f;
         float rad = glm::radians(angle);
-        auto vine = std::make_shared<SceneNode>(prefix + "_Vine_" + std::to_string(v));
-        vine->mesh = (v % 2 == 0) ? &meshes.kokedamaVineCurved1 : &meshes.kokedamaVineCurved2;
-        vine->transform.position = glm::vec3(std::cos(rad) * 0.11f, ballY - 0.04f, std::sin(rad) * 0.11f);
-        vine->transform.rotation = glm::vec3(0.0f, angle, 0.0f);
-        vine->color = ivyFoliage;
-        root->addChild(vine);
+        auto vineNode = std::make_shared<SceneNode>(prefix + "_VineNode_" + std::to_string(v));
+        vineNode->transform.position = glm::vec3(std::cos(rad) * 0.11f, ballY - 0.04f, std::sin(rad) * 0.11f);
+        vineNode->transform.rotation.y = angle;
+        root->addChild(vineNode);
 
-        auto blossom = std::make_shared<SceneNode>(prefix + "_Blossom_" + std::to_string(v));
-        blossom->mesh = &meshes.sphere;
-        blossom->transform.position = glm::vec3(std::cos(rad) * 0.15f, ballY - 0.32f, std::sin(rad) * 0.15f);
-        blossom->transform.scale = glm::vec3(0.06f, 0.06f, 0.06f);
-        blossom->color = (v % 2 == 0) ? glm::vec4(0.98f, 0.42f, 0.62f, 1.0f) : glm::vec4(0.98f, 0.88f, 0.25f, 1.0f);
-        root->addChild(blossom);
+        auto vine = std::make_shared<SceneNode>(prefix + "_VineMesh_" + std::to_string(v));
+        vine->mesh = (v % 2 == 0) ? &meshes.kokedamaVineCurved1 : &meshes.kokedamaVineCurved2;
+        vine->color = ivyFoliage;
+        vineNode->addChild(vine);
+
+        // Curved leaves attached along the vine
+        auto vLeaf1 = std::make_shared<SceneNode>(prefix + "_VineLeaf1_" + std::to_string(v));
+        vLeaf1->mesh = &meshes.curvedLeaf;
+        vLeaf1->transform.position = glm::vec3(0.02f, -0.10f, 0.02f);
+        vLeaf1->transform.rotation = glm::vec3(35.0f, 40.0f, -20.0f);
+        vLeaf1->transform.scale = glm::vec3(0.55f);
+        vLeaf1->color = ivyFoliage;
+        vineNode->addChild(vLeaf1);
+
+        auto vLeaf2 = std::make_shared<SceneNode>(prefix + "_VineLeaf2_" + std::to_string(v));
+        vLeaf2->mesh = &meshes.curvedLeaf;
+        vLeaf2->transform.position = glm::vec3(0.04f, -0.20f, 0.03f);
+        vLeaf2->transform.rotation = glm::vec3(-25.0f, 130.0f, 30.0f);
+        vLeaf2->transform.scale = glm::vec3(0.50f);
+        vLeaf2->color = ivyFoliage;
+        vineNode->addChild(vLeaf2);
+
+        // Blossom at tip of vine with curved cupped petals
+        glm::vec3 blossomTip(0.04f, -0.28f, 0.05f);
+        for (int p = 0; p < 4; ++p) {
+            float pAngle = (float)p * 90.0f;
+            float pr = glm::radians(pAngle);
+            auto petal = std::make_shared<SceneNode>(prefix + "_VinePetal_" + std::to_string(v) + "_" + std::to_string(p));
+            petal->mesh = &meshes.curvedPetal;
+            petal->transform.position = blossomTip + glm::vec3(std::cos(pr) * 0.012f, 0.0f, std::sin(pr) * 0.012f);
+            petal->transform.rotation = glm::vec3(30.0f, pAngle, 0.0f);
+            petal->transform.scale = glm::vec3(0.70f);
+            petal->color = (v % 2 == 0) ? glm::vec4(0.98f, 0.42f, 0.62f, 1.0f) : glm::vec4(0.98f, 0.88f, 0.25f, 1.0f);
+            vineNode->addChild(petal);
+        }
     }
 
     return root;
@@ -497,21 +576,21 @@ inline std::shared_ptr<SceneNode> createIkebanaVase(SceneMeshes& meshes, const s
         stem->color = stemColor;
         branchRoot->addChild(stem);
 
-        // Lower green leaf sprouting naturally off the curved stem
+        // Lower green curved leaf sprouting naturally off the curved stem
         auto leaf1 = std::make_shared<SceneNode>(prefix + "_Leaf1_" + std::to_string(i));
-        leaf1->mesh = &meshes.cube;
+        leaf1->mesh = &meshes.curvedLeaf;
         leaf1->transform.position = fl.leaf1Pos;
-        leaf1->transform.rotation = glm::vec3(10.0f, 0.0f, -42.0f);
-        leaf1->transform.scale = glm::vec3(0.008f, 0.10f, 0.045f);
+        leaf1->transform.rotation = glm::vec3(15.0f, 30.0f, -42.0f);
+        leaf1->transform.scale = glm::vec3(0.95f);
         leaf1->color = leafColor;
         branchRoot->addChild(leaf1);
 
-        // Upper green leaf branching out opposite the lower leaf along the curve
+        // Upper green curved leaf branching out opposite the lower leaf along the curve
         auto leaf2 = std::make_shared<SceneNode>(prefix + "_Leaf2_" + std::to_string(i));
-        leaf2->mesh = &meshes.cube;
+        leaf2->mesh = &meshes.curvedLeaf;
         leaf2->transform.position = fl.leaf2Pos;
-        leaf2->transform.rotation = glm::vec3(-10.0f, 180.0f, -38.0f);
-        leaf2->transform.scale = glm::vec3(0.008f, 0.08f, 0.038f);
+        leaf2->transform.rotation = glm::vec3(-15.0f, 195.0f, -38.0f);
+        leaf2->transform.scale = glm::vec3(0.80f);
         leaf2->color = leafColor;
         branchRoot->addChild(leaf2);
 
@@ -519,26 +598,19 @@ inline std::shared_ptr<SceneNode> createIkebanaVase(SceneMeshes& meshes, const s
         auto calyx = std::make_shared<SceneNode>(prefix + "_Calyx_" + std::to_string(i));
         calyx->mesh = &meshes.cylinder;
         calyx->transform.position = fl.tipPos;
-        calyx->transform.scale = glm::vec3(fl.bloomScale * 0.50f, 0.025f, fl.bloomScale * 0.50f);
+        calyx->transform.scale = glm::vec3(fl.bloomScale * 0.45f, 0.025f, fl.bloomScale * 0.45f);
         calyx->color = stemColor;
         branchRoot->addChild(calyx);
 
-        // Central blossom sphere positioned seamlessly at the curved stem tip
-        auto bloom = std::make_shared<SceneNode>(prefix + "_Bloom_" + std::to_string(i));
-        bloom->mesh = &meshes.sphere;
-        bloom->transform.position = fl.tipPos + glm::vec3(0.0f, fl.bloomScale * 0.22f, 0.0f);
-        bloom->transform.scale = glm::vec3(fl.bloomScale, fl.bloomScale * 0.70f, fl.bloomScale);
-        bloom->color = fl.bloomColor;
-        branchRoot->addChild(bloom);
-
-        // Surrounding sculpted petal lobes
-        for (int p = 0; p < 4; ++p) {
-            float pAngle = (float)p * 90.0f + 20.0f;
+        // 5 Cupped curved flower petals arranged in a floral rosette
+        for (int p = 0; p < 5; ++p) {
+            float pAngle = (float)p * 72.0f;
             float pr = glm::radians(pAngle);
             auto petal = std::make_shared<SceneNode>(prefix + "_Petal_" + std::to_string(i) + "_" + std::to_string(p));
-            petal->mesh = &meshes.sphere;
-            petal->transform.position = fl.tipPos + glm::vec3(std::cos(pr) * fl.bloomScale * 0.32f, fl.bloomScale * 0.20f, std::sin(pr) * fl.bloomScale * 0.32f);
-            petal->transform.scale = glm::vec3(fl.bloomScale * 0.52f, fl.bloomScale * 0.36f, fl.bloomScale * 0.52f);
+            petal->mesh = &meshes.curvedPetal;
+            petal->transform.position = fl.tipPos + glm::vec3(std::cos(pr) * fl.bloomScale * 0.22f, fl.bloomScale * 0.05f, std::sin(pr) * fl.bloomScale * 0.22f);
+            petal->transform.rotation = glm::vec3(35.0f, pAngle, 0.0f);
+            petal->transform.scale = glm::vec3(fl.bloomScale * 1.5f);
             petal->color = fl.bloomColor;
             branchRoot->addChild(petal);
         }
@@ -546,8 +618,8 @@ inline std::shared_ptr<SceneNode> createIkebanaVase(SceneMeshes& meshes, const s
         // Golden stamen center firmly embedded in the middle of the blossom
         auto stamen = std::make_shared<SceneNode>(prefix + "_Stamen_" + std::to_string(i));
         stamen->mesh = &meshes.sphere;
-        stamen->transform.position = fl.tipPos + glm::vec3(0.0f, fl.bloomScale * 0.40f, 0.0f);
-        stamen->transform.scale = glm::vec3(fl.bloomScale * 0.36f, fl.bloomScale * 0.28f, fl.bloomScale * 0.36f);
+        stamen->transform.position = fl.tipPos + glm::vec3(0.0f, fl.bloomScale * 0.12f, 0.0f);
+        stamen->transform.scale = glm::vec3(fl.bloomScale * 0.28f, fl.bloomScale * 0.22f, fl.bloomScale * 0.28f);
         stamen->color = glm::vec4(0.98f, 0.88f, 0.20f, 1.0f);
         branchRoot->addChild(stamen);
     }
@@ -2096,10 +2168,13 @@ public:
     std::vector<std::shared_ptr<Mesh>> boughMeshes;
     std::vector<std::shared_ptr<Mesh>> branchMeshes;
 
-    SakuraTree(SceneMeshes& meshes, const glm::vec3& pos)
+    SakuraTree(SceneMeshes& meshes, const glm::vec3& pos, float scale = 1.0f, float rotY = 0.0f, float leanAngle = 0.0f, float blossomTone = 0.0f)
     {
         root = std::make_shared<SceneNode>("Sakura_Tree");
         root->transform.position = pos;
+        root->transform.rotation.y = rotY;
+        root->transform.rotation.z = leanAngle;
+        root->transform.scale = glm::vec3(scale);
 
         glm::vec4 bark(0.32f, 0.20f, 0.14f, 1.0f);
         glm::vec4 barkDark(0.24f, 0.15f, 0.10f, 1.0f);
@@ -2193,11 +2268,11 @@ public:
             root->addChild(branch);
         }
 
-        // 5. Volumetric Multi-Tiered Cherry Blossom Canopy (22 Cloud Clusters)
-        glm::vec4 deepPink(0.92f, 0.50f, 0.68f, 1.0f);   // inner heartwood blossoms
-        glm::vec4 midPink(0.98f, 0.72f, 0.82f, 1.0f);    // main classic sakura pink
-        glm::vec4 lightPink(1.00f, 0.86f, 0.90f, 1.0f);  // bright sunlit tips
-        glm::vec4 whitePink(1.00f, 0.92f, 0.95f, 1.0f);  // ethereal white-pink highlights
+        // 5. Volumetric Multi-Tiered Cherry Blossom Canopy (22 Sculpted Multi-Lobed Billow Clusters)
+        glm::vec4 deepPink(0.92f + blossomTone * 0.04f, 0.48f - blossomTone * 0.10f, 0.66f + blossomTone * 0.12f, 1.0f);
+        glm::vec4 midPink(0.98f + blossomTone * 0.02f, 0.70f - blossomTone * 0.08f, 0.82f + blossomTone * 0.10f, 1.0f);
+        glm::vec4 lightPink(1.00f, 0.86f - blossomTone * 0.05f, 0.90f + blossomTone * 0.06f, 1.0f);
+        glm::vec4 whitePink(1.00f, 0.93f - blossomTone * 0.03f, 0.96f + blossomTone * 0.03f, 1.0f);
 
         struct ClusterDef { glm::vec3 offset; glm::vec3 scl; glm::vec4 col; };
         std::vector<ClusterDef> clusters = {
@@ -2235,11 +2310,34 @@ public:
         for (size_t i = 0; i < clusters.size(); ++i)
         {
             auto cluster = std::make_shared<SceneNode>("BlossomCluster_" + std::to_string(i));
-            cluster->mesh = &meshes.sphere;
+            cluster->mesh = &meshes.sakuraCanopyLobe;
             cluster->transform.position = clusters[i].offset;
             cluster->transform.scale = clusters[i].scl;
             cluster->color = clusters[i].col;
             root->addChild(cluster);
+        }
+
+        // 5b. Botanical curved cherry leaves (fresh young spring foliage sprigs)
+        struct LeafSprigDef { glm::vec3 offset; glm::vec3 rot; float scl; };
+        std::vector<LeafSprigDef> leafSprigs = {
+            { { -2.8f, 6.0f,  1.6f }, { 25.0f,  45.0f, -15.0f }, 1.3f },
+            { { -1.6f, 6.4f,  1.8f }, { -20.0f, 120.0f, 20.0f }, 1.2f },
+            { {  2.6f, 5.9f, -1.5f }, { 15.0f, -60.0f, -25.0f }, 1.4f },
+            { {  1.8f, 6.3f, -1.8f }, { -15.0f, 150.0f, 15.0f }, 1.2f },
+            { { -2.4f, 4.8f,  1.4f }, { 35.0f,  20.0f, -30.0f }, 1.5f },
+            { {  2.2f, 4.7f, -1.5f }, { 30.0f, -40.0f,  25.0f }, 1.5f },
+            { {  0.1f, 5.0f,  2.2f }, { 25.0f,  90.0f, -10.0f }, 1.4f },
+            { { -1.3f, 7.8f,  0.2f }, { -10.0f, -30.0f, 20.0f }, 1.3f },
+            { {  1.4f, 7.7f, -0.2f }, { 15.0f, 160.0f, -20.0f }, 1.3f }
+        };
+        for (size_t l = 0; l < leafSprigs.size(); ++l) {
+            auto sprig = std::make_shared<SceneNode>("Sakura_LeafSprig_" + std::to_string(l));
+            sprig->mesh = &meshes.curvedLeaf;
+            sprig->transform.position = leafSprigs[l].offset;
+            sprig->transform.rotation = leafSprigs[l].rot;
+            sprig->transform.scale = glm::vec3(leafSprigs[l].scl);
+            sprig->color = glm::vec4(0.28f, 0.58f, 0.22f, 1.0f); // vibrant spring leaf green
+            root->addChild(sprig);
         }
 
         // 6. Fallen Blossom Petal Patches on Street Cobblestones
@@ -2256,13 +2354,13 @@ public:
             root->addChild(patch);
         }
 
-        // 7. Dynamic Cascading Petal Particle System (32 Falling Petals)
+        // 7. Dynamic Cascading Petal Particle System (32 Falling Curved Petals)
         petals.reserve(32);
         for (int i = 0; i < 32; ++i)
         {
             auto petal = std::make_shared<SceneNode>("Petal_" + std::to_string(i));
-            petal->mesh = &meshes.sphere;
-            petal->transform.scale = glm::vec3(0.18f, 0.06f, 0.16f);
+            petal->mesh = &meshes.curvedPetal;
+            petal->transform.scale = glm::vec3(1.2f);
             petal->color = (i % 2 == 0) ? glm::vec4(0.99f, 0.70f, 0.82f, 1.0f) : glm::vec4(1.0f, 0.85f, 0.90f, 1.0f);
 
             FallingPetal fp;
@@ -2882,6 +2980,7 @@ public:
     std::shared_ptr<SceneNode> root;
     std::shared_ptr<SceneNode> upperArm;
     std::shared_ptr<SceneNode> foreArm;
+    std::shared_ptr<SceneNode> hand;
 
     VendorFigure(SceneMeshes& meshes, const std::string& name, const glm::vec3& pos, float rotY, const glm::vec4& robeColor)
     {
@@ -2892,6 +2991,7 @@ public:
         glm::vec4 skin(0.92f, 0.76f, 0.64f, 1.0f);
         glm::vec4 wood(0.35f, 0.24f, 0.15f, 1.0f);
         glm::vec4 darkPants(0.18f, 0.18f, 0.22f, 1.0f);
+        glm::vec4 whiteBand(0.95f, 0.95f, 0.95f, 1.0f);
 
         // Raised wooden platform behind counter so the vendor stands tall and visible
         auto platform = std::make_shared<SceneNode>(name + "_Platform");
@@ -2901,95 +3001,121 @@ public:
         platform->color = wood;
         root->addChild(platform);
 
-        // Legs standing on platform
-        auto legL = std::make_shared<SceneNode>(name + "_LegL");
-        legL->mesh = &meshes.cylinder;
-        legL->transform.position = glm::vec3(-0.18f, 0.65f, 0.0f);
-        legL->transform.scale = glm::vec3(0.16f, 0.90f, 0.16f);
-        legL->color = darkPants;
-        root->addChild(legL);
+        // Hierarchical Articulated Legs standing on platform (Platform top is at Y = 0.20)
+        float hipX[2] = { -0.16f, 0.16f };
+        for (int l = 0; l < 2; ++l)
+        {
+            std::string side = (l == 0) ? "L" : "R";
+            auto thigh = std::make_shared<SceneNode>(name + "_Thigh" + side);
+            thigh->mesh = &meshes.limbThigh;
+            thigh->transform.position = glm::vec3(hipX[l], 1.04f, 0.0f);
+            thigh->color = darkPants;
+            root->addChild(thigh);
 
-        auto legR = std::make_shared<SceneNode>(name + "_LegR");
-        legR->mesh = &meshes.cylinder;
-        legR->transform.position = glm::vec3(0.18f, 0.65f, 0.0f);
-        legR->transform.scale = glm::vec3(0.16f, 0.90f, 0.16f);
-        legR->color = darkPants;
-        root->addChild(legR);
+            auto shin = std::make_shared<SceneNode>(name + "_Shin" + side);
+            shin->mesh = &meshes.limbShin;
+            shin->transform.position = glm::vec3(0.0f, -0.42f, 0.0f);
+            shin->color = darkPants;
+            thigh->addChild(shin);
 
-        // Torso (wearing festive Happi coat)
+            auto foot = std::make_shared<SceneNode>(name + "_Geta" + side);
+            foot->mesh = &meshes.getaFoot;
+            foot->transform.position = glm::vec3(0.0f, -0.42f, 0.04f);
+            foot->color = wood;
+            shin->addChild(foot);
+        }
+
+        // Anatomically Contoured Human Torso (Wearing festive Happi coat with Eri collar)
         auto torso = std::make_shared<SceneNode>(name + "_Torso");
-        torso->mesh = &meshes.cube;
-        torso->transform.position = glm::vec3(0.0f, 1.55f, 0.0f);
-        torso->transform.scale = glm::vec3(0.75f, 0.95f, 0.48f);
+        torso->mesh = &meshes.humanTorso;
+        torso->transform.position = glm::vec3(0.0f, 1.48f, 0.0f);
+        torso->transform.scale = glm::vec3(1.15f, 1.05f, 1.15f);
         torso->color = robeColor;
         root->addChild(torso);
 
         // Obi sash belt
         auto obi = std::make_shared<SceneNode>(name + "_Obi");
         obi->mesh = &meshes.cube;
-        obi->transform.position = glm::vec3(0.0f, 1.35f, 0.0f);
-        obi->transform.scale = glm::vec3(0.78f, 0.22f, 0.52f);
+        obi->transform.position = glm::vec3(0.0f, 1.30f, 0.0f);
+        obi->transform.scale = glm::vec3(0.68f, 0.20f, 0.48f);
         obi->color = glm::vec4(0.88f, 0.82f, 0.35f, 1.0f);
         root->addChild(obi);
 
-        // Head
+        // Sculpted Anatomical Human Head & Face
         auto head = std::make_shared<SceneNode>(name + "_Head");
-        head->mesh = &meshes.sphere;
-        head->transform.position = glm::vec3(0.0f, 2.30f, 0.0f);
-        head->transform.scale = glm::vec3(0.48f, 0.52f, 0.48f);
+        head->mesh = &meshes.humanHead;
+        head->transform.position = glm::vec3(0.0f, 2.05f, 0.0f);
+        head->transform.scale = glm::vec3(1.18f);
         head->color = skin;
         root->addChild(head);
 
-        // Headband (Hachimaki)
+        // Headband (Hachimaki) knotted across the forehead
         auto band = std::make_shared<SceneNode>(name + "_Hachimaki");
         band->mesh = &meshes.cube;
-        band->transform.position = glm::vec3(0.0f, 2.38f, 0.0f);
-        band->transform.scale = glm::vec3(0.52f, 0.12f, 0.52f);
-        band->color = glm::vec4(0.95f, 0.95f, 0.95f, 1.0f);
+        band->transform.position = glm::vec3(0.0f, 2.12f, 0.02f);
+        band->transform.scale = glm::vec3(0.48f, 0.08f, 0.46f);
+        band->color = whiteBand;
         root->addChild(band);
 
-        // Left arm resting naturally near hip
+        // Left Arm: Shoulder -> UpperArm -> Elbow -> Forearm -> Hand (resting naturally)
         auto leftArm = std::make_shared<SceneNode>(name + "_LeftArm");
-        leftArm->mesh = &meshes.cylinder;
-        leftArm->transform.position = glm::vec3(-0.48f, 1.60f, 0.0f);
-        leftArm->transform.rotation.z = -22.0f;
-        leftArm->transform.scale = glm::vec3(0.15f, 0.75f, 0.15f);
+        leftArm->mesh = &meshes.limbUpperArm;
+        leftArm->transform.position = glm::vec3(-0.36f, 1.82f, 0.0f);
+        leftArm->transform.rotation.z = -18.0f;
+        leftArm->transform.rotation.x = 10.0f;
         leftArm->color = robeColor;
         root->addChild(leftArm);
 
-        // Hierarchical Right Arm (Shoulder -> UpperArm -> Elbow -> Forearm -> Utensil)
+        auto leftForearm = std::make_shared<SceneNode>(name + "_LeftForearm");
+        leftForearm->mesh = &meshes.limbForearm;
+        leftForearm->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
+        leftForearm->transform.rotation.x = -25.0f;
+        leftForearm->color = skin;
+        leftArm->addChild(leftForearm);
+
+        auto leftHand = std::make_shared<SceneNode>(name + "_LeftHand");
+        leftHand->mesh = &meshes.humanHand;
+        leftHand->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
+        leftHand->transform.rotation.z = 90.0f;
+        leftHand->color = skin;
+        leftForearm->addChild(leftHand);
+
+        // Right Arm (Hierarchical Shoulder -> UpperArm -> Elbow -> Forearm -> Hand -> Utensil)
         upperArm = std::make_shared<SceneNode>(name + "_UpperArm");
-        upperArm->transform.position = glm::vec3(0.45f, 1.90f, 0.05f);
+        upperArm->transform.position = glm::vec3(0.36f, 1.82f, 0.05f);
         root->addChild(upperArm);
 
         auto upperMesh = std::make_shared<SceneNode>(name + "_UpperMesh");
-        upperMesh->mesh = &meshes.cylinder;
-        upperMesh->transform.position = glm::vec3(0.0f, -0.28f, 0.0f);
-        upperMesh->transform.scale = glm::vec3(0.16f, 0.55f, 0.16f);
+        upperMesh->mesh = &meshes.limbUpperArm;
         upperMesh->color = robeColor;
         upperArm->addChild(upperMesh);
 
-        // Forearm node (child of upper arm)
+        // Forearm node (child of upper arm at elbow condyle)
         foreArm = std::make_shared<SceneNode>(name + "_ForeArm");
-        foreArm->transform.position = glm::vec3(0.0f, -0.55f, 0.0f);
+        foreArm->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
         upperArm->addChild(foreArm);
 
         auto foreMesh = std::make_shared<SceneNode>(name + "_ForeMesh");
-        foreMesh->mesh = &meshes.cylinder;
-        foreMesh->transform.position = glm::vec3(0.0f, -0.25f, 0.15f);
-        foreMesh->transform.rotation.x = -45.0f;
-        foreMesh->transform.scale = glm::vec3(0.14f, 0.55f, 0.14f);
+        foreMesh->mesh = &meshes.limbForearm;
         foreMesh->color = skin;
         foreArm->addChild(foreMesh);
 
-        // Cooking turner utensil in hand
+        // Anatomical Hand
+        hand = std::make_shared<SceneNode>(name + "_Hand");
+        hand->mesh = &meshes.humanHand;
+        hand->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
+        hand->transform.rotation.x = 45.0f;
+        hand->color = skin;
+        foreArm->addChild(hand);
+
+        // Cooking turner utensil held firmly in hand
         auto utensil = std::make_shared<SceneNode>(name + "_Utensil");
         utensil->mesh = &meshes.cylinder;
-        utensil->transform.position = glm::vec3(0.0f, -0.42f, 0.35f);
+        utensil->transform.position = glm::vec3(0.0f, -0.06f, 0.18f);
         utensil->transform.rotation.x = -75.0f;
-        utensil->transform.scale = glm::vec3(0.04f, 0.50f, 0.04f);
+        utensil->transform.scale = glm::vec3(0.03f, 0.45f, 0.03f);
         utensil->color = glm::vec4(0.75f, 0.75f, 0.78f, 1.0f); // steel pick
-        foreArm->addChild(utensil);
+        hand->addChild(utensil);
     }
 
     void update(float time)
@@ -2997,7 +3123,7 @@ public:
         // Stirring / cooking arm joint kinematics reaching over counter
         upperArm->transform.rotation.x = 22.0f + std::sin(time * 4.0f) * 16.0f;
         upperArm->transform.rotation.y = std::cos(time * 4.0f) * 14.0f;
-        foreArm->transform.rotation.x = -28.0f + std::sin(time * 4.0f + 0.5f) * 18.0f;
+        foreArm->transform.rotation.x = 35.0f + std::sin(time * 4.0f + 0.5f) * 18.0f;
     }
 };
 
@@ -3062,35 +3188,31 @@ public:
         glm::vec4 darkPants(0.12f, 0.10f, 0.16f, 1.0f);
         glm::vec4 bootBlack(0.08f, 0.08f, 0.10f, 1.0f);
 
-        // Legs (standing firmly on stage: Magician local Y = 0.0 is stage floor)
-        auto legL = std::make_shared<SceneNode>("Magician_LegL");
-        legL->mesh = &meshes.cylinder;
-        legL->transform.position = glm::vec3(-0.20f, 0.45f, 0.0f);
-        legL->transform.scale = glm::vec3(0.18f, 0.80f, 0.18f); // Y in [0.05, 0.85]
-        legL->color = darkPants;
-        root->addChild(legL);
+        // Hierarchical Articulated Legs standing firmly on stage (Y = 0.0 is stage floor)
+        float hipX[2] = { -0.16f, 0.16f };
+        for (int l = 0; l < 2; ++l)
+        {
+            std::string side = (l == 0) ? "L" : "R";
+            auto thigh = std::make_shared<SceneNode>("Magician_Thigh" + side);
+            thigh->mesh = &meshes.limbThigh;
+            thigh->transform.position = glm::vec3(hipX[l], 0.84f, 0.0f);
+            thigh->color = darkPants;
+            root->addChild(thigh);
 
-        auto legR = std::make_shared<SceneNode>("Magician_LegR");
-        legR->mesh = &meshes.cylinder;
-        legR->transform.position = glm::vec3(0.20f, 0.45f, 0.0f);
-        legR->transform.scale = glm::vec3(0.18f, 0.80f, 0.18f); // Y in [0.05, 0.85]
-        legR->color = darkPants;
-        root->addChild(legR);
+            auto shin = std::make_shared<SceneNode>("Magician_Shin" + side);
+            shin->mesh = &meshes.limbShin;
+            shin->transform.position = glm::vec3(0.0f, -0.42f, 0.0f);
+            shin->color = darkPants;
+            thigh->addChild(shin);
 
-        // Formal magician boots resting flush on the stage surface (Y in [0.0, 0.10])
-        auto bootL = std::make_shared<SceneNode>("Magician_BootL");
-        bootL->mesh = &meshes.cube;
-        bootL->transform.position = glm::vec3(-0.20f, 0.05f, 0.05f);
-        bootL->transform.scale = glm::vec3(0.20f, 0.10f, 0.32f); // bottom sits at 0.05 - 0.05 = 0.0f!
-        bootL->color = bootBlack;
-        root->addChild(bootL);
-
-        auto bootR = std::make_shared<SceneNode>("Magician_BootR");
-        bootR->mesh = &meshes.cube;
-        bootR->transform.position = glm::vec3(0.20f, 0.05f, 0.05f);
-        bootR->transform.scale = glm::vec3(0.20f, 0.10f, 0.32f); // bottom sits at 0.05 - 0.05 = 0.0f!
-        bootR->color = bootBlack;
-        root->addChild(bootR);
+            // Formal magician boots resting flush on the stage surface (Y in [0.0, 0.10])
+            auto boot = std::make_shared<SceneNode>("Magician_Boot" + side);
+            boot->mesh = &meshes.cube;
+            boot->transform.position = glm::vec3(0.0f, -0.38f, 0.05f);
+            boot->transform.scale = glm::vec3(0.18f, 0.10f, 0.28f);
+            boot->color = bootBlack;
+            shin->addChild(boot);
+        }
 
         // Cape tail draping behind magician
         auto capeTail = std::make_shared<SceneNode>("Magician_CapeTail");
@@ -3101,81 +3223,93 @@ public:
         capeTail->color = robe;
         root->addChild(capeTail);
 
-        // Body robe
+        // Body robe (contoured human torso with kimono collar Eri)
         auto torso = std::make_shared<SceneNode>("Magician_Torso");
-        torso->mesh = &meshes.cylinder;
-        torso->transform.position = glm::vec3(0.0f, 1.4f, 0.0f);
-        torso->transform.scale = glm::vec3(0.8f, 1.3f, 0.6f);
+        torso->mesh = &meshes.humanTorso;
+        torso->transform.position = glm::vec3(0.0f, 1.28f, 0.0f);
+        torso->transform.scale = glm::vec3(1.22f, 1.05f, 1.22f);
         torso->color = robe;
         root->addChild(torso);
 
-        // Head
+        // Head (sculpted human head with facial features)
         auto head = std::make_shared<SceneNode>("Magician_Head");
-        head->mesh = &meshes.sphere;
-        head->transform.position = glm::vec3(0.0f, 2.3f, 0.0f);
-        head->transform.scale = glm::vec3(0.5f, 0.55f, 0.5f);
+        head->mesh = &meshes.humanHead;
+        head->transform.position = glm::vec3(0.0f, 1.88f, 0.0f);
+        head->transform.scale = glm::vec3(1.20f);
         head->color = skin;
         root->addChild(head);
 
         // Top Hat / Wizard hat
         auto hatBrim = std::make_shared<SceneNode>("Hat_Brim");
         hatBrim->mesh = &meshes.cylinder;
-        hatBrim->transform.position = glm::vec3(0.0f, 2.58f, 0.0f);
-        hatBrim->transform.scale = glm::vec3(1.1f, 0.08f, 1.1f);
+        hatBrim->transform.position = glm::vec3(0.0f, 2.15f, 0.0f);
+        hatBrim->transform.scale = glm::vec3(1.0f, 0.06f, 1.0f);
         hatBrim->color = robe;
         root->addChild(hatBrim);
 
         auto hatCone = std::make_shared<SceneNode>("Hat_Cone");
         hatCone->mesh = &meshes.cone;
-        hatCone->transform.position = glm::vec3(0.0f, 3.2f, 0.0f);
-        hatCone->transform.scale = glm::vec3(0.7f, 1.2f, 0.7f);
+        hatCone->transform.position = glm::vec3(0.0f, 2.70f, 0.0f);
+        hatCone->transform.scale = glm::vec3(0.65f, 1.1f, 0.65f);
         hatCone->color = robe;
         root->addChild(hatCone);
 
-        // Left Arm (bent gracefully at side / hip)
+        // Left Arm: Shoulder -> UpperArm -> Elbow -> Forearm -> Hand (bent gracefully at side / hip)
         auto leftArm = std::make_shared<SceneNode>("Magician_LeftArm");
-        leftArm->mesh = &meshes.cylinder;
-        leftArm->transform.position = glm::vec3(-0.50f, 1.55f, 0.05f);
+        leftArm->mesh = &meshes.limbUpperArm;
+        leftArm->transform.position = glm::vec3(-0.36f, 1.62f, 0.05f);
         leftArm->transform.rotation.z = 22.0f;
         leftArm->transform.rotation.x = -15.0f;
-        leftArm->transform.scale = glm::vec3(0.18f, 0.85f, 0.18f);
         leftArm->color = robe;
         root->addChild(leftArm);
 
+        auto leftForearm = std::make_shared<SceneNode>("Magician_LeftForearm");
+        leftForearm->mesh = &meshes.limbForearm;
+        leftForearm->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
+        leftForearm->transform.rotation.x = 35.0f;
+        leftForearm->color = skin;
+        leftArm->addChild(leftForearm);
+
         auto leftHand = std::make_shared<SceneNode>("Magician_LeftHand");
-        leftHand->mesh = &meshes.sphere;
-        leftHand->transform.position = glm::vec3(-0.65f, 1.20f, 0.15f);
-        leftHand->transform.scale = glm::vec3(0.18f, 0.18f, 0.18f);
+        leftHand->mesh = &meshes.humanHand;
+        leftHand->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
+        leftHand->transform.rotation.z = 90.0f;
         leftHand->color = skin;
-        root->addChild(leftHand);
+        leftForearm->addChild(leftHand);
 
         // Raised Right Arm commanding the magic orb
         auto rightArm = std::make_shared<SceneNode>("Magician_RightArm");
-        rightArm->mesh = &meshes.cylinder;
-        rightArm->transform.position = glm::vec3(0.55f, 1.9f, 0.2f);
-        rightArm->transform.rotation = glm::vec3(-40.0f, 20.0f, -30.0f);
-        rightArm->transform.scale = glm::vec3(0.18f, 0.9f, 0.18f);
+        rightArm->mesh = &meshes.limbUpperArm;
+        rightArm->transform.position = glm::vec3(0.36f, 1.62f, 0.05f);
+        rightArm->transform.rotation = glm::vec3(-45.0f, 20.0f, -25.0f);
         rightArm->color = robe;
         root->addChild(rightArm);
+
+        auto rightForearm = std::make_shared<SceneNode>("Magician_RightForearm");
+        rightForearm->mesh = &meshes.limbForearm;
+        rightForearm->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
+        rightForearm->transform.rotation.x = 25.0f;
+        rightForearm->color = skin;
+        rightArm->addChild(rightForearm);
 
         // Right Hand Node (serves as the moving reference frame for the orb!)
         rightHand = std::make_shared<SceneNode>("Magician_RightHand");
         rightHand->transform.position = glm::vec3(0.9f, 2.3f, 0.5f);
         root->addChild(rightHand);
 
-        // Hand palm sphere
+        // Hand palm contoured mesh
         auto palm = std::make_shared<SceneNode>("Magician_Palm");
-        palm->mesh = &meshes.sphere;
-        palm->transform.scale = glm::vec3(0.2f, 0.2f, 0.2f);
+        palm->mesh = &meshes.humanHand;
+        palm->transform.rotation.x = -30.0f;
         palm->color = skin;
         rightHand->addChild(palm);
 
         // Magic Wand
         auto wand = std::make_shared<SceneNode>("Magic_Wand");
         wand->mesh = &meshes.cylinder;
-        wand->transform.position = glm::vec3(0.1f, 0.25f, 0.0f);
-        wand->transform.rotation.z = -35.0f;
-        wand->transform.scale = glm::vec3(0.05f, 0.7f, 0.05f);
+        wand->transform.position = glm::vec3(0.04f, 0.12f, 0.10f);
+        wand->transform.rotation.x = -50.0f;
+        wand->transform.scale = glm::vec3(0.035f, 0.65f, 0.035f);
         wand->color = gold;
         rightHand->addChild(wand);
 
@@ -3508,121 +3642,120 @@ public:
 
                 glm::vec4 yukata = yukataColors[personIndex % yukataColors.size()];
 
-                // Seated lap / lower body resting on bench felt (Y in [0.52, 0.72])
-                auto lap = std::make_shared<SceneNode>("Aud_Lap_" + std::to_string(personIndex));
-                lap->mesh = &meshes.cube;
-                lap->transform.position = glm::vec3(0.0f, 0.62f, 0.06f);
-                lap->transform.scale = glm::vec3(0.50f, 0.20f, 0.44f);
-                lap->color = yukata;
-                person->addChild(lap);
+                // Seated lap / lower body (contoured thighs resting horizontally on bench felt)
+                auto thighL = std::make_shared<SceneNode>("Aud_ThighL_" + std::to_string(personIndex));
+                thighL->mesh = &meshes.limbThigh;
+                thighL->transform.position = glm::vec3(-0.16f, 0.55f, 0.05f);
+                thighL->transform.rotation.x = -85.0f; // horizontal resting forward on bench
+                thighL->color = yukata;
+                person->addChild(thighL);
 
-                // Lower Legs extending from seat down to ground (Y in [0.06, 0.50])
-                auto legL = std::make_shared<SceneNode>("Aud_LegL_" + std::to_string(personIndex));
-                legL->mesh = &meshes.cylinder;
-                legL->transform.position = glm::vec3(-0.16f, 0.28f, 0.25f);
-                legL->transform.scale = glm::vec3(0.13f, 0.44f, 0.13f);
-                legL->color = skin;
-                person->addChild(legL);
+                auto shinL = std::make_shared<SceneNode>("Aud_ShinL_" + std::to_string(personIndex));
+                shinL->mesh = &meshes.limbShin;
+                shinL->transform.position = glm::vec3(0.0f, -0.40f, 0.0f);
+                shinL->transform.rotation.x = 85.0f; // bends down to ground
+                shinL->color = skin;
+                thighL->addChild(shinL);
 
-                auto legR = std::make_shared<SceneNode>("Aud_LegR_" + std::to_string(personIndex));
-                legR->mesh = &meshes.cylinder;
-                legR->transform.position = glm::vec3(0.16f, 0.28f, 0.25f);
-                legR->transform.scale = glm::vec3(0.13f, 0.44f, 0.13f);
-                legR->color = skin;
-                person->addChild(legR);
-
-                // Traditional Japanese Geta sandals (resting flush on ground: Y in [0.0, 0.07])
                 auto getaL = std::make_shared<SceneNode>("Aud_GetaL_" + std::to_string(personIndex));
-                getaL->mesh = &meshes.cube;
-                getaL->transform.position = glm::vec3(-0.16f, 0.035f, 0.28f);
-                getaL->transform.scale = glm::vec3(0.14f, 0.07f, 0.26f); // Lowest face = 0.035 - 0.035 = 0.0f!
+                getaL->mesh = &meshes.getaFoot;
+                getaL->transform.position = glm::vec3(0.0f, -0.40f, 0.05f);
                 getaL->color = benchWood;
-                person->addChild(getaL);
+                shinL->addChild(getaL);
+
+                auto thighR = std::make_shared<SceneNode>("Aud_ThighR_" + std::to_string(personIndex));
+                thighR->mesh = &meshes.limbThigh;
+                thighR->transform.position = glm::vec3(0.16f, 0.55f, 0.05f);
+                thighR->transform.rotation.x = -85.0f;
+                thighR->color = yukata;
+                person->addChild(thighR);
+
+                auto shinR = std::make_shared<SceneNode>("Aud_ShinR_" + std::to_string(personIndex));
+                shinR->mesh = &meshes.limbShin;
+                shinR->transform.position = glm::vec3(0.0f, -0.40f, 0.0f);
+                shinR->transform.rotation.x = 85.0f;
+                shinR->color = skin;
+                thighR->addChild(shinR);
 
                 auto getaR = std::make_shared<SceneNode>("Aud_GetaR_" + std::to_string(personIndex));
-                getaR->mesh = &meshes.cube;
-                getaR->transform.position = glm::vec3(0.16f, 0.035f, 0.28f);
-                getaR->transform.scale = glm::vec3(0.14f, 0.07f, 0.26f); // Lowest face = 0.0f!
+                getaR->mesh = &meshes.getaFoot;
+                getaR->transform.position = glm::vec3(0.0f, -0.40f, 0.05f);
                 getaR->color = benchWood;
-                person->addChild(getaR);
+                shinR->addChild(getaR);
 
-                // Red sandal straps (Hanao)
-                auto strapL = std::make_shared<SceneNode>("Aud_StrapL_" + std::to_string(personIndex));
-                strapL->mesh = &meshes.cube;
-                strapL->transform.position = glm::vec3(-0.16f, 0.075f, 0.31f);
-                strapL->transform.scale = glm::vec3(0.12f, 0.02f, 0.08f);
-                strapL->color = redFelt;
-                person->addChild(strapL);
-
-                auto strapR = std::make_shared<SceneNode>("Aud_StrapR_" + std::to_string(personIndex));
-                strapR->mesh = &meshes.cube;
-                strapR->transform.position = glm::vec3(0.16f, 0.075f, 0.31f);
-                strapR->transform.scale = glm::vec3(0.12f, 0.02f, 0.08f);
-                strapR->color = redFelt;
-                person->addChild(strapR);
-
-                // Torso upright in Yukata (Y in [0.72, 1.48])
+                // Torso upright in Yukata (contoured human torso with kimono collar Eri)
                 auto torso = std::make_shared<SceneNode>("Aud_Torso_" + std::to_string(personIndex));
-                torso->mesh = &meshes.cube;
-                torso->transform.position = glm::vec3(0.0f, 1.10f, 0.0f);
-                torso->transform.scale = glm::vec3(0.52f, 0.76f, 0.38f);
+                torso->mesh = &meshes.humanTorso;
+                torso->transform.position = glm::vec3(0.0f, 0.95f, 0.0f);
+                torso->transform.scale = glm::vec3(1.05f, 0.95f, 1.05f);
                 torso->color = yukata;
                 person->addChild(torso);
 
-                // Obi sash belt (Y in [0.82, 0.98])
+                // Obi sash belt
                 auto obi = std::make_shared<SceneNode>("Aud_Obi_" + std::to_string(personIndex));
                 obi->mesh = &meshes.cube;
-                obi->transform.position = glm::vec3(0.0f, 0.90f, 0.0f);
+                obi->transform.position = glm::vec3(0.0f, 0.85f, 0.0f);
                 obi->transform.scale = glm::vec3(0.55f, 0.16f, 0.40f);
                 obi->color = goldObi;
                 person->addChild(obi);
 
-                // Left Arm resting on knee
+                // Articulated Arms resting gently on lap/knees
                 auto armL = std::make_shared<SceneNode>("Aud_ArmL_" + std::to_string(personIndex));
-                armL->mesh = &meshes.cylinder;
-                armL->transform.position = glm::vec3(-0.31f, 1.00f, 0.10f);
-                armL->transform.rotation.x = -32.0f;
-                armL->transform.scale = glm::vec3(0.12f, 0.52f, 0.12f);
+                armL->mesh = &meshes.limbUpperArm;
+                armL->transform.position = glm::vec3(-0.30f, 1.25f, 0.05f);
+                armL->transform.rotation.x = -25.0f;
+                armL->transform.rotation.z = -10.0f;
                 armL->color = yukata;
                 person->addChild(armL);
 
-                auto handL = std::make_shared<SceneNode>("Aud_HandL_" + std::to_string(personIndex));
-                handL->mesh = &meshes.sphere;
-                handL->transform.position = glm::vec3(-0.31f, 0.74f, 0.26f);
-                handL->transform.scale = glm::vec3(0.12f, 0.12f, 0.12f);
-                handL->color = skin;
-                person->addChild(handL);
+                auto forearmL = std::make_shared<SceneNode>("Aud_ForearmL_" + std::to_string(personIndex));
+                forearmL->mesh = &meshes.limbForearm;
+                forearmL->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
+                forearmL->transform.rotation.x = 45.0f;
+                forearmL->color = skin;
+                armL->addChild(forearmL);
 
-                // Right Arm resting on knee
+                auto handL = std::make_shared<SceneNode>("Aud_HandL_" + std::to_string(personIndex));
+                handL->mesh = &meshes.humanHand;
+                handL->transform.position = glm::vec3(0.0f, -0.32f, 0.0f);
+                handL->color = skin;
+                forearmL->addChild(handL);
+
                 auto armR = std::make_shared<SceneNode>("Aud_ArmR_" + std::to_string(personIndex));
-                armR->mesh = &meshes.cylinder;
-                armR->transform.position = glm::vec3(0.31f, 1.00f, 0.10f);
-                armR->transform.rotation.x = -32.0f;
-                armR->transform.scale = glm::vec3(0.12f, 0.52f, 0.12f);
+                armR->mesh = &meshes.limbUpperArm;
+                armR->transform.position = glm::vec3(0.30f, 1.25f, 0.05f);
+                armR->transform.rotation.x = -25.0f;
+                armR->transform.rotation.z = 10.0f;
                 armR->color = yukata;
                 person->addChild(armR);
 
-                auto handR = std::make_shared<SceneNode>("Aud_HandR_" + std::to_string(personIndex));
-                handR->mesh = &meshes.sphere;
-                handR->transform.position = glm::vec3(0.31f, 0.74f, 0.26f);
-                handR->transform.scale = glm::vec3(0.12f, 0.12f, 0.12f);
-                handR->color = skin;
-                person->addChild(handR);
+                auto forearmR = std::make_shared<SceneNode>("Aud_ForearmR_" + std::to_string(personIndex));
+                forearmR->mesh = &meshes.limbForearm;
+                forearmR->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
+                forearmR->transform.rotation.x = 45.0f;
+                forearmR->color = skin;
+                armR->addChild(forearmR);
 
-                // Head (animated sway / nod) (Y in [1.41, 1.83])
+                auto handR = std::make_shared<SceneNode>("Aud_HandR_" + std::to_string(personIndex));
+                handR->mesh = &meshes.humanHand;
+                handR->transform.position = glm::vec3(0.0f, -0.32f, 0.0f);
+                handR->color = skin;
+                forearmR->addChild(handR);
+
+                // Sculpted Human Head with facial contours
                 auto head = std::make_shared<SceneNode>("Aud_Head_" + std::to_string(personIndex));
-                head->mesh = &meshes.sphere;
-                head->transform.position = glm::vec3(0.0f, 1.62f, 0.0f);
-                head->transform.scale = glm::vec3(0.38f, 0.42f, 0.38f);
+                head->mesh = &meshes.humanHead;
+                head->transform.position = glm::vec3(0.0f, 1.50f, 0.0f);
+                head->transform.scale = glm::vec3(1.10f);
                 head->color = skin;
                 person->addChild(head);
                 heads.push_back(head);
 
-                // Traditional festival hair / top knot (Y in [1.66, 1.86])
+                // Traditional festival hair / top knot
                 auto hair = std::make_shared<SceneNode>("Aud_Hair_" + std::to_string(personIndex));
                 hair->mesh = &meshes.sphere;
-                hair->transform.position = glm::vec3(0.0f, 1.76f, -0.04f);
-                hair->transform.scale = glm::vec3(0.40f, 0.20f, 0.40f);
+                hair->transform.position = glm::vec3(0.0f, 1.62f, -0.04f);
+                hair->transform.scale = glm::vec3(0.36f, 0.16f, 0.36f);
                 hair->color = darkHair;
                 person->addChild(hair);
 
@@ -3649,10 +3782,15 @@ public:
 struct WalkingPerson
 {
     std::shared_ptr<SceneNode> root;
-    std::shared_ptr<SceneNode> legL;
-    std::shared_ptr<SceneNode> legR;
+    std::shared_ptr<SceneNode> thighL;
+    std::shared_ptr<SceneNode> shinL;
+    std::shared_ptr<SceneNode> thighR;
+    std::shared_ptr<SceneNode> shinR;
     std::shared_ptr<SceneNode> armL;
+    std::shared_ptr<SceneNode> forearmL;
     std::shared_ptr<SceneNode> armR;
+    std::shared_ptr<SceneNode> forearmR;
+    std::shared_ptr<SceneNode> head;
     float laneX;
     float speed;
     float direction; // -1.0f = toward Torii gate (-Z), +1.0f = toward entrance (+Z)
@@ -3716,87 +3854,112 @@ public:
             // Face travel direction
             wp.root->transform.rotation.y = (wp.direction < 0.0f) ? 180.0f : 0.0f;
 
-            // Torso
+            glm::vec4 yukataColor = yukataTones[i % yukataTones.size()];
+            glm::vec4 skinColor(0.92f, 0.76f, 0.64f, 1.0f);
+            glm::vec4 pantsColor(0.18f, 0.18f, 0.22f, 1.0f);
+            glm::vec4 woodColor(0.35f, 0.22f, 0.14f, 1.0f);
+
+            // Contoured Human Torso wearing traditional Yukata with Kimono Eri collar
             auto torso = std::make_shared<SceneNode>("Walk_Torso_" + std::to_string(i));
-            torso->mesh = &meshes.cube;
+            torso->mesh = &meshes.humanTorso;
             torso->transform.position = glm::vec3(0.0f, 1.25f, 0.0f);
-            torso->transform.scale = glm::vec3(0.55f, 0.9f, 0.38f);
-            torso->color = yukataTones[i % yukataTones.size()];
+            torso->transform.scale = glm::vec3(1.10f, 1.0f, 1.10f);
+            torso->color = yukataColor;
             wp.root->addChild(torso);
 
             // Sash (Obi belt)
             auto obi = std::make_shared<SceneNode>("Walk_Obi_" + std::to_string(i));
             obi->mesh = &meshes.cube;
-            obi->transform.position = glm::vec3(0.0f, 1.15f, 0.0f);
-            obi->transform.scale = glm::vec3(0.58f, 0.22f, 0.42f);
+            obi->transform.position = glm::vec3(0.0f, 1.08f, 0.0f);
+            obi->transform.scale = glm::vec3(0.60f, 0.20f, 0.42f);
             obi->color = glm::vec4(0.88f, 0.82f, 0.35f, 1.0f);
             wp.root->addChild(obi);
 
-            // Head
-            auto head = std::make_shared<SceneNode>("Walk_Head_" + std::to_string(i));
-            head->mesh = &meshes.sphere;
-            head->transform.position = glm::vec3(0.0f, 1.95f, 0.0f);
-            head->transform.scale = glm::vec3(0.40f, 0.44f, 0.40f);
-            head->color = glm::vec4(0.92f, 0.76f, 0.64f, 1.0f);
-            wp.root->addChild(head);
+            // Sculpted Anatomical Human Head & Face
+            wp.head = std::make_shared<SceneNode>("Walk_Head_" + std::to_string(i));
+            wp.head->mesh = &meshes.humanHead;
+            wp.head->transform.position = glm::vec3(0.0f, 1.82f, 0.0f);
+            wp.head->transform.scale = glm::vec3(1.12f);
+            wp.head->color = skinColor;
+            wp.root->addChild(wp.head);
 
-            // Left Leg
-            wp.legL = std::make_shared<SceneNode>("Walk_LegL_" + std::to_string(i));
-            wp.legL->mesh = &meshes.cylinder;
-            wp.legL->transform.position = glm::vec3(-0.16f, 0.4f, 0.0f);
-            wp.legL->transform.scale = glm::vec3(0.14f, 0.8f, 0.14f);
-            wp.legL->color = glm::vec4(0.2f, 0.2f, 0.25f, 1.0f);
-            wp.root->addChild(wp.legL);
+            // Left Leg: Hip Pivot -> Thigh -> Knee Condyle -> Shin -> Ankle -> Geta Sandal
+            wp.thighL = std::make_shared<SceneNode>("Walk_ThighL_" + std::to_string(i));
+            wp.thighL->mesh = &meshes.limbThigh;
+            wp.thighL->transform.position = glm::vec3(-0.16f, 0.84f, 0.0f);
+            wp.thighL->color = pantsColor;
+            wp.root->addChild(wp.thighL);
 
-            // Right Leg
-            wp.legR = std::make_shared<SceneNode>("Walk_LegR_" + std::to_string(i));
-            wp.legR->mesh = &meshes.cylinder;
-            wp.legR->transform.position = glm::vec3(0.16f, 0.4f, 0.0f);
-            wp.legR->transform.scale = glm::vec3(0.14f, 0.8f, 0.14f);
-            wp.legR->color = glm::vec4(0.2f, 0.2f, 0.25f, 1.0f);
-            wp.root->addChild(wp.legR);
+            wp.shinL = std::make_shared<SceneNode>("Walk_ShinL_" + std::to_string(i));
+            wp.shinL->mesh = &meshes.limbShin;
+            wp.shinL->transform.position = glm::vec3(0.0f, -0.42f, 0.0f);
+            wp.shinL->color = skinColor;
+            wp.thighL->addChild(wp.shinL);
 
-            // Left Arm Pivot (at left shoulder: Y = 1.55)
-            wp.armL = std::make_shared<SceneNode>("Walk_ArmPivotL_" + std::to_string(i));
-            wp.armL->transform.position = glm::vec3(-0.35f, 1.55f, 0.0f);
+            auto getaL = std::make_shared<SceneNode>("Walk_GetaL_" + std::to_string(i));
+            getaL->mesh = &meshes.getaFoot;
+            getaL->transform.position = glm::vec3(0.0f, -0.42f, 0.04f);
+            getaL->color = woodColor;
+            wp.shinL->addChild(getaL);
 
-            // Left Yukata Sleeve
-            auto sleeveL = std::make_shared<SceneNode>("Walk_SleeveL_" + std::to_string(i));
-            sleeveL->mesh = &meshes.cylinder;
-            sleeveL->transform.position = glm::vec3(0.0f, -0.22f, 0.0f);
-            sleeveL->transform.scale = glm::vec3(0.14f, 0.44f, 0.14f);
-            sleeveL->color = yukataTones[i % yukataTones.size()];
-            wp.armL->addChild(sleeveL);
+            // Right Leg: Hip Pivot -> Thigh -> Knee Condyle -> Shin -> Ankle -> Geta Sandal
+            wp.thighR = std::make_shared<SceneNode>("Walk_ThighR_" + std::to_string(i));
+            wp.thighR->mesh = &meshes.limbThigh;
+            wp.thighR->transform.position = glm::vec3(0.16f, 0.84f, 0.0f);
+            wp.thighR->color = pantsColor;
+            wp.root->addChild(wp.thighR);
 
-            // Left Hand (skin colored)
-            auto handL = std::make_shared<SceneNode>("Walk_HandL_" + std::to_string(i));
-            handL->mesh = &meshes.sphere;
-            handL->transform.position = glm::vec3(0.0f, -0.48f, 0.0f);
-            handL->transform.scale = glm::vec3(0.12f, 0.14f, 0.12f);
-            handL->color = glm::vec4(0.92f, 0.76f, 0.64f, 1.0f);
-            wp.armL->addChild(handL);
+            wp.shinR = std::make_shared<SceneNode>("Walk_ShinR_" + std::to_string(i));
+            wp.shinR->mesh = &meshes.limbShin;
+            wp.shinR->transform.position = glm::vec3(0.0f, -0.42f, 0.0f);
+            wp.shinR->color = skinColor;
+            wp.thighR->addChild(wp.shinR);
+
+            auto getaR = std::make_shared<SceneNode>("Walk_GetaR_" + std::to_string(i));
+            getaR->mesh = &meshes.getaFoot;
+            getaR->transform.position = glm::vec3(0.0f, -0.42f, 0.04f);
+            getaR->color = woodColor;
+            wp.shinR->addChild(getaR);
+
+            // Left Arm: Shoulder Pivot -> Upper Arm / Sleeve -> Elbow Condyle -> Forearm -> Wrist -> Hand
+            wp.armL = std::make_shared<SceneNode>("Walk_ArmL_" + std::to_string(i));
+            wp.armL->mesh = &meshes.limbUpperArm;
+            wp.armL->transform.position = glm::vec3(-0.34f, 1.58f, 0.0f);
+            wp.armL->color = yukataColor;
             wp.root->addChild(wp.armL);
 
-            // Right Arm Pivot (at right shoulder: Y = 1.55)
-            wp.armR = std::make_shared<SceneNode>("Walk_ArmPivotR_" + std::to_string(i));
-            wp.armR->transform.position = glm::vec3(0.35f, 1.55f, 0.0f);
+            wp.forearmL = std::make_shared<SceneNode>("Walk_ForearmL_" + std::to_string(i));
+            wp.forearmL->mesh = &meshes.limbForearm;
+            wp.forearmL->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
+            wp.forearmL->color = skinColor;
+            wp.armL->addChild(wp.forearmL);
 
-            // Right Yukata Sleeve
-            auto sleeveR = std::make_shared<SceneNode>("Walk_SleeveR_" + std::to_string(i));
-            sleeveR->mesh = &meshes.cylinder;
-            sleeveR->transform.position = glm::vec3(0.0f, -0.22f, 0.0f);
-            sleeveR->transform.scale = glm::vec3(0.14f, 0.44f, 0.14f);
-            sleeveR->color = yukataTones[i % yukataTones.size()];
-            wp.armR->addChild(sleeveR);
+            auto handL = std::make_shared<SceneNode>("Walk_HandL_" + std::to_string(i));
+            handL->mesh = &meshes.humanHand;
+            handL->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
+            handL->transform.rotation.z = 90.0f;
+            handL->color = skinColor;
+            wp.forearmL->addChild(handL);
 
-            // Right Hand (skin colored)
-            auto handR = std::make_shared<SceneNode>("Walk_HandR_" + std::to_string(i));
-            handR->mesh = &meshes.sphere;
-            handR->transform.position = glm::vec3(0.0f, -0.48f, 0.0f);
-            handR->transform.scale = glm::vec3(0.12f, 0.14f, 0.12f);
-            handR->color = glm::vec4(0.92f, 0.76f, 0.64f, 1.0f);
-            wp.armR->addChild(handR);
+            // Right Arm: Shoulder Pivot -> Upper Arm / Sleeve -> Elbow Condyle -> Forearm -> Wrist -> Hand
+            wp.armR = std::make_shared<SceneNode>("Walk_ArmR_" + std::to_string(i));
+            wp.armR->mesh = &meshes.limbUpperArm;
+            wp.armR->transform.position = glm::vec3(0.34f, 1.58f, 0.0f);
+            wp.armR->color = yukataColor;
             wp.root->addChild(wp.armR);
+
+            wp.forearmR = std::make_shared<SceneNode>("Walk_ForearmR_" + std::to_string(i));
+            wp.forearmR->mesh = &meshes.limbForearm;
+            wp.forearmR->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
+            wp.forearmR->color = skinColor;
+            wp.armR->addChild(wp.forearmR);
+
+            auto handR = std::make_shared<SceneNode>("Walk_HandR_" + std::to_string(i));
+            handR->mesh = &meshes.humanHand;
+            handR->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
+            handR->transform.rotation.z = -90.0f;
+            handR->color = skinColor;
+            wp.forearmR->addChild(handR);
 
             root->addChild(wp.root);
             walkers.push_back(wp);
@@ -3831,17 +3994,37 @@ public:
             float turnSway = std::sin(time * 3.0f + wp.phase) * 3.0f;
             wp.root->transform.rotation.y = baseYaw + turnSway;
 
-            // Alternating leg swing walk-cycle
+            // Alternating hip swing walk-cycle
             float walkAngle = std::sin(time * 6.0f + wp.phase) * 26.0f;
-            wp.legL->transform.rotation.x = walkAngle;
-            wp.legR->transform.rotation.x = -walkAngle;
+            wp.thighL->transform.rotation.x = walkAngle;
+            wp.thighR->transform.rotation.x = -walkAngle;
+
+            // Biomechanical knee flexion kinematics:
+            // When thigh swings backward (< 0), knee bends backward (+X angle) to lift sandal
+            // When thigh swings forward (> 0), knee straightens for heel strike
+            float kneeL = std::max(0.0f, -walkAngle * 1.35f);
+            float kneeR = std::max(0.0f, walkAngle * 1.35f);
+            wp.shinL->transform.rotation.x = kneeL;
+            wp.shinR->transform.rotation.x = kneeR;
 
             // Realistic walking arm swing: arms swing in opposite phase to legs
-            float armAngle = -walkAngle * 0.85f;
+            float armAngle = -walkAngle * 0.75f;
             wp.armL->transform.rotation.x = armAngle;
             wp.armR->transform.rotation.x = -armAngle;
-            wp.armL->transform.rotation.z = -5.0f;
-            wp.armR->transform.rotation.z = 5.0f;
+            wp.armL->transform.rotation.z = -6.0f;
+            wp.armR->transform.rotation.z = 6.0f;
+
+            // Biomechanical elbow kinematics:
+            // Resting flex ~ 18 deg, bends further on forward swing
+            wp.forearmL->transform.rotation.x = 18.0f + std::max(0.0f, armAngle * 0.65f);
+            wp.forearmR->transform.rotation.x = 18.0f + std::max(0.0f, -armAngle * 0.65f);
+
+            // Subtle head tilt / gaze sway during motion
+            if (wp.head)
+            {
+                wp.head->transform.rotation.y = std::sin(time * 3.0f + wp.phase) * 4.0f;
+                wp.head->transform.rotation.z = std::cos(time * 6.0f + wp.phase) * 2.0f;
+            }
         }
     }
 };
