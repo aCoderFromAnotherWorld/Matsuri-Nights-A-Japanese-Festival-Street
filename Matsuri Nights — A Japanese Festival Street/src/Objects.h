@@ -3318,19 +3318,19 @@ public:
         hatCone->color = robe;
         head->addChild(hatCone);
 
-        // 1. Articulated Left Arm (Shoulder -> UpperArm -> Elbow -> Forearm -> Hand bent naturally at side / hip)
+        // 1. Articulated Left Arm (Shoulder -> UpperArm -> Elbow -> Forearm -> Hand bent naturally at side / hip, elbow downwards)
         leftArm = std::make_shared<SceneNode>("Magician_LeftArm");
         leftArm->mesh = &meshes.limbUpperArm;
         leftArm->transform.position = glm::vec3(-0.36f, 1.62f, 0.05f);
-        leftArm->transform.rotation.z = 22.0f;
-        leftArm->transform.rotation.x = -15.0f;
+        leftArm->transform.rotation.z = 16.0f;
+        leftArm->transform.rotation.x = -10.0f;
         leftArm->color = robe;
         root->addChild(leftArm);
 
         leftForearm = std::make_shared<SceneNode>("Magician_LeftForearm");
         leftForearm->mesh = &meshes.limbForearm;
         leftForearm->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
-        leftForearm->transform.rotation.x = 35.0f;
+        leftForearm->transform.rotation.x = -12.0f;
         leftForearm->color = skin;
         leftArm->addChild(leftForearm);
 
@@ -3338,45 +3338,44 @@ public:
         leftHand = std::make_shared<SceneNode>("Magician_LeftHand");
         leftHand->mesh = &meshes.humanHand;
         leftHand->transform.position = glm::vec3(0.0f, -0.42f, 0.0f);
-        leftHand->transform.rotation = glm::vec3(10.0f, 0.0f, 180.0f);
+        leftHand->transform.rotation = glm::vec3(0.0f, 0.0f, 180.0f);
         leftHand->color = skin;
         leftForearm->addChild(leftHand);
 
-        // 2. Raised Right Arm commanding the magic wand and orb (Hierarchical Shoulder -> Elbow -> Wrist -> Hand -> Wand & Orb)
+        // 2. Articulated Right Arm commanding the magic wand and orb (Shoulder hangs downward -> Elbow points DOWN -> Forearm bends forward/upward -> Hand -> Wand & Orb)
         rightArm = std::make_shared<SceneNode>("Magician_RightArm");
         rightArm->mesh = &meshes.limbUpperArm;
         rightArm->transform.position = glm::vec3(0.36f, 1.62f, 0.05f);
-        rightArm->transform.rotation = glm::vec3(-62.0f, 18.0f, -22.0f);
+        rightArm->transform.rotation = glm::vec3(-16.0f, 10.0f, -16.0f); // Upper arm hangs downward, elbow is DOWN at waist
         rightArm->color = robe;
         root->addChild(rightArm);
 
         rightForearm = std::make_shared<SceneNode>("Magician_RightForearm");
         rightForearm->mesh = &meshes.limbForearm;
         rightForearm->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
-        rightForearm->transform.rotation.x = 42.0f;
-        rightForearm->transform.rotation.y = 10.0f;
+        rightForearm->transform.rotation = glm::vec3(-74.0f, 0.0f, 0.0f); // Forearm bends forward and upward from downward elbow
         rightForearm->color = skin;
         rightArm->addChild(rightForearm);
 
         // Right Hand Node (child of forearm at wrist condyle! Serves as moving reference frame for wand and orb)
         rightHand = std::make_shared<SceneNode>("Magician_RightHand");
         rightHand->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
-        rightHand->transform.rotation = glm::vec3(-15.0f, 0.0f, -20.0f);
+        rightHand->transform.rotation = glm::vec3(90.0f, 0.0f, -10.0f); // Net forward pitch aligns with world +Z
         rightForearm->addChild(rightHand);
 
         // Hand palm contoured mesh grasping the wand forward toward the orb
         auto rightPalm = std::make_shared<SceneNode>("Magician_RightPalm");
         rightPalm->mesh = &meshes.humanHand;
-        rightPalm->transform.position = glm::vec3(0.01f, 0.035f, 0.065f);
-        rightPalm->transform.rotation = glm::vec3(-65.0f, 10.0f, -15.0f);
+        rightPalm->transform.position = glm::vec3(0.0f, 0.02f, 0.06f);
+        rightPalm->transform.rotation = glm::vec3(-75.0f, 0.0f, -10.0f);
         rightPalm->color = skin;
         rightHand->addChild(rightPalm);
 
         // Magic Wand held firmly in right hand pointing directly toward magic orb
         wand = std::make_shared<SceneNode>("Magic_Wand");
         wand->mesh = &meshes.cylinder;
-        wand->transform.position = glm::vec3(0.01f, 0.060f, 0.15f);
-        wand->transform.rotation = glm::vec3(-65.0f, 10.0f, -15.0f);
+        wand->transform.position = glm::vec3(0.01f, 0.05f, 0.18f);
+        wand->transform.rotation = glm::vec3(-75.0f, 0.0f, -10.0f);
         wand->transform.scale = glm::vec3(0.035f, 0.65f, 0.035f);
         wand->color = gold;
         rightHand->addChild(wand);
@@ -3408,23 +3407,24 @@ public:
 
     void update(float time)
     {
-        // 1. Dynamic spellcasting arm, elbow, wrist and hand motion on RIGHT arm commanding wand & orb
-        rightArm->transform.rotation.x = -62.0f + std::sin(time * 2.4f) * 16.0f;
-        rightArm->transform.rotation.y =  18.0f + std::cos(time * 1.8f) * 12.0f;
-        rightArm->transform.rotation.z = -22.0f + std::sin(time * 1.6f) *  8.0f;
+        // 1. Dynamic spellcasting arm motion on RIGHT arm commanding wand & orb (ELBOW POINTS DOWNWARDS!)
+        rightArm->transform.rotation.x = -16.0f + std::sin(time * 2.0f) * 4.0f; // Upper arm hangs downward, elbow stays down
+        rightArm->transform.rotation.y =  10.0f + std::cos(time * 1.6f) * 3.0f;
+        rightArm->transform.rotation.z = -16.0f + std::sin(time * 1.8f) * 3.0f;
 
-        rightForearm->transform.rotation.x = 42.0f + std::sin(time * 2.6f + 0.5f) * 18.0f;
-        rightForearm->transform.rotation.y = std::cos(time * 2.2f) * 10.0f;
+        // Forearm bends forward/upward from the downward-pointing elbow
+        rightForearm->transform.rotation.x = -74.0f + std::sin(time * 2.4f + 0.4f) * 8.0f;
+        rightForearm->transform.rotation.y = std::cos(time * 2.0f) * 4.0f;
 
         // Dynamic wrist flourishes & wand flicking with right hand
-        rightHand->transform.rotation.x = -15.0f + std::sin(time * 3.4f) * 22.0f;
-        rightHand->transform.rotation.y = std::cos(time * 2.8f) * 16.0f;
-        rightHand->transform.rotation.z = -20.0f + std::sin(time * 2.5f) * 12.0f;
+        rightHand->transform.rotation.x =  90.0f + std::sin(time * 3.0f) * 8.0f;
+        rightHand->transform.rotation.y =  std::cos(time * 2.4f) * 6.0f;
+        rightHand->transform.rotation.z = -10.0f + std::sin(time * 2.2f) * 5.0f;
 
-        // 2. Subtle left arm breathing sway & resting posture
-        leftArm->transform.rotation.x = -15.0f + std::sin(time * 1.6f) * 4.0f;
-        leftForearm->transform.rotation.x = 35.0f + std::cos(time * 1.6f) * 5.0f;
-        leftHand->transform.rotation.x = 10.0f + std::sin(time * 2.0f) * 3.0f;
+        // 2. Subtle left arm breathing sway & resting posture (ELBOW POINTS DOWNWARDS!)
+        leftArm->transform.rotation.x = -10.0f + std::sin(time * 1.5f) * 3.0f;
+        leftForearm->transform.rotation.x = -12.0f + std::cos(time * 1.5f) * 3.0f;
+        leftHand->transform.rotation.x = std::sin(time * 1.8f) * 3.0f;
 
         // 3. Subtle head scan engaging the seated audience
         if (head)
@@ -3434,11 +3434,11 @@ public:
         }
 
         // 4. Magic Orb executes a helical 3D orbit around the right hand's moving reference frame:
-        float r = 0.55f;
+        float r = 0.45f;
         float speed = 3.2f;
         float orbX = r * std::cos(time * speed);
-        float orbZ = 0.20f + r * std::sin(time * speed);
-        float orbY = 0.28f + 0.22f * std::sin(time * speed * 2.0f);
+        float orbY = 0.18f + 0.16f * std::sin(time * speed * 2.0f);
+        float orbZ = 0.50f + r * std::sin(time * speed);
 
         orbNode->transform.position = glm::vec3(orbX, orbY, orbZ);
         orbNode->transform.rotation.y = time * 180.0f;
@@ -3448,8 +3448,8 @@ public:
         {
             float delay = (float)(i + 1) * 0.14f;
             float tx = r * std::cos((time - delay) * speed);
-            float tz = 0.20f + r * std::sin((time - delay) * speed);
-            float ty = 0.28f + 0.22f * std::sin((time - delay) * speed * 2.0f);
+            float tz = 0.50f + r * std::sin((time - delay) * speed);
+            float ty = 0.18f + 0.16f * std::sin((time - delay) * speed * 2.0f);
             trailOrbs[i]->transform.position = glm::vec3(tx, ty, tz);
         }
     }

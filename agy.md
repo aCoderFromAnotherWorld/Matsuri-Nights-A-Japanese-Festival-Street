@@ -12,6 +12,32 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Fix: Magician Natural Downward Elbow Flexion & Arm Kinematics
+
+#### 1. Downward Elbow Biomechanics & Forward/Upward Forearm Flexion (`Objects.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Problem Addressed:**
+  * Previously, the upper arm had an exaggerated upward angle ($-62^\circ$) and the forearm had a positive pitch angle ($+42^\circ$), which caused the elbow joint to thrust upwards into the air above the wrist, unnaturally pointing up rather than hanging down as real human elbows do when bending arms.
+* **Fix & Anatomical Realignment:**
+  * **Downward Upper Arm Hang:** Upper arm rotates downward from the shoulder:
+    * `rightArm->transform.rotation = (-16.0f, 10.0f, -16.0f)`.
+    * Shoulder is at $Y = 1.62\text{m}$, and the elbow descends naturally down to waist level at $Y \approx 1.25\text{m}$.
+    * The elbow is positioned firmly as the lowest point of the upper arm, pointing naturally **DOWNWARDS** towards the stage floor.
+  * **Forward/Upward Forearm Flexion:** Forearm articulates with negative pitch angle from the downward elbow:
+    * `rightForearm->transform.rotation = (-74.0f, 0.0f, 0.0f)`.
+    * Bends smoothly forward and upward from the downward-pointing elbow ($Y = 1.25\text{m} \to Y = 1.27\text{m}$, extending forward along $+Z$ by $+0.36\text{m}$ to the wrist at $Z \approx 0.51\text{m}$).
+    * Hand and wand hold forward over the stage toward the audience and floating magic orb.
+  * **Companion Left Arm Downward Alignment:**
+    * `leftArm->transform.rotation = (-10.0f, 0.0f, 16.0f)` (upper arm hangs downward from shoulder, elbow down at $Y \approx 1.25\text{m}$).
+    * `leftForearm->transform.rotation = (-12.0f, 0.0f, 0.0f)` (relaxed gentle forward flexion).
+    * `leftHand->transform.position = (0.0f, -0.42f, 0.0f)` with `rotation = (0.0f, 0.0f, 180.0f)`, resting flush along the left hip/thigh with fingertips extending downward.
+  * **Kinematics & Animation (`Magician::update`):**
+    * Upper arm shoulder pitch stays strictly between $-20^\circ$ and $-12^\circ$ (elbow NEVER goes upwards throughout the animation).
+    * Forearm articulates smoothly between $-82^\circ$ and $-66^\circ$, gesturing gracefully with the wand while keeping the elbow anchored downwards.
+    * Magic orb helical orbit centered cleanly in front of the forward wand tip ($Z = +0.50\text{m}$).
+
+---
+
 ### [2026-10-10] — Fix: Magician Hand Swap (Right Hand Wand/Orb Grasp & Left Hand Resting Pose)
 
 #### 1. Magician Hand Roles & Articulated Rig Swap (`Objects.h`)
