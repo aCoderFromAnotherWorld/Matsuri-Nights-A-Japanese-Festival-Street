@@ -35,10 +35,13 @@ Every visual mesh in the project belongs to a `SceneNode` in the hierarchical sc
   3. **Stage Spotlight:**
      * Conical spotlight mounted above the stage housing tracking the magician.
      * Inner cutoff angle $\cos(15^\circ)$ and outer cutoff angle $\cos(20^\circ)$ for smooth penumbra falloff.
-* **Shading Mode Switcher (<kbd>P</kbd>):**
-  * `0`: Full Blinn-Phong (Ambient + Diffuse + Specular).
-  * `1`: Diffuse Only (Ambient + Lambert Diffuse, specular disabled).
-  * `2`: Flat Ambient Only (Uniform base illumination).
+* **Realistic Soft Shadow Mapping (PCF Filtered):**
+  * **Depth Pass:** Uses a $2048 \times 2048$ resolution depth framebuffer (`depthMapFBO`) to capture orthographic light-space depth values across the entire festival promenade.
+  * **Adaptive Depth Bias:** Applies a slope-scaled normal bias $\text{bias} = \max(0.0035 \times (1.0 - \mathbf{N} \cdot \mathbf{L}), 0.0006)$ eliminating surface shadow acne while preserving crisp shadow contact.
+  * **16-Sample PCF Penumbra:** Softens shadow contours naturally across building walls, stall awnings, and cobblestones:
+    $$\text{shadow} = \frac{1}{16} \sum_{x=-1}^{2} \sum_{y=-1}^{2} (\text{projCoords.z} - \text{bias} > \text{depthMap}(\text{projCoords.xy} + \text{offset}(x,y)))$$
+  * **Illumination Modulation:** Direct sunlight and moonlight terms are modulated by $(1.0 - \text{shadow})$, while ambient sky illumination remains intact, guaranteeing realistic, naturally illuminated shadows.
+  * **Shadow Toggle (<kbd>V</kbd>):** Dynamically toggles soft shadow mapping on and off for live comparative evaluation.
 
 ### C. Texture Mapping Pipeline (Phase 3)
 * Textures are generated procedurally as valid 24-bit uncompressed `.bmp` files on disk in `assets/textures/` via `src/TextureGenerator.h` and loaded into OpenGL using `stb_image.h` (`src/Texture.h`).

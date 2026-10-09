@@ -95,6 +95,7 @@ int main()
     std::cout << "  [N]             : Smooth Day <-> Festival Night transition\n";
     std::cout << "  [P]             : Cycle Shading Mode (Blinn-Phong -> Diffuse-Only -> Ambient/Flat)\n";
     std::cout << "  [X]             : Toggle Texturing (Textures ON / OFF)\n";
+    std::cout << "  [V]             : Toggle Realistic Soft Shadows (ON / OFF)\n";
     std::cout << "  [Z]             : Toggle Real-Time GPU Ray Tracing Mode (ON / OFF)\n";
     std::cout << "  [F9]            : Capture & Export CPU Ray-Traced Snapshot to BMP\n";
     std::cout << "  [F]             : Launch Firework rocket\n";
@@ -136,7 +137,7 @@ int main()
         }
         else
         {
-            scene.render(basicShader, camera, aspect);
+            scene.render(basicShader, camera, aspect, width, height);
         }
 
         glfwSwapBuffers(window);
@@ -237,6 +238,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         glfwGetFramebufferSize(window, &w, &h);
         g_Scene->captureCPURayTracedSnapshot(camera, w, h, "raytraced_snapshot.bmp");
     }
+
+    // Realistic Shadows: Toggle Soft PCF Shadow Mapping
+    if (key == GLFW_KEY_V && g_Scene)
+        g_Scene->toggleShadows();
 
     // Toggle mouse cursor capture
     if (key == GLFW_KEY_C)

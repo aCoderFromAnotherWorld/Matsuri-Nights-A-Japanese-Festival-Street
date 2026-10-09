@@ -95,6 +95,23 @@ public:
         }
     }
 
+    void drawDepth(const Shader& depthShader) const
+    {
+        if (!visible || isSky || isEmissive)
+            return;
+
+        if (mesh)
+        {
+            depthShader.setMat4("model", worldMatrix);
+            mesh->Draw();
+        }
+
+        for (const auto& child : children)
+        {
+            child->drawDepth(depthShader);
+        }
+    }
+
     glm::vec3 getWorldPosition() const
     {
         return glm::vec3(worldMatrix[3]);

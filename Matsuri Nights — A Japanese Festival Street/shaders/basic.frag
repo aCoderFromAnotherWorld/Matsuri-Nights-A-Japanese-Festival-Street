@@ -4,6 +4,7 @@ out vec4 FragColor;
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
+in vec4 FragPosLightSpace;
 
 struct DirLight {
     vec3 direction;
@@ -65,7 +66,44 @@ uniform bool useTexture;      // Per-node
 uniform sampler2D diffuseTexture;
 uniform float textureTiling;
 
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffColor)
+// Realistic Shadows: PCF Shadow Map Uniforms
+uniform sampler2D shadowMap;
+uniform bool enableShadows;
+
+float calculateShadow(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
+{
+    if (!enableShadows)
+        return 0.0;
+
+    // Perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // Transform to [0, 1] range
+    projCoords = projCoords * 0.5 + 0.5;
+
+    // If fragment is outside light frustum far plane, no shadow
+    if (projCoords.z > 1.0)
+        return 0.0;
+
+    // Adaptive slope-scale depth bias to eliminate shadow acne
+    float bias = max(0.0035 * (1.0 - dot(normal, lightDir)), 0.0006);
+
+    // 16-sample Percentage-Closer Filtering (PCF) with smooth disc
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for(int x = -1; x <= 2; ++x)
+    {
+        for(int y = -1; y <= 2; ++y)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize * 1.2).r;
+            shadow += (projCoords.z - bias > pcfDepth) ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 16.0;
+
+    return shadow;
+}
+
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffColor, float shadow)
 {
     vec3 lightDir = normalize(-light.direction);
     // Diffuse shading
@@ -75,8 +113,8 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffColor)
     float spec = pow(max(dot(normal, halfwayDir), 0.0), max(material.shininess, 1.0));
 
     vec3 ambient = light.ambient * diffColor;
-    vec3 diffuse = light.diffuse * diff * diffColor;
-    vec3 specular = light.specular * (spec * material.specularStrength);
+    vec3 diffuse = (1.0 - shadow) * light.diffuse * diff * diffColor;
+    vec3 specular = (1.0 - shadow) * light.specular * (spec * material.specularStrength);
 
     if (shadingMode == 1)
         return ambient + diffuse;
@@ -182,8 +220,11 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    // 1. Directional Sun/Moonlight
-    vec3 result = CalcDirLight(dirLight, norm, viewDir, baseColor.rgb);
+    // Realistic directional shadow calculation
+    float shadow = calculateShadow(FragPosLightSpace, norm, normalize(-dirLight.direction));
+
+    // 1. Directional Sun/Moonlight with Soft PCF Shadow
+    vec3 result = CalcDirLight(dirLight, norm, viewDir, baseColor.rgb, shadow);
 
     // 2. Dynamic Point Lights (orbiting orb, stall lights, swinging lanterns, fireworks)
     for (int i = 0; i < numActivePointLights; ++i)

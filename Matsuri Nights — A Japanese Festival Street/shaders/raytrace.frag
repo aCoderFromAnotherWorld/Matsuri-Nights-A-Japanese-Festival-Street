@@ -456,24 +456,36 @@ vec3 computeDirectLighting(vec3 hitP, vec3 norm, vec3 viewDir, HitInfo hit)
 {
     vec3 result = vec3(0.0);
 
-    // 1. Ambient Term
+    // 1. Ambient Term with Contact Ambient Occlusion
     vec3 dayAmb = vec3(0.35, 0.38, 0.42);
     vec3 nightAmb = vec3(0.06, 0.08, 0.14);
-    vec3 ambient = mix(dayAmb, nightAmb, uNightFactor) * hit.albedo;
+    float contactAO = clamp(hitP.y * 1.6 + 0.40, 0.40, 1.0);
+    vec3 ambient = mix(dayAmb, nightAmb, uNightFactor) * hit.albedo * contactAO;
     result += ambient;
 
     vec3 shadowOrig = hitP + norm * 0.003;
 
-    // 2. Directional Sun / Moon Light
+    // 2. Directional Sun / Moon Light with Soft Penumbra Shadows
     vec3 sunDir = normalize(mix(vec3(0.4, 0.8, 0.5), vec3(-0.3, 0.7, -0.4), uNightFactor));
     vec3 sunCol = mix(vec3(1.0, 0.95, 0.80), vec3(0.20, 0.28, 0.48), uNightFactor);
 
-    if (!traceShadow(shadowOrig, sunDir, 300.0))
+    vec3 uAxis = normalize(cross(sunDir, vec3(0.0, 1.0, 0.0)));
+    vec3 vAxis = cross(sunDir, uAxis);
+    float sunShadow = 0.0;
+    vec2 pcfOffsets[4] = vec2[4](vec2(-0.02, -0.02), vec2(0.02, -0.02), vec2(-0.02, 0.02), vec2(0.02, 0.02));
+    for (int s = 0; s < 4; ++s)
+    {
+        vec3 jitteredDir = normalize(sunDir + uAxis * pcfOffsets[s].x + vAxis * pcfOffsets[s].y);
+        if (traceShadow(shadowOrig, jitteredDir, 300.0))
+            sunShadow += 0.25;
+    }
+
+    if (sunShadow < 0.99)
     {
         float diff = max(dot(norm, sunDir), 0.0);
         vec3 halfDir = normalize(sunDir + viewDir);
         float spec = pow(max(dot(norm, halfDir), 0.0), hit.shininess) * hit.specularStrength;
-        result += (hit.albedo * diff + vec3(spec)) * sunCol * mix(0.9, 0.4, uNightFactor);
+        result += (1.0 - sunShadow) * (hit.albedo * diff + vec3(spec)) * sunCol * mix(0.9, 0.4, uNightFactor);
     }
 
     // 3. Dynamic Magic Orb Point Light

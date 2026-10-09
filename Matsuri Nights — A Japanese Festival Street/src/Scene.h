@@ -81,6 +81,15 @@ public:
     unsigned int quadVAO = 0;
     unsigned int quadVBO = 0;
 
+    // Realistic Shadows: Directional Depth FBO & Texture
+    const unsigned int SHADOW_WIDTH = 2048;
+    const unsigned int SHADOW_HEIGHT = 2048;
+    unsigned int depthMapFBO = 0;
+    unsigned int depthMap = 0;
+    std::unique_ptr<Shader> shadowDepthShader;
+    bool enableShadows = true;
+    glm::mat4 lightSpaceMatrix{ 1.0f };
+
     Scene()
     {
         meshes.init();
@@ -92,6 +101,7 @@ public:
         initLighting();
         setupInspectables();
         initRayTracing();
+        initShadows();
     }
 
     ~Scene()
@@ -105,6 +115,16 @@ public:
         {
             glDeleteBuffers(1, &quadVBO);
             quadVBO = 0;
+        }
+        if (depthMapFBO != 0)
+        {
+            glDeleteFramebuffers(1, &depthMapFBO);
+            depthMapFBO = 0;
+        }
+        if (depthMap != 0)
+        {
+            glDeleteTextures(1, &depthMap);
+            depthMap = 0;
         }
     }
 
@@ -762,8 +782,73 @@ public:
         updateLighting(dt);
     }
 
-    void render(const Shader& shader, const Camera& camera, float aspectRatio)
+    void initShadows()
     {
+        glGenFramebuffers(1, &depthMapFBO);
+        glGenTextures(1, &depthMap);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        shadowDepthShader = std::make_unique<Shader>("shaders/shadow_depth.vert", "shaders/shadow_depth.frag");
+    }
+
+    void toggleShadows()
+    {
+        enableShadows = !enableShadows;
+        std::cout << "\n========================================================" << std::endl;
+        std::cout << " [SHADOWS] Realistic PCF Soft Shadow Mapping "
+                  << (enableShadows ? "ENABLED (16-sample PCF filter active)" : "DISABLED (Flat unshadowed lighting)") << std::endl;
+        std::cout << "========================================================\n" << std::endl;
+    }
+
+    void renderShadowDepth()
+    {
+        if (!enableShadows || !shadowDepthShader || depthMapFBO == 0) return;
+
+        // Directional light position tracking sun/moon sweep
+        glm::vec3 lightDir = glm::normalize(glm::mix(glm::vec3(0.4f, 0.8f, 0.5f), glm::vec3(-0.3f, 0.7f, -0.4f), dayNightFactor));
+        glm::vec3 sceneCenter(0.0f, 3.0f, 0.0f);
+        glm::vec3 lightPos = sceneCenter + lightDir * 42.0f;
+
+        glm::mat4 lightProjection = glm::ortho(-24.0f, 24.0f, -24.0f, 24.0f, 0.1f, 90.0f);
+        glm::mat4 lightView = glm::lookAt(lightPos, sceneCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+        lightSpaceMatrix = lightProjection * lightView;
+
+        shadowDepthShader->use();
+        shadowDepthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        // Front-face culling eliminates self-shadow acne on architectural hulls
+        glCullFace(GL_FRONT);
+        rootNode->drawDepth(*shadowDepthShader);
+        glCullFace(GL_BACK);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    void render(const Shader& shader, const Camera& camera, float aspectRatio, int screenWidth = 1280, int screenHeight = 720)
+    {
+        // 1. Render depth map from directional light perspective
+        renderShadowDepth();
+
+        // 2. Restore screen viewport and render primary shaded scene
+        glViewport(0, 0, screenWidth, screenHeight);
+
         shader.use();
 
         // Global camera view and projection matrices
@@ -778,6 +863,13 @@ public:
         // Phase 2: Shading mode & Lights
         shader.setInt("shadingMode", shadingMode);
         shader.setBool("enableTextures", enableTextures);
+
+        // Realistic Shadows: Bind Depth Map to Texture Unit 1
+        shader.setBool("enableShadows", enableShadows);
+        shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        shader.setInt("shadowMap", 1);
 
         // Directional Light
         shader.setVec3("dirLight.direction", dirLight.direction);

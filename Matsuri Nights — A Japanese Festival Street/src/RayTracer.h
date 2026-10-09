@@ -393,25 +393,37 @@ namespace CPU_RayTracer
     {
         glm::vec3 result(0.0f);
 
-        // 1. Ambient Term
+        // 1. Ambient Term with Contact Ambient Occlusion
         glm::vec3 dayAmb(0.35f, 0.38f, 0.42f);
         glm::vec3 nightAmb(0.06f, 0.08f, 0.14f);
-        glm::vec3 ambient = glm::mix(dayAmb, nightAmb, data.dayNightFactor) * hit.albedo;
+        float contactAO = std::clamp(hit.p.y * 1.6f + 0.40f, 0.40f, 1.0f);
+        glm::vec3 ambient = glm::mix(dayAmb, nightAmb, data.dayNightFactor) * hit.albedo * contactAO;
         result += ambient;
 
         glm::vec3 shadowOrig = hit.p + hit.normal * 0.003f;
 
-        // 2. Directional Sun / Moon
+        // 2. Directional Sun / Moon with Soft Penumbra Shadows
         glm::vec3 sunDir = glm::normalize(glm::mix(glm::vec3(0.4f, 0.8f, 0.5f), glm::vec3(-0.3f, 0.7f, -0.4f), data.dayNightFactor));
         glm::vec3 sunCol = glm::mix(glm::vec3(1.0f, 0.95f, 0.80f), glm::vec3(0.20f, 0.28f, 0.48f), data.dayNightFactor);
 
-        Ray sunShadowRay(shadowOrig, sunDir);
-        if (!traceShadow(sunShadowRay, data, 300.0f))
+        glm::vec3 uAxis = glm::normalize(glm::cross(sunDir, glm::vec3(0.0f, 1.0f, 0.0f)));
+        glm::vec3 vAxis = glm::cross(sunDir, uAxis);
+        float sunShadow = 0.0f;
+        glm::vec2 pcfOffsets[4] = { glm::vec2(-0.02f, -0.02f), glm::vec2(0.02f, -0.02f), glm::vec2(-0.02f, 0.02f), glm::vec2(0.02f, 0.02f) };
+        for (int s = 0; s < 4; ++s)
+        {
+            glm::vec3 jitteredDir = glm::normalize(sunDir + uAxis * pcfOffsets[s].x + vAxis * pcfOffsets[s].y);
+            Ray sunShadowRay(shadowOrig, jitteredDir);
+            if (traceShadow(sunShadowRay, data, 300.0f))
+                sunShadow += 0.25f;
+        }
+
+        if (sunShadow < 0.99f)
         {
             float diff = std::max(glm::dot(hit.normal, sunDir), 0.0f);
             glm::vec3 halfDir = glm::normalize(sunDir + viewDir);
             float spec = std::pow(std::max(glm::dot(hit.normal, halfDir), 0.0f), hit.shininess) * hit.specularStrength;
-            result += (hit.albedo * diff + glm::vec3(spec)) * sunCol * glm::mix(0.9f, 0.4f, data.dayNightFactor);
+            result += (1.0f - sunShadow) * (hit.albedo * diff + glm::vec3(spec)) * sunCol * glm::mix(0.9f, 0.4f, data.dayNightFactor);
         }
 
         // 3. Dynamic Magic Orb Light

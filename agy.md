@@ -12,6 +12,42 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-09] — Implementation of Realistic Shadow Effects (16-Sample PCF Soft Shadow Mapping & Ray-Traced Penumbra)
+
+#### 1. Directional Light PCF Soft Shadow Mapping (Primary Rasterizer Pipeline)
+* **Files Added / Modified:**
+  * Added [`Matsuri Nights — A Japanese Festival Street/shaders/shadow_depth.vert`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/shadow_depth.vert)
+  * Added [`Matsuri Nights — A Japanese Festival Street/shaders/shadow_depth.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/shadow_depth.frag)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/shaders/basic.vert`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/basic.vert)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/shaders/basic.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/basic.frag)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/src/SceneNode.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/SceneNode.h)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/Main.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp)
+* **Shadow Architecture & Engineering:**
+  * **High-Resolution Depth FBO:** $2048 \times 2048$ 32-bit floating point depth map with `GL_CLAMP_TO_BORDER` ($1.0$ border) to eliminate out-of-frustum artifacting.
+  * **Light-Space Projection Matrix:** Computes dynamic orthographic projection matrix $\mathbf{M}_{\text{light}} = \mathbf{P}_{\text{ortho}} \times \mathbf{V}_{\text{light}}$ centered on the festival street avenue ($48\text{m} \times 48\text{m} \times 90\text{m}$ volume).
+  * **Front-Face Culling (`glCullFace(GL_FRONT)`):** Depth pass renders solid back-faces into the shadow map, eliminating self-shadow acne without requiring exaggerated depth offsets.
+  * **Fast Depth Traversal (`SceneNode::drawDepth`):** Renders visible non-emissive meshes directly without texture or material uploads, maintaining high frame rates.
+  * **Adaptive Slope-Scaled Bias:** $\text{bias} = \max(0.0035 \times (1.0 - \mathbf{N} \cdot \mathbf{L}), 0.0006)$ dynamically offsets depth comparisons according to surface incline.
+  * **16-Sample Percentage-Closer Filtering (PCF):** Evaluates a $4 \times 4$ bilinear box kernel across neighbor texels to produce natural, smooth penumbra edges along building silhouettes, Torii beams, stall canopies, and pedestrians.
+  * **Celestial Motion Sync:** As Day/Night transitions (<kbd>N</kbd>), cast shadows smoothly pivot, lengthen, and soften across the cobblestone street.
+  * **Interactive Shadow Toggle (<kbd>V</kbd>):** Hotkey toggles shadow calculations on and off live with console confirmation.
+
+#### 2. Ray-Traced Soft Penumbra Shadows & Contact Ambient Occlusion
+* **Files Modified:**
+  * Updated [`Matsuri Nights — A Japanese Festival Street/shaders/raytrace.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/raytrace.frag)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/src/RayTracer.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/RayTracer.h)
+* **Features:**
+  * Multi-sample jittered shadow rays distributed across celestial angular diameter to produce soft, physically accurate penumbra in both the real-time GPU ray tracer and the multi-threaded CPU snapshot renderer.
+  * Contact ambient occlusion factor darkens crevices near ground level, realistically grounding pillars, stalls, and figures.
+
+#### 3. Documentation & Verification
+* Updated [`controls.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/controls.md) with <kbd>V</kbd> keybinding details.
+* Updated [`color_changes.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/color_changes.md) with shadow mapping formulas and illumination modulation.
+* Verified zero-warning, zero-error MSBuild compilation.
+
+---
+
 ### [2026-10-09] — Implementation of Dual Ray Tracing Architecture (Real-Time GPU Mode + CPU Snapshot Export)
 
 #### 1. Real-Time GPU Ray Tracer (Interactive Full-Screen Pass)

@@ -23,6 +23,7 @@
 | **<kbd>F</kbd>** | Manually launch a Firework rocket |
 | **<kbd>P</kbd>** | Cycle Shading Mode (Blinn-Phong $\rightarrow$ Diffuse Only $\rightarrow$ Ambient Only) |
 | **<kbd>X</kbd>** | Toggle Diffuse Textures ON / OFF |
+| **<kbd>V</kbd>** | Toggle **Realistic PCF Soft Shadows** ON / OFF (16-sample filter & shadow acne bias) |
 | **<kbd>Z</kbd>** | Toggle **Real-Time GPU Ray Tracing Mode** ON / OFF (60+ FPS Whitted Ray Tracer) |
 | **<kbd>F9</kbd>** | Capture & Export **CPU Multi-Threaded Ray-Traced Snapshot** to `raytraced_snapshot.bmp` |
 | **<kbd>T</kbd>** | Cycle selectable object for **Live Inspection & Transformation** |
@@ -95,6 +96,12 @@ Press the number keys to quickly showcase key areas to the evaluator:
   * Globally toggles texture sampling on and off.
   * When ON, procedural high-res textures (`wood_timber.bmp`, `roof_tiles.bmp`, `stone_pavement.bmp`, `tatami_cloth.bmp`, `gold_leaf.bmp`, `sakura_bark.bmp`, `lantern_paper.bmp`) are mapped across the scene with UV tiling and modulated by base color.
   * When OFF, clean untextured base material colors are rendered for comparative evaluation.
+* **Toggle Realistic Soft Shadows (<kbd>V</kbd>):**
+  * Toggles **Directional Light Soft Shadow Mapping** with a 16-sample Percentage-Closer Filtering (PCF) kernel and slope-scaled depth bias:
+    * **Depth Pass (2048x2048 FBO):** Renders scene depth from the dynamic Sun / Moon light viewpoint with front-face culling to eliminate peter-panning and shadow acne.
+    * **16-Sample PCF Penumbra:** Softens shadow contours naturally across building walls, stall awnings, Torii crossbeams, and street pavement.
+    * **Day/Night Sweep:** As the celestial sun/moon rotates with <kbd>N</kbd>, cast shadows dynamically lengthen, tilt, and soften across the street!
+    * **Comparison Mode:** Press <kbd>V</kbd> to switch between realistic soft shadows and unshadowed lighting for presentation and evaluation.
 * **Toggle Real-Time GPU Ray Tracing (<kbd>Z</kbd>):**
   * Instantly switches the entire rendering pipeline from standard rasterization to a full **Real-Time GPU Whitted Ray Tracer** running at 60+ FPS (`shaders/raytrace.frag`):
     * **Per-Pixel Primary Rays:** Cast from camera origin through view plane screen pixels.
