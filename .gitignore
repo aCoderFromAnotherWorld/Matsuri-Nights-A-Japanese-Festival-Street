@@ -31,3 +31,6 @@ $RECYCLE.BIN/
 # Ray tracing local snapshots
 raytraced_snapshot.bmp
 *.snapshot.bmp
+
+# Generated local texture assets
+/assets/

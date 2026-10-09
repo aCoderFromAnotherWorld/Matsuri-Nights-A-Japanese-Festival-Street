@@ -20,6 +20,22 @@ struct SceneMeshes
     Mesh sphere;
     Mesh plane;
 
+    // Curved Geometry Primitives
+    Mesh curvedKasagi;
+    Mesh curvedShimaki;
+    Mesh catenaryRope;
+    Mesh bonsaiTrunkCurved;
+    Mesh bonsaiBranchCurved1;
+    Mesh bonsaiBranchCurved2;
+    Mesh ikebanaStemShin;
+    Mesh ikebanaStemSoe;
+    Mesh ikebanaStemHikae;
+    Mesh ikebanaStemAccent;
+    Mesh planterStemCurvedA;
+    Mesh planterStemCurvedB;
+    Mesh kokedamaVineCurved1;
+    Mesh kokedamaVineCurved2;
+
     void init()
     {
         cube = Primitives::createCube(1.0f);
@@ -27,6 +43,54 @@ struct SceneMeshes
         cone = Primitives::createCone(0.5f, 1.0f, 24);
         sphere = Primitives::createSphere(0.5f, 20, 24);
         plane = Primitives::createPlane(1.0f, 1.0f, 4, 4);
+
+        // 1. Curved Torii Gate Kasagi & Shimaki (Iconic upward sori arch & beveled roof cap)
+        curvedKasagi = Primitives::createCurvedBeam(15.4f, 1.25f, 0.55f, 0.40f, 1.15f, 32, true);
+        curvedShimaki = Primitives::createCurvedBeam(14.2f, 0.95f, 0.65f, 0.28f, 1.08f, 32, false);
+
+        // 2. Continuous Catenary Rope
+        catenaryRope = Primitives::createCatenaryRope(3.8f, 6.20f, 0.65f, 0.035f, 36, 12);
+
+        // 3. Curved Bonsai Trunk & Branches (Windswept Moyogi style spline)
+        bonsaiTrunkCurved = Primitives::createSplineTube(
+            { { 0.0f, 0.0f, 0.0f }, { -0.06f, 0.12f, 0.02f }, { -0.02f, 0.26f, 0.04f }, { 0.04f, 0.38f, -0.01f }, { 0.01f, 0.48f, 0.01f } },
+            0.065f, 0.030f, 24, 14, 2.0f, true, true);
+        bonsaiBranchCurved1 = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { -0.05f, 0.03f, 0.02f }, { -0.11f, 0.05f, 0.03f }, { -0.16f, 0.04f, 0.05f }),
+            0.030f, 0.016f, 16, 12, 1.0f, true, true);
+        bonsaiBranchCurved2 = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { 0.05f, 0.03f, -0.02f }, { 0.11f, 0.05f, -0.04f }, { 0.16f, 0.04f, -0.06f }),
+            0.028f, 0.015f, 16, 12, 1.0f, true, true);
+
+        // 4. Curved Ikebana Stems (Living lines: Shin, Soe, Hikae, Accent)
+        ikebanaStemShin = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { 0.02f, 0.14f, -0.02f }, { 0.05f, 0.26f, -0.04f }, { 0.07f, 0.38f, -0.05f }),
+            0.018f, 0.011f, 20, 14, 1.0f, true, true);
+        ikebanaStemSoe = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { -0.05f, 0.10f, 0.04f }, { -0.12f, 0.20f, 0.09f }, { -0.15f, 0.30f, 0.12f }),
+            0.016f, 0.010f, 20, 14, 1.0f, true, true);
+        ikebanaStemHikae = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { 0.07f, 0.08f, -0.05f }, { 0.15f, 0.16f, -0.12f }, { 0.20f, 0.22f, -0.18f }),
+            0.015f, 0.009f, 20, 14, 1.0f, true, true);
+        ikebanaStemAccent = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { -0.04f, 0.06f, -0.04f }, { -0.08f, 0.13f, -0.08f }, { -0.11f, 0.20f, -0.11f }),
+            0.014f, 0.008f, 18, 12, 1.0f, true, true);
+
+        // 5. Curved Window Planter Flower Stems
+        planterStemCurvedA = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { 0.02f, 0.05f, 0.01f }, { 0.035f, 0.10f, 0.02f }, { 0.03f, 0.15f, 0.025f }),
+            0.011f, 0.008f, 16, 12, 1.0f, true, true);
+        planterStemCurvedB = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { -0.015f, 0.05f, 0.015f }, { -0.03f, 0.10f, 0.025f }, { -0.025f, 0.15f, 0.03f }),
+            0.011f, 0.008f, 16, 12, 1.0f, true, true);
+
+        // 6. Curved Hanging Kokedama Vines
+        kokedamaVineCurved1 = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { 0.03f, -0.08f, 0.02f }, { 0.06f, -0.18f, 0.04f }, { 0.04f, -0.28f, 0.05f }),
+            0.016f, 0.009f, 18, 12, 1.0f, true, true);
+        kokedamaVineCurved2 = Primitives::createBezierTube(
+            Curves::Bezier3({ 0.0f, 0.0f, 0.0f }, { -0.02f, -0.07f, 0.03f }, { -0.05f, -0.17f, 0.05f }, { -0.03f, -0.27f, 0.06f }),
+            0.016f, 0.009f, 18, 12, 1.0f, true, true);
     }
 };
 
@@ -134,45 +198,23 @@ inline std::shared_ptr<SceneNode> createBonsaiTree(SceneMeshes& meshes, const st
     rock->color = rockColor;
     root->addChild(rock);
 
-    // Gnarled Twisting Bonsai Trunk (multi-segment windswept curve)
-    auto tBase = std::make_shared<SceneNode>(prefix + "_TrunkBase");
-    tBase->mesh = &meshes.cylinder;
-    tBase->transform.position = glm::vec3(-0.06f, 0.22f, 0.02f);
-    tBase->transform.rotation = glm::vec3(-8.0f, 15.0f, 14.0f);
-    tBase->transform.scale = glm::vec3(0.07f, 0.20f, 0.07f);
-    tBase->color = trunkWood;
-    root->addChild(tBase);
+    // Gnarled Twisting Bonsai Trunk (continuous organic swept 3D spline curve)
+    auto trunk = std::make_shared<SceneNode>(prefix + "_TrunkCurved");
+    trunk->mesh = &meshes.bonsaiTrunkCurved;
+    trunk->transform.position = glm::vec3(0.0f, 0.12f, 0.0f);
+    trunk->color = trunkWood;
+    root->addChild(trunk);
 
-    auto tMid = std::make_shared<SceneNode>(prefix + "_TrunkMid");
-    tMid->mesh = &meshes.cylinder;
-    tMid->transform.position = glm::vec3(-0.02f, 0.38f, 0.03f);
-    tMid->transform.rotation = glm::vec3(12.0f, -20.0f, -16.0f);
-    tMid->transform.scale = glm::vec3(0.055f, 0.18f, 0.055f);
-    tMid->color = trunkWood;
-    root->addChild(tMid);
-
-    auto tTop = std::make_shared<SceneNode>(prefix + "_TrunkTop");
-    tTop->mesh = &meshes.cylinder;
-    tTop->transform.position = glm::vec3(0.03f, 0.50f, 0.01f);
-    tTop->transform.rotation = glm::vec3(-6.0f, 30.0f, 18.0f);
-    tTop->transform.scale = glm::vec3(0.04f, 0.14f, 0.04f);
-    tTop->color = trunkWood;
-    root->addChild(tTop);
-
-    // Miniature Bonsai Branches
+    // Miniature Bonsai Branches (swept curved limbs arching gracefully under foliage pads)
     auto br1 = std::make_shared<SceneNode>(prefix + "_Branch1");
-    br1->mesh = &meshes.cylinder;
-    br1->transform.position = glm::vec3(-0.09f, 0.35f, 0.05f);
-    br1->transform.rotation = glm::vec3(-15.0f, 10.0f, 55.0f);
-    br1->transform.scale = glm::vec3(0.035f, 0.16f, 0.035f);
+    br1->mesh = &meshes.bonsaiBranchCurved1;
+    br1->transform.position = glm::vec3(-0.02f, 0.38f, 0.04f);
     br1->color = trunkWood;
     root->addChild(br1);
 
     auto br2 = std::make_shared<SceneNode>(prefix + "_Branch2");
-    br2->mesh = &meshes.cylinder;
-    br2->transform.position = glm::vec3(0.08f, 0.44f, -0.04f);
-    br2->transform.rotation = glm::vec3(20.0f, -40.0f, -50.0f);
-    br2->transform.scale = glm::vec3(0.03f, 0.15f, 0.03f);
+    br2->mesh = &meshes.bonsaiBranchCurved2;
+    br2->transform.position = glm::vec3(0.04f, 0.44f, -0.01f);
     br2->color = trunkWood;
     root->addChild(br2);
 
@@ -254,11 +296,11 @@ inline std::shared_ptr<SceneNode> createWindowPlanterBox(SceneMeshes& meshes, co
         float bloomY = 0.30f + ((f % 2) * 0.04f);
         float stemH = bloomY - 0.18f;
 
-        // Slender green stem rooted directly in the soil
+        // Natural curved green stem rooted directly in the soil
         auto stem = std::make_shared<SceneNode>(prefix + "_FlowerStem_" + std::to_string(f));
-        stem->mesh = &meshes.cylinder;
-        stem->transform.position = glm::vec3(fx, 0.18f + stemH * 0.5f, fz);
-        stem->transform.scale = glm::vec3(0.012f, stemH, 0.012f);
+        stem->mesh = (f % 2 == 0) ? &meshes.planterStemCurvedA : &meshes.planterStemCurvedB;
+        stem->transform.position = glm::vec3(fx, 0.18f, fz);
+        stem->transform.scale = glm::vec3(1.0f, stemH / 0.15f, 1.0f);
         stem->color = stemGreen;
         root->addChild(stem);
 
@@ -328,21 +370,20 @@ inline std::shared_ptr<SceneNode> createHangingKokedama(SceneMeshes& meshes, con
     mossBall->color = mossBallCol;
     root->addChild(mossBall);
 
-    // Cascading Foliage Sprays & Ivy Trailing Downward
+    // Cascading Foliage Sprays & Ivy Trailing Downward along graceful 3D Bézier curves
     for (int v = 0; v < 4; ++v) {
         float angle = (float)v * 90.0f;
         float rad = glm::radians(angle);
         auto vine = std::make_shared<SceneNode>(prefix + "_Vine_" + std::to_string(v));
-        vine->mesh = &meshes.cylinder;
-        vine->transform.position = glm::vec3(std::cos(rad) * 0.11f, ballY - 0.16f, std::sin(rad) * 0.11f);
-        vine->transform.rotation = glm::vec3(15.0f * std::sin(rad), 0.0f, -15.0f * std::cos(rad));
-        vine->transform.scale = glm::vec3(0.025f, 0.26f, 0.025f);
+        vine->mesh = (v % 2 == 0) ? &meshes.kokedamaVineCurved1 : &meshes.kokedamaVineCurved2;
+        vine->transform.position = glm::vec3(std::cos(rad) * 0.11f, ballY - 0.04f, std::sin(rad) * 0.11f);
+        vine->transform.rotation = glm::vec3(0.0f, angle, 0.0f);
         vine->color = ivyFoliage;
         root->addChild(vine);
 
         auto blossom = std::make_shared<SceneNode>(prefix + "_Blossom_" + std::to_string(v));
         blossom->mesh = &meshes.sphere;
-        blossom->transform.position = glm::vec3(std::cos(rad) * 0.14f, ballY - 0.30f, std::sin(rad) * 0.14f);
+        blossom->transform.position = glm::vec3(std::cos(rad) * 0.15f, ballY - 0.32f, std::sin(rad) * 0.15f);
         blossom->transform.scale = glm::vec3(0.06f, 0.06f, 0.06f);
         blossom->color = (v % 2 == 0) ? glm::vec4(0.98f, 0.42f, 0.62f, 1.0f) : glm::vec4(0.98f, 0.88f, 0.25f, 1.0f);
         root->addChild(blossom);
@@ -411,23 +452,34 @@ inline std::shared_ptr<SceneNode> createIkebanaVase(SceneMeshes& meshes, const s
     rim->specularStrength = 0.80f;
     root->addChild(rim);
 
-    // Asymmetric Ikebana Flower Stems & Blossoms (Hierarchical Connected Floral Anatomy)
+    // Asymmetric Ikebana Flower Stems & Blossoms (Living Curves: Shin, Soe, Hikae, Accent)
     struct FlowerSpec {
         glm::vec3 anchorPos;
         glm::vec3 stemRot;
-        float stemLen;
+        const Mesh* stemMesh;
+        glm::vec3 tipPos;
+        glm::vec3 leaf1Pos;
+        glm::vec3 leaf2Pos;
         glm::vec4 bloomColor;
         float bloomScale;
     };
     std::vector<FlowerSpec> flowers = {
         // 1. Tall Shin (Truth/Heaven) line: Crimson Camellia (Tsubaki)
-        { glm::vec3(0.01f, 0.48f, -0.01f), glm::vec3(10.0f, 0.0f, -8.0f), 0.38f, glm::vec4(0.88f, 0.14f, 0.18f, 1.0f), 0.12f },
+        { glm::vec3(0.01f, 0.48f, -0.01f), glm::vec3(5.0f, 0.0f, -4.0f), &meshes.ikebanaStemShin,
+          glm::vec3(0.07f, 0.38f, -0.05f), glm::vec3(0.03f, 0.18f, -0.02f), glm::vec3(0.05f, 0.29f, -0.04f),
+          glm::vec4(0.88f, 0.14f, 0.18f, 1.0f), 0.12f },
         // 2. Medium Soe (Supporting/Man) line: Soft Pink Peony (Botan)
-        { glm::vec3(-0.02f, 0.48f, 0.02f), glm::vec3(-14.0f, 35.0f, 20.0f), 0.30f, glm::vec4(0.96f, 0.58f, 0.74f, 1.0f), 0.11f },
+        { glm::vec3(-0.02f, 0.48f, 0.02f), glm::vec3(-6.0f, 20.0f, 10.0f), &meshes.ikebanaStemSoe,
+          glm::vec3(-0.15f, 0.30f, 0.12f), glm::vec3(-0.07f, 0.14f, 0.06f), glm::vec3(-0.12f, 0.22f, 0.10f),
+          glm::vec4(0.96f, 0.58f, 0.74f, 1.0f), 0.11f },
         // 3. Slanted Hikae (Restrained/Earth) line: Golden Plum Blossom (Ume)
-        { glm::vec3(0.03f, 0.48f, 0.02f), glm::vec3(22.0f, -40.0f, -22.0f), 0.25f, glm::vec4(0.98f, 0.82f, 0.16f, 1.0f), 0.09f },
+        { glm::vec3(0.03f, 0.48f, 0.02f), glm::vec3(12.0f, -25.0f, -10.0f), &meshes.ikebanaStemHikae,
+          glm::vec3(0.20f, 0.22f, -0.18f), glm::vec3(0.10f, 0.11f, -0.08f), glm::vec3(0.16f, 0.17f, -0.13f),
+          glm::vec4(0.98f, 0.82f, 0.16f, 1.0f), 0.09f },
         // 4. Low accent line: Imperial Violet Iris (Ayame)
-        { glm::vec3(-0.02f, 0.48f, -0.03f), glm::vec3(-18.0f, -120.0f, 16.0f), 0.22f, glm::vec4(0.55f, 0.20f, 0.78f, 1.0f), 0.10f }
+        { glm::vec3(-0.02f, 0.48f, -0.03f), glm::vec3(-8.0f, -60.0f, 8.0f), &meshes.ikebanaStemAccent,
+          glm::vec3(-0.11f, 0.20f, -0.11f), glm::vec3(-0.05f, 0.09f, -0.05f), glm::vec3(-0.09f, 0.15f, -0.09f),
+          glm::vec4(0.55f, 0.20f, 0.78f, 1.0f), 0.10f }
     };
 
     for (size_t i = 0; i < flowers.size(); ++i) {
@@ -439,44 +491,42 @@ inline std::shared_ptr<SceneNode> createIkebanaVase(SceneMeshes& meshes, const s
         branchRoot->transform.rotation = fl.stemRot;
         root->addChild(branchRoot);
 
-        // Slender stem cylinder extending from base (Y=0) up to tip (Y=stemLen)
+        // Swept curved 3D stem tube extending gracefully along the Ikebana living line
         auto stem = std::make_shared<SceneNode>(prefix + "_Stem_" + std::to_string(i));
-        stem->mesh = &meshes.cylinder;
-        stem->transform.position = glm::vec3(0.0f, fl.stemLen * 0.5f, 0.0f);
-        stem->transform.scale = glm::vec3(0.016f, fl.stemLen, 0.016f);
+        stem->mesh = fl.stemMesh;
         stem->color = stemColor;
         branchRoot->addChild(stem);
 
-        // Lower green leaf sprouting naturally off the stem
+        // Lower green leaf sprouting naturally off the curved stem
         auto leaf1 = std::make_shared<SceneNode>(prefix + "_Leaf1_" + std::to_string(i));
         leaf1->mesh = &meshes.cube;
-        leaf1->transform.position = glm::vec3(0.02f, fl.stemLen * 0.42f, 0.0f);
+        leaf1->transform.position = fl.leaf1Pos;
         leaf1->transform.rotation = glm::vec3(10.0f, 0.0f, -42.0f);
         leaf1->transform.scale = glm::vec3(0.008f, 0.10f, 0.045f);
         leaf1->color = leafColor;
         branchRoot->addChild(leaf1);
 
-        // Upper green leaf branching out opposite the lower leaf
+        // Upper green leaf branching out opposite the lower leaf along the curve
         auto leaf2 = std::make_shared<SceneNode>(prefix + "_Leaf2_" + std::to_string(i));
         leaf2->mesh = &meshes.cube;
-        leaf2->transform.position = glm::vec3(-0.02f, fl.stemLen * 0.68f, 0.0f);
+        leaf2->transform.position = fl.leaf2Pos;
         leaf2->transform.rotation = glm::vec3(-10.0f, 180.0f, -38.0f);
         leaf2->transform.scale = glm::vec3(0.008f, 0.08f, 0.038f);
         leaf2->color = leafColor;
         branchRoot->addChild(leaf2);
 
-        // Green calyx cup firmly attached to the stem tip cradling the blossom
+        // Green calyx cup firmly attached to the curved stem tip cradling the blossom
         auto calyx = std::make_shared<SceneNode>(prefix + "_Calyx_" + std::to_string(i));
         calyx->mesh = &meshes.cylinder;
-        calyx->transform.position = glm::vec3(0.0f, fl.stemLen - 0.012f, 0.0f);
+        calyx->transform.position = fl.tipPos;
         calyx->transform.scale = glm::vec3(fl.bloomScale * 0.50f, 0.025f, fl.bloomScale * 0.50f);
         calyx->color = stemColor;
         branchRoot->addChild(calyx);
 
-        // Central blossom sphere positioned seamlessly at the stem tip
+        // Central blossom sphere positioned seamlessly at the curved stem tip
         auto bloom = std::make_shared<SceneNode>(prefix + "_Bloom_" + std::to_string(i));
         bloom->mesh = &meshes.sphere;
-        bloom->transform.position = glm::vec3(0.0f, fl.stemLen + fl.bloomScale * 0.22f, 0.0f);
+        bloom->transform.position = fl.tipPos + glm::vec3(0.0f, fl.bloomScale * 0.22f, 0.0f);
         bloom->transform.scale = glm::vec3(fl.bloomScale, fl.bloomScale * 0.70f, fl.bloomScale);
         bloom->color = fl.bloomColor;
         branchRoot->addChild(bloom);
@@ -487,7 +537,7 @@ inline std::shared_ptr<SceneNode> createIkebanaVase(SceneMeshes& meshes, const s
             float pr = glm::radians(pAngle);
             auto petal = std::make_shared<SceneNode>(prefix + "_Petal_" + std::to_string(i) + "_" + std::to_string(p));
             petal->mesh = &meshes.sphere;
-            petal->transform.position = glm::vec3(std::cos(pr) * fl.bloomScale * 0.32f, fl.stemLen + fl.bloomScale * 0.20f, std::sin(pr) * fl.bloomScale * 0.32f);
+            petal->transform.position = fl.tipPos + glm::vec3(std::cos(pr) * fl.bloomScale * 0.32f, fl.bloomScale * 0.20f, std::sin(pr) * fl.bloomScale * 0.32f);
             petal->transform.scale = glm::vec3(fl.bloomScale * 0.52f, fl.bloomScale * 0.36f, fl.bloomScale * 0.52f);
             petal->color = fl.bloomColor;
             branchRoot->addChild(petal);
@@ -496,7 +546,7 @@ inline std::shared_ptr<SceneNode> createIkebanaVase(SceneMeshes& meshes, const s
         // Golden stamen center firmly embedded in the middle of the blossom
         auto stamen = std::make_shared<SceneNode>(prefix + "_Stamen_" + std::to_string(i));
         stamen->mesh = &meshes.sphere;
-        stamen->transform.position = glm::vec3(0.0f, fl.stemLen + fl.bloomScale * 0.40f, 0.0f);
+        stamen->transform.position = fl.tipPos + glm::vec3(0.0f, fl.bloomScale * 0.40f, 0.0f);
         stamen->transform.scale = glm::vec3(fl.bloomScale * 0.36f, fl.bloomScale * 0.28f, fl.bloomScale * 0.36f);
         stamen->color = glm::vec4(0.98f, 0.88f, 0.20f, 1.0f);
         branchRoot->addChild(stamen);
@@ -2006,19 +2056,17 @@ public:
         gakuzuka->color = black;
         root->addChild(gakuzuka);
 
-        // Sub-top crossbeam (Shimaki)
+        // Sub-top curved crossbeam (Shimaki) with authentic Japanese upward sori
         auto shimaki = std::make_shared<SceneNode>("Torii_Shimaki");
-        shimaki->mesh = &meshes.cube;
+        shimaki->mesh = &meshes.curvedShimaki;
         shimaki->transform.position = glm::vec3(0.0f, 10.1f, 0.0f);
-        shimaki->transform.scale = glm::vec3(14.0f, 0.65f, 0.95f);
         shimaki->color = vermilion;
         root->addChild(shimaki);
 
-        // Upper main curved crossbeam (Kasagi) with black roof cap
+        // Upper main curved crossbeam (Kasagi) with dramatic upward sori and beveled roof cap
         auto kasagi = std::make_shared<SceneNode>("Torii_Kasagi");
-        kasagi->mesh = &meshes.cube;
+        kasagi->mesh = &meshes.curvedKasagi;
         kasagi->transform.position = glm::vec3(0.0f, 10.65f, 0.0f);
-        kasagi->transform.scale = glm::vec3(15.2f, 0.5f, 1.2f);
         kasagi->color = black;
         root->addChild(kasagi);
     }
@@ -2042,6 +2090,12 @@ public:
     std::shared_ptr<SceneNode> root;
     std::vector<FallingPetal> petals;
 
+    // Organic 3D Curved Geometry Meshes (Swept Spline, Bishop frames, Bézier branches)
+    std::shared_ptr<Mesh> trunkMesh;
+    std::vector<std::shared_ptr<Mesh>> rootMeshes;
+    std::vector<std::shared_ptr<Mesh>> boughMeshes;
+    std::vector<std::shared_ptr<Mesh>> branchMeshes;
+
     SakuraTree(SceneMeshes& meshes, const glm::vec3& pos)
     {
         root = std::make_shared<SceneNode>("Sakura_Tree");
@@ -2050,88 +2104,91 @@ public:
         glm::vec4 bark(0.32f, 0.20f, 0.14f, 1.0f);
         glm::vec4 barkDark(0.24f, 0.15f, 0.10f, 1.0f);
 
-        // 1. Organic Buttress Root Spurs anchoring trunk into ground
-        struct RootDef { float angle; float length; float thickness; };
-        RootDef rootDefs[5] = {
-            { 15.0f,  2.2f, 0.45f },
-            { 85.0f,  2.0f, 0.40f },
-            { 160.0f, 2.4f, 0.48f },
-            { 230.0f, 1.9f, 0.38f },
-            { 305.0f, 2.3f, 0.44f }
-        };
+        // 1. Organic Buttress Root Spurs anchoring trunk into ground along 3D Bézier curves
+        float rootAngles[5] = { 15.0f, 85.0f, 160.0f, 230.0f, 305.0f };
+        float rootDist[5]   = { 2.2f,  2.0f,  2.4f,   1.9f,   2.3f };
         for (int r = 0; r < 5; ++r) {
-            float rad = glm::radians(rootDefs[r].angle);
+            float rad = glm::radians(rootAngles[r]);
+            float cosR = std::cos(rad);
+            float sinR = std::sin(rad);
+            float len = rootDist[r];
+
+            glm::vec3 p0(cosR * 0.55f, 0.45f, sinR * 0.55f);
+            glm::vec3 p1(cosR * 1.10f, 0.22f, sinR * 1.10f);
+            glm::vec3 p2(cosR * 1.65f, 0.08f, sinR * 1.65f);
+            glm::vec3 p3(cosR * len,  -0.05f, sinR * len);
+
+            auto rMesh = std::make_shared<Mesh>(Curves::createBezierTube(
+                Curves::Bezier3(p0, p1, p2, p3), 0.32f, 0.10f, 16, 12, 1.0f, true, true));
+            rootMeshes.push_back(rMesh);
+
             auto rootSpur = std::make_shared<SceneNode>("Sakura_Root_" + std::to_string(r));
-            rootSpur->mesh = &meshes.cylinder;
-            rootSpur->transform.position = glm::vec3(std::cos(rad) * 0.95f, 0.25f, std::sin(rad) * 0.95f);
-            rootSpur->transform.rotation = glm::vec3(52.0f * std::sin(rad), -rootDefs[r].angle, -52.0f * std::cos(rad));
-            rootSpur->transform.scale = glm::vec3(rootDefs[r].thickness, rootDefs[r].length, rootDefs[r].thickness);
+            rootSpur->mesh = rMesh.get();
             rootSpur->color = barkDark;
             root->addChild(rootSpur);
         }
 
-        // 2. Organic Multi-Segment Gnarled Curved Trunk (tapers naturally)
-        auto trunkBase = std::make_shared<SceneNode>("Trunk_Base");
-        trunkBase->mesh = &meshes.cylinder;
-        trunkBase->transform.position = glm::vec3(0.0f, 1.20f, 0.0f);
-        trunkBase->transform.rotation = glm::vec3(3.0f, 0.0f, -4.0f);
-        trunkBase->transform.scale = glm::vec3(1.35f, 2.40f, 1.35f);
-        trunkBase->color = bark;
-        root->addChild(trunkBase);
+        // 2. Organic Continuous Swept 3D Spline Trunk (natural flaring base, gnarled twists, tapers to crown)
+        std::vector<glm::vec3> trunkSpline = {
+            {  0.00f, -0.25f,  0.00f }, // root flare base in earth
+            {  0.00f,  0.00f,  0.00f }, // ground level
+            { -0.16f,  1.50f,  0.10f }, // gentle forward-left organic sweep
+            { -0.18f,  3.10f, -0.06f }, // counter-curve backward-left
+            {  0.06f,  4.50f,  0.04f }, // gentle return towards center
+            {  0.00f,  5.50f,  0.00f }  // crown fork junction
+        };
+        trunkMesh = std::make_shared<Mesh>(Curves::createSplineTube(trunkSpline, 0.76f, 0.42f, 32, 18, 3.0f, true, true));
+        auto trunk = std::make_shared<SceneNode>("Sakura_Trunk_Curved");
+        trunk->mesh = trunkMesh.get();
+        trunk->color = bark;
+        root->addChild(trunk);
 
-        auto trunkMid = std::make_shared<SceneNode>("Trunk_Mid");
-        trunkMid->mesh = &meshes.cylinder;
-        trunkMid->transform.position = glm::vec3(-0.15f, 3.20f, 0.12f);
-        trunkMid->transform.rotation = glm::vec3(-5.0f, 20.0f, 8.0f);
-        trunkMid->transform.scale = glm::vec3(1.10f, 2.20f, 1.10f);
-        trunkMid->color = bark;
-        root->addChild(trunkMid);
-
-        auto trunkUpper = std::make_shared<SceneNode>("Trunk_Upper");
-        trunkUpper->mesh = &meshes.cylinder;
-        trunkUpper->transform.position = glm::vec3(-0.05f, 4.80f, 0.05f);
-        trunkUpper->transform.rotation = glm::vec3(8.0f, -15.0f, -6.0f);
-        trunkUpper->transform.scale = glm::vec3(0.90f, 1.80f, 0.90f);
-        trunkUpper->color = bark;
-        root->addChild(trunkUpper);
-
-        // 3. Five Primary Spreading Scaffold Boughs
-        struct BoughDef { glm::vec3 pos; glm::vec3 rot; glm::vec3 scale; };
-        BoughDef boughs[5] = {
-            { { -0.55f, 5.20f,  0.45f }, {  25.0f,   35.0f, -42.0f }, { 0.55f, 3.4f, 0.55f } },
-            { {  0.65f, 5.10f, -0.50f }, { -20.0f,  -45.0f,  38.0f }, { 0.52f, 3.2f, 0.52f } },
-            { { -0.40f, 5.40f, -0.65f }, { -38.0f,  -10.0f, -25.0f }, { 0.48f, 3.0f, 0.48f } },
-            { {  0.50f, 5.35f,  0.55f }, {  35.0f, -120.0f,  30.0f }, { 0.48f, 3.1f, 0.48f } },
-            { {  0.05f, 5.80f,  0.00f }, {   5.0f,   10.0f,   8.0f }, { 0.58f, 2.8f, 0.58f } }
+        // 3. Five Primary Spreading Scaffold Boughs (swept 3D Bézier curves arching into canopy)
+        struct BoughCurve { glm::vec3 p0, p1, p2, p3; float rStart, rEnd; };
+        BoughCurve boughCurves[5] = {
+            // Northwest bough
+            { { -0.05f, 5.35f,  0.05f }, { -0.50f, 5.60f,  0.40f }, { -1.10f, 5.90f,  0.80f }, { -1.75f, 6.20f,  1.20f }, 0.28f, 0.14f },
+            // Northeast bough
+            { {  0.05f, 5.30f, -0.05f }, {  0.50f, 5.55f, -0.40f }, {  1.10f, 5.85f, -0.85f }, {  1.75f, 6.10f, -1.30f }, 0.28f, 0.14f },
+            // Southwest bough
+            { { -0.05f, 5.40f, -0.05f }, { -0.45f, 5.70f, -0.45f }, { -0.95f, 6.05f, -0.85f }, { -1.50f, 6.40f, -1.25f }, 0.26f, 0.13f },
+            // Southeast bough
+            { {  0.05f, 5.35f,  0.05f }, {  0.45f, 5.65f,  0.45f }, {  0.95f, 6.00f,  0.85f }, {  1.55f, 6.30f,  1.15f }, 0.26f, 0.13f },
+            // Central crown bough
+            { {  0.00f, 5.45f,  0.00f }, {  0.05f, 6.00f,  0.05f }, { -0.05f, 6.60f, -0.05f }, {  0.05f, 7.20f,  0.00f }, 0.30f, 0.15f }
         };
         for (int b = 0; b < 5; ++b) {
-            auto bough = std::make_shared<SceneNode>("Bough_" + std::to_string(b));
-            bough->mesh = &meshes.cylinder;
-            bough->transform.position = boughs[b].pos;
-            bough->transform.rotation = boughs[b].rot;
-            bough->transform.scale = boughs[b].scale;
+            auto bMesh = std::make_shared<Mesh>(Curves::createBezierTube(
+                Curves::Bezier3(boughCurves[b].p0, boughCurves[b].p1, boughCurves[b].p2, boughCurves[b].p3),
+                boughCurves[b].rStart, boughCurves[b].rEnd, 20, 14, 1.5f, true, true));
+            boughMeshes.push_back(bMesh);
+
+            auto bough = std::make_shared<SceneNode>("Sakura_Bough_" + std::to_string(b));
+            bough->mesh = bMesh.get();
             bough->color = bark;
             root->addChild(bough);
         }
 
-        // 4. Secondary & Tertiary Branch Forks
-        struct BranchDef { glm::vec3 pos; glm::vec3 rot; glm::vec3 scale; };
-        BranchDef branches[8] = {
-            { { -1.8f, 6.2f,  1.2f }, {  15.0f,  45.0f, -50.0f }, { 0.30f, 2.2f, 0.30f } },
-            { { -1.5f, 6.4f, -0.8f }, { -30.0f, -25.0f, -40.0f }, { 0.28f, 2.0f, 0.28f } },
-            { {  1.8f, 6.1f, -1.3f }, { -25.0f, -55.0f,  45.0f }, { 0.28f, 2.1f, 0.28f } },
-            { {  1.6f, 6.3f,  1.1f }, {  40.0f, -80.0f,  35.0f }, { 0.28f, 2.0f, 0.28f } },
-            { {  0.2f, 7.2f,  1.4f }, {  30.0f,  20.0f,  15.0f }, { 0.25f, 1.8f, 0.25f } },
-            { { -0.3f, 7.1f, -1.5f }, { -35.0f, -30.0f, -10.0f }, { 0.25f, 1.8f, 0.25f } },
-            { { -1.2f, 7.5f,  0.2f }, {  10.0f,  70.0f, -35.0f }, { 0.24f, 1.7f, 0.24f } },
-            { {  1.1f, 7.4f, -0.2f }, { -15.0f, -60.0f,  30.0f }, { 0.24f, 1.7f, 0.24f } }
+        // 4. Secondary Curved Branches Forking Towards Blossom Clouds
+        struct BranchCurve { glm::vec3 p0, p1, p2, p3; float rStart, rEnd; };
+        BranchCurve branchCurves[8] = {
+            { { -1.75f, 6.20f,  1.20f }, { -2.20f, 6.50f,  1.40f }, { -2.60f, 6.80f,  1.50f }, { -3.00f, 7.10f,  1.60f }, 0.14f, 0.08f },
+            { { -1.50f, 6.40f, -1.25f }, { -1.90f, 6.70f, -1.50f }, { -2.30f, 7.00f, -1.70f }, { -2.60f, 7.30f, -1.80f }, 0.13f, 0.08f },
+            { {  1.75f, 6.10f, -1.30f }, {  2.15f, 6.45f, -1.50f }, {  2.55f, 6.75f, -1.70f }, {  2.90f, 7.10f, -1.80f }, 0.14f, 0.08f },
+            { {  1.55f, 6.30f,  1.15f }, {  1.95f, 6.65f,  1.35f }, {  2.35f, 6.95f,  1.45f }, {  2.70f, 7.25f,  1.55f }, 0.13f, 0.08f },
+            { {  0.05f, 7.20f,  0.00f }, {  0.15f, 7.60f,  0.40f }, {  0.18f, 8.00f,  0.80f }, {  0.20f, 8.40f,  1.20f }, 0.15f, 0.08f },
+            { {  0.05f, 7.20f,  0.00f }, { -0.15f, 7.60f, -0.40f }, { -0.20f, 8.00f, -0.80f }, { -0.25f, 8.40f, -1.20f }, 0.15f, 0.08f },
+            { { -0.80f, 6.80f,  0.10f }, { -1.10f, 7.20f,  0.15f }, { -1.30f, 7.60f,  0.20f }, { -1.50f, 8.00f,  0.25f }, 0.12f, 0.07f },
+            { {  0.80f, 6.70f, -0.10f }, {  1.10f, 7.10f, -0.15f }, {  1.30f, 7.50f, -0.20f }, {  1.50f, 7.90f, -0.25f }, 0.12f, 0.07f }
         };
         for (int br = 0; br < 8; ++br) {
-            auto branch = std::make_shared<SceneNode>("Branch_" + std::to_string(br));
-            branch->mesh = &meshes.cylinder;
-            branch->transform.position = branches[br].pos;
-            branch->transform.rotation = branches[br].rot;
-            branch->transform.scale = branches[br].scale;
+            auto brMesh = std::make_shared<Mesh>(Curves::createBezierTube(
+                Curves::Bezier3(branchCurves[br].p0, branchCurves[br].p1, branchCurves[br].p2, branchCurves[br].p3),
+                branchCurves[br].rStart, branchCurves[br].rEnd, 16, 12, 1.0f, true, true));
+            branchMeshes.push_back(brMesh);
+
+            auto branch = std::make_shared<SceneNode>("Sakura_Branch_" + std::to_string(br));
+            branch->mesh = brMesh.get();
             branch->color = bark;
             root->addChild(branch);
         }
@@ -2372,41 +2429,21 @@ public:
             root->addChild(peg);
         }
 
-        // 2. Realistic Sagging Catenary Rope connecting left and right poles
-        // Span: X in [-3.8, +3.8]. Equation: Y(x) = Y_pole - sag * (1.0 - (x/3.8)^2)
+        // 2. Realistic Continuous Swept Catenary Rope connecting left and right poles
+        // Span: X in [-3.8, +3.8]. Continuous 3D swept mesh along mathematical curve
         const float yPole = 6.20f;
         const float sag = 0.65f;
         const float halfSpan = 3.8f;
-        const int numSegments = 10;
 
         auto catenaryY = [&](float x) -> float {
             float normX = x / halfSpan;
             return yPole - sag * (1.0f - normX * normX);
         };
 
-        for (int i = 0; i < numSegments; ++i)
-        {
-            float x0 = -halfSpan + (float)i / (float)numSegments * (2.0f * halfSpan);
-            float x1 = -halfSpan + (float)(i + 1) / (float)numSegments * (2.0f * halfSpan);
-            float y0 = catenaryY(x0);
-            float y1 = catenaryY(x1);
-
-            float mx = (x0 + x1) * 0.5f;
-            float my = (y0 + y1) * 0.5f;
-
-            float dx = x1 - x0;
-            float dy = y1 - y0;
-            float len = std::sqrt(dx * dx + dy * dy);
-            float angleDeg = glm::degrees(std::atan2(dy, dx));
-
-            auto seg = std::make_shared<SceneNode>(prefix + "_RopeSeg_" + std::to_string(i));
-            seg->mesh = &meshes.cylinder;
-            seg->transform.position = glm::vec3(mx, my, 0.0f);
-            seg->transform.rotation.z = angleDeg - 90.0f; // Align cylinder along segment direction
-            seg->transform.scale = glm::vec3(0.035f, len, 0.035f);
-            seg->color = ropeColor;
-            root->addChild(seg);
-        }
+        auto rope = std::make_shared<SceneNode>(prefix + "_Rope");
+        rope->mesh = &meshes.catenaryRope;
+        rope->color = ropeColor;
+        root->addChild(rope);
 
         // 3. Lanterns anchored precisely onto the sagging catenary curve
         float lanternX[2] = { -1.90f, 1.90f };

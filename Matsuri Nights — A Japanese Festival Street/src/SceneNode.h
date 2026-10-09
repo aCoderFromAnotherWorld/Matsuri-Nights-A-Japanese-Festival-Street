@@ -19,6 +19,20 @@ public:
     std::vector<std::shared_ptr<SceneNode>> children;
 
     const Mesh* mesh = nullptr;
+    std::shared_ptr<Mesh> ownedMesh = nullptr;
+
+    void setMesh(const Mesh* m)
+    {
+        mesh = m;
+        ownedMesh = nullptr;
+    }
+
+    void setMesh(std::shared_ptr<Mesh> m)
+    {
+        ownedMesh = m;
+        mesh = ownedMesh ? ownedMesh.get() : nullptr;
+    }
+
     glm::vec4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
     bool isWindow = false;
     bool isSky = false;

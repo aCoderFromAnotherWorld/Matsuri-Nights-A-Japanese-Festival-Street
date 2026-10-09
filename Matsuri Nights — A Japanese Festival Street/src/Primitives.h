@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mesh.h"
+#include "Curves.h"
 #include <glm/glm.hpp>
 #include <vector>
 #define _USE_MATH_DEFINES
@@ -294,5 +295,87 @@ public:
         }
 
         return Mesh(vertices, indices);
+    }
+
+    // -------------------------------------------------------------
+    // Curved Geometry Generators (swept tubes, splines, beams, ropes)
+    // -------------------------------------------------------------
+    static Mesh createSweptTube(
+        const std::function<glm::vec3(float)>& evalPos,
+        const std::function<glm::vec3(float)>& evalTan,
+        const std::function<float(float)>& radiusFunc,
+        int lengthSegments = 24,
+        int radialSegments = 16,
+        float vTiling = 1.0f,
+        bool capStart = true,
+        bool capEnd = true,
+        const glm::vec3& initialUp = glm::vec3(0.0f, 1.0f, 0.0f))
+    {
+        return Curves::createSweptTube(evalPos, evalTan, radiusFunc, lengthSegments, radialSegments, vTiling, capStart, capEnd, initialUp);
+    }
+
+    static Mesh createBezierTube(
+        const Curves::Bezier3& bezier,
+        float rStart,
+        float rEnd,
+        int lengthSegments = 24,
+        int radialSegments = 16,
+        float vTiling = 1.0f,
+        bool capStart = true,
+        bool capEnd = true,
+        const glm::vec3& initialUp = glm::vec3(0.0f, 1.0f, 0.0f))
+    {
+        return Curves::createBezierTube(bezier, rStart, rEnd, lengthSegments, radialSegments, vTiling, capStart, capEnd, initialUp);
+    }
+
+    static Mesh createBezierTube2(
+        const Curves::Bezier2& bezier,
+        float rStart,
+        float rEnd,
+        int lengthSegments = 16,
+        int radialSegments = 12,
+        float vTiling = 1.0f,
+        bool capStart = true,
+        bool capEnd = true,
+        const glm::vec3& initialUp = glm::vec3(0.0f, 1.0f, 0.0f))
+    {
+        return Curves::createBezierTube2(bezier, rStart, rEnd, lengthSegments, radialSegments, vTiling, capStart, capEnd, initialUp);
+    }
+
+    static Mesh createSplineTube(
+        const std::vector<glm::vec3>& pts,
+        float rStart,
+        float rEnd,
+        int lengthSegments = 32,
+        int radialSegments = 16,
+        float vTiling = 2.0f,
+        bool capStart = true,
+        bool capEnd = true,
+        const glm::vec3& initialUp = glm::vec3(0.0f, 1.0f, 0.0f))
+    {
+        return Curves::createSplineTube(pts, rStart, rEnd, lengthSegments, radialSegments, vTiling, capStart, capEnd, initialUp);
+    }
+
+    static Mesh createCurvedBeam(
+        float spanX,
+        float baseWidthZ,
+        float baseHeightY,
+        float soriUpward = 0.35f,
+        float endFlare = 1.15f,
+        int lengthSegments = 32,
+        bool roofBevel = true)
+    {
+        return Curves::createCurvedBeam(spanX, baseWidthZ, baseHeightY, soriUpward, endFlare, lengthSegments, roofBevel);
+    }
+
+    static Mesh createCatenaryRope(
+        float halfSpan = 3.8f,
+        float yPole = 6.20f,
+        float sag = 0.65f,
+        float radius = 0.035f,
+        int lengthSegments = 36,
+        int radialSegments = 12)
+    {
+        return Curves::createCatenaryRope(halfSpan, yPole, sag, radius, lengthSegments, radialSegments);
     }
 };

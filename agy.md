@@ -12,6 +12,63 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Implementation of Mathematical Curves Architecture & Organic Swept Geometries (Splines, Bézier Curves, Bishop Frames, Swept Tubes, Curved Beams & Ropes)
+
+#### 1. Mathematical Curves & Swept Geometry Architecture (`Curves.h`, `Primitives.h`, `SceneNode.h`)
+* **Files Added:** [`Matsuri Nights — A Japanese Festival Street/src/Curves.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Curves.h)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Primitives.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Primitives.h), [`Matsuri Nights — A Japanese Festival Street/src/SceneNode.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/SceneNode.h), [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Mathematical Foundations:**
+  * **Quadratic & Cubic Bézier Curves (`Curves::Bezier2`, `Curves::Bezier3`):** Parametric 3D polynomial curves with analytical first derivative tangent vectors $\mathbf{B}'(t)$ for precise orientation alignment.
+  * **Catmull-Rom Splines (`Curves::CatmullRomSpline`):** Smooth $C^1$ cubic spline interpolation through arbitrary 3D waypoint sequences.
+  * **Parallel Transport Frames (Bishop Frames / Rotation-Minimizing Frames):** Implemented `Curves::computeBishopFrames` using Rodrigues' rotation formula. Eliminates the twisting artifacts and inflection singularities inherent to classical Frenet-Serret frames, producing continuous, smooth normal and binormal basis vectors along any 3D trajectory.
+  * **Generalized Swept Tube Generator (`createSweptTube`):** Sweeps circular cross-sections with variable radius functions $r(t)$ (linear or non-linear tapering) along arbitrary 3D curves. Computes smooth vertex normals, seamless $(u, v)$ texture wrapping, and watertight start/end caps.
+  * **Swept Curved Architectural Beams (`createCurvedBeam`):** Sweeps rectangular or beveled trapezoidal profiles along upward parabolic curves with flared wingtips (*sori* / *nokizori*) and beveled roof ridges.
+  * **Continuous Catenary Rope Mesh (`createCatenaryRope`):** Evaluates mathematical catenary sag formulas into a continuous, smooth tubular rope mesh.
+  * **`SceneNode` Procedural Mesh Ownership:** Added `ownedMesh` and `setMesh()` to `SceneNode`, enabling seamless lifecycle management for procedural curved geometries alongside shared primitives.
+
+#### 2. Organic Sakura Tree: Swept 3D Spline Trunk, Roots & Boughs (`SakuraTree`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Features:**
+  * **Continuous Spline Trunk (`Sakura_Trunk_Curved`):** Replaced stacked straight cylinders with a continuous 3D Catmull-Rom spline tube (6 waypoints) featuring an organic flaring buttress base ($r = 0.76\text{m}$), windswept natural twists, and smooth taper to the crown ($r = 0.42\text{m}$) with continuous bark texture mapping.
+  * **5 Organic Curved Root Spurs:** Swept 3D cubic Bézier tubes arching down and out into the earth ($r = 0.32\text{m} \to 0.10\text{m}$), replacing straight rigid sticks.
+  * **5 Primary Spreading Scaffold Boughs:** Swept 3D cubic Bézier tubes emerging from the trunk crown and arching gracefully into the canopy ($r = 0.28\text{m} \to 0.14\text{m}$).
+  * **8 Secondary Curved Branches:** Swept 3D curved tubes branching upward to support the 22 cherry blossom cloud clusters and falling petal system.
+
+#### 3. Authentic Japanese Ikebana Floral Living Lines (`createIkebanaVase`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Features:**
+  * Replaced straight rigid cylinder stems with swept curved 3D tubes embodying traditional Japanese *Kadō* living line aesthetics:
+    * **Shin (Heaven/Truth):** Elegant upright sweeping arc curve (`ikebanaStemShin`).
+    * **Soe (Man/Supporting):** Dynamic outward and upward S-curve (`ikebanaStemSoe`).
+    * **Hikae (Earth/Restrained):** Low arching sweeping bow curve (`ikebanaStemHikae`).
+    * **Accent:** Delicate curving accent stem (`ikebanaStemAccent`).
+  * Green leaves sprout along the exact curved trajectories, and green calyx cups, blossoms, petal lobes, and golden stamens nestle seamlessly at the curved stem tips.
+
+#### 4. Gnarled Windswept Miniature Bonsai Trees (`createBonsaiTree`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Features:**
+  * **Spline Bonsai Trunk (`bonsaiTrunkCurved`):** Replaced 3 disconnected cylinders with a continuous 3D Catmull-Rom spline tube in classic *Moyogi* (informal upright) serpentine style, tapering from $0.065\text{m}$ at the mossy soil to $0.030\text{m}$ at the crown.
+  * **Curved Bonsai Branches (`bonsaiBranchCurved1`, `bonsaiBranchCurved2`):** Swept 3D curved limbs arching gracefully beneath the sculpted evergreen foliage clouds.
+
+#### 5. Curved Window Planter Stems & Cascading Kokedama Vines
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Features:**
+  * **Window Planter Boxes (`createWindowPlanterBox`):** Replaced straight vertical cylinder stems with organic curved stems (`planterStemCurvedA`, `planterStemCurvedB`) bowing gently under flower blossom weight.
+  * **Hanging Kokedama Moss Balls (`createHangingKokedama`):** Replaced straight rods with swept 3D Bézier ivy vines (`kokedamaVineCurved1`, `kokedamaVineCurved2`) cascading gracefully from the moss balls.
+
+#### 6. Grand Torii Gate Architectural Curves (`ToriiGate`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Features:**
+  * **Kasagi (Upper Lintel):** Replaced flat rectangular box with a swept curved beam featuring authentic Japanese upward *sori* ($0.40\text{m}$ upward curve), flared wingtips, and beveled roof ridge cap (`curvedKasagi`, $15.4\text{m}$ span).
+  * **Shimaki (Sub-Lintel):** Replaced flat box with a matching swept curved beam with upward *sori* ($0.28\text{m}$ curve) finished in vermilion lacquer (`curvedShimaki`, $14.2\text{m}$ span).
+
+#### 7. Continuous Catenary Street Lantern Ropes (`StreetLanternSpan`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Features:**
+  * Replaced 10 faceted cylinder segments with a single continuous, perfectly smooth swept 3D catenary rope mesh (`catenaryRope`) spanning $7.6\text{m}$ between cedar poles with natural sag ($0.65\text{m}$).
+
+---
+
 ### [2026-10-10] — Machiya Townhouse Staircase Relocation & Spacious 2nd Floor Landing Gallery Clearance
 
 #### 1. Staircase Repositioning & Upper Floor Landing Clearance Fix
