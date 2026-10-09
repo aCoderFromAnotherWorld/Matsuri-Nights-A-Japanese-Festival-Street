@@ -243,18 +243,57 @@ inline std::shared_ptr<SceneNode> createWindowPlanterBox(SceneMeshes& meshes, co
         root->addChild(leafMound);
     }
 
-    // Diverse Colorful Flower Blooms
+    // Diverse Colorful Flower Blooms & Stems (Fully Connected Floral Anatomy)
     glm::vec4 flowerPalette[5] = { flowerRed, flowerYellow, flowerPink, flowerWhite, flowerPurple };
+    glm::vec4 stemGreen(0.20f, 0.48f, 0.18f, 1.0f);
+    glm::vec4 stamenGold(0.98f, 0.88f, 0.22f, 1.0f);
     int numFlowers = (int)(width * 5.0f);
     for (int f = 0; f < numFlowers; ++f) {
         float fz = -width * 0.42f + (float)f * (width * 0.84f / (float)(std::max(1, numFlowers - 1)));
         float fx = ((f % 3) - 1) * 0.06f;
+        float bloomY = 0.30f + ((f % 2) * 0.04f);
+        float stemH = bloomY - 0.18f;
+
+        // Slender green stem rooted directly in the soil
+        auto stem = std::make_shared<SceneNode>(prefix + "_FlowerStem_" + std::to_string(f));
+        stem->mesh = &meshes.cylinder;
+        stem->transform.position = glm::vec3(fx, 0.18f + stemH * 0.5f, fz);
+        stem->transform.scale = glm::vec3(0.012f, stemH, 0.012f);
+        stem->color = stemGreen;
+        root->addChild(stem);
+
+        // Green foliage leaves attached along the stem
+        auto leaf1 = std::make_shared<SceneNode>(prefix + "_FlowerLeafA_" + std::to_string(f));
+        leaf1->mesh = &meshes.cube;
+        leaf1->transform.position = glm::vec3(fx + 0.02f, 0.22f, fz + 0.01f);
+        leaf1->transform.rotation = glm::vec3(15.0f, (float)(f * 45 % 360), -30.0f);
+        leaf1->transform.scale = glm::vec3(0.01f, 0.045f, 0.022f);
+        leaf1->color = foliage;
+        root->addChild(leaf1);
+
+        // Green calyx cup cradling the base of the flower bloom
+        auto calyx = std::make_shared<SceneNode>(prefix + "_FlowerCalyx_" + std::to_string(f));
+        calyx->mesh = &meshes.cylinder;
+        calyx->transform.position = glm::vec3(fx, bloomY - 0.025f, fz);
+        calyx->transform.scale = glm::vec3(0.035f, 0.02f, 0.035f);
+        calyx->color = stemGreen;
+        root->addChild(calyx);
+
+        // Colorful spherical flower bloom
         auto bloom = std::make_shared<SceneNode>(prefix + "_Flower_" + std::to_string(f));
         bloom->mesh = &meshes.sphere;
-        bloom->transform.position = glm::vec3(fx, 0.30f + ((f % 2) * 0.04f), fz);
-        bloom->transform.scale = glm::vec3(0.065f, 0.065f, 0.065f);
+        bloom->transform.position = glm::vec3(fx, bloomY, fz);
+        bloom->transform.scale = glm::vec3(0.065f, 0.055f, 0.065f);
         bloom->color = flowerPalette[f % 5];
         root->addChild(bloom);
+
+        // Golden stamen center nestled atop the petals
+        auto stamen = std::make_shared<SceneNode>(prefix + "_FlowerStamen_" + std::to_string(f));
+        stamen->mesh = &meshes.sphere;
+        stamen->transform.position = glm::vec3(fx, bloomY + 0.022f, fz);
+        stamen->transform.scale = glm::vec3(0.024f, 0.020f, 0.024f);
+        stamen->color = stamenGold;
+        root->addChild(stamen);
     }
 
     return root;
@@ -372,53 +411,95 @@ inline std::shared_ptr<SceneNode> createIkebanaVase(SceneMeshes& meshes, const s
     rim->specularStrength = 0.80f;
     root->addChild(rim);
 
-    // Asymmetric Ikebana Flower Stems & Blossoms
+    // Asymmetric Ikebana Flower Stems & Blossoms (Hierarchical Connected Floral Anatomy)
     struct FlowerSpec {
-        glm::vec3 stemPos;
+        glm::vec3 anchorPos;
         glm::vec3 stemRot;
         float stemLen;
-        glm::vec3 bloomPos;
         glm::vec4 bloomColor;
         float bloomScale;
     };
     std::vector<FlowerSpec> flowers = {
-        { glm::vec3(0.02f, 0.65f, -0.01f), glm::vec3(12.0f, 0.0f, -8.0f), 0.34f, glm::vec3(0.05f, 0.84f, -0.02f), glm::vec4(0.88f, 0.14f, 0.18f, 1.0f), 0.12f },
-        { glm::vec3(-0.04f, 0.62f, 0.03f), glm::vec3(-15.0f, 0.0f, 22.0f), 0.28f, glm::vec3(-0.12f, 0.74f, 0.08f), glm::vec4(0.96f, 0.58f, 0.74f, 1.0f), 0.11f },
-        { glm::vec3(0.05f, 0.58f, 0.04f), glm::vec3(18.0f, 30.0f, -24.0f), 0.24f, glm::vec3(0.12f, 0.68f, 0.10f), glm::vec4(0.98f, 0.82f, 0.16f, 1.0f), 0.09f },
-        { glm::vec3(-0.03f, 0.56f, -0.05f), glm::vec3(-20.0f, -40.0f, 14.0f), 0.22f, glm::vec3(-0.08f, 0.66f, -0.12f), glm::vec4(0.55f, 0.20f, 0.78f, 1.0f), 0.10f }
+        // 1. Tall Shin (Truth/Heaven) line: Crimson Camellia (Tsubaki)
+        { glm::vec3(0.01f, 0.48f, -0.01f), glm::vec3(10.0f, 0.0f, -8.0f), 0.38f, glm::vec4(0.88f, 0.14f, 0.18f, 1.0f), 0.12f },
+        // 2. Medium Soe (Supporting/Man) line: Soft Pink Peony (Botan)
+        { glm::vec3(-0.02f, 0.48f, 0.02f), glm::vec3(-14.0f, 35.0f, 20.0f), 0.30f, glm::vec4(0.96f, 0.58f, 0.74f, 1.0f), 0.11f },
+        // 3. Slanted Hikae (Restrained/Earth) line: Golden Plum Blossom (Ume)
+        { glm::vec3(0.03f, 0.48f, 0.02f), glm::vec3(22.0f, -40.0f, -22.0f), 0.25f, glm::vec4(0.98f, 0.82f, 0.16f, 1.0f), 0.09f },
+        // 4. Low accent line: Imperial Violet Iris (Ayame)
+        { glm::vec3(-0.02f, 0.48f, -0.03f), glm::vec3(-18.0f, -120.0f, 16.0f), 0.22f, glm::vec4(0.55f, 0.20f, 0.78f, 1.0f), 0.10f }
     };
 
     for (size_t i = 0; i < flowers.size(); ++i) {
         const auto& fl = flowers[i];
+
+        // Hierarchical Flower Branch root anchored at the vase rim
+        auto branchRoot = std::make_shared<SceneNode>(prefix + "_Branch_" + std::to_string(i));
+        branchRoot->transform.position = fl.anchorPos;
+        branchRoot->transform.rotation = fl.stemRot;
+        root->addChild(branchRoot);
+
+        // Slender stem cylinder extending from base (Y=0) up to tip (Y=stemLen)
         auto stem = std::make_shared<SceneNode>(prefix + "_Stem_" + std::to_string(i));
         stem->mesh = &meshes.cylinder;
-        stem->transform.position = fl.stemPos;
-        stem->transform.rotation = fl.stemRot;
-        stem->transform.scale = glm::vec3(0.02f, fl.stemLen, 0.02f);
+        stem->transform.position = glm::vec3(0.0f, fl.stemLen * 0.5f, 0.0f);
+        stem->transform.scale = glm::vec3(0.016f, fl.stemLen, 0.016f);
         stem->color = stemColor;
-        root->addChild(stem);
+        branchRoot->addChild(stem);
 
+        // Lower green leaf sprouting naturally off the stem
+        auto leaf1 = std::make_shared<SceneNode>(prefix + "_Leaf1_" + std::to_string(i));
+        leaf1->mesh = &meshes.cube;
+        leaf1->transform.position = glm::vec3(0.02f, fl.stemLen * 0.42f, 0.0f);
+        leaf1->transform.rotation = glm::vec3(10.0f, 0.0f, -42.0f);
+        leaf1->transform.scale = glm::vec3(0.008f, 0.10f, 0.045f);
+        leaf1->color = leafColor;
+        branchRoot->addChild(leaf1);
+
+        // Upper green leaf branching out opposite the lower leaf
+        auto leaf2 = std::make_shared<SceneNode>(prefix + "_Leaf2_" + std::to_string(i));
+        leaf2->mesh = &meshes.cube;
+        leaf2->transform.position = glm::vec3(-0.02f, fl.stemLen * 0.68f, 0.0f);
+        leaf2->transform.rotation = glm::vec3(-10.0f, 180.0f, -38.0f);
+        leaf2->transform.scale = glm::vec3(0.008f, 0.08f, 0.038f);
+        leaf2->color = leafColor;
+        branchRoot->addChild(leaf2);
+
+        // Green calyx cup firmly attached to the stem tip cradling the blossom
+        auto calyx = std::make_shared<SceneNode>(prefix + "_Calyx_" + std::to_string(i));
+        calyx->mesh = &meshes.cylinder;
+        calyx->transform.position = glm::vec3(0.0f, fl.stemLen - 0.012f, 0.0f);
+        calyx->transform.scale = glm::vec3(fl.bloomScale * 0.50f, 0.025f, fl.bloomScale * 0.50f);
+        calyx->color = stemColor;
+        branchRoot->addChild(calyx);
+
+        // Central blossom sphere positioned seamlessly at the stem tip
         auto bloom = std::make_shared<SceneNode>(prefix + "_Bloom_" + std::to_string(i));
         bloom->mesh = &meshes.sphere;
-        bloom->transform.position = fl.bloomPos;
-        bloom->transform.scale = glm::vec3(fl.bloomScale, fl.bloomScale * 0.75f, fl.bloomScale);
+        bloom->transform.position = glm::vec3(0.0f, fl.stemLen + fl.bloomScale * 0.22f, 0.0f);
+        bloom->transform.scale = glm::vec3(fl.bloomScale, fl.bloomScale * 0.70f, fl.bloomScale);
         bloom->color = fl.bloomColor;
-        root->addChild(bloom);
+        branchRoot->addChild(bloom);
 
+        // Surrounding sculpted petal lobes
+        for (int p = 0; p < 4; ++p) {
+            float pAngle = (float)p * 90.0f + 20.0f;
+            float pr = glm::radians(pAngle);
+            auto petal = std::make_shared<SceneNode>(prefix + "_Petal_" + std::to_string(i) + "_" + std::to_string(p));
+            petal->mesh = &meshes.sphere;
+            petal->transform.position = glm::vec3(std::cos(pr) * fl.bloomScale * 0.32f, fl.stemLen + fl.bloomScale * 0.20f, std::sin(pr) * fl.bloomScale * 0.32f);
+            petal->transform.scale = glm::vec3(fl.bloomScale * 0.52f, fl.bloomScale * 0.36f, fl.bloomScale * 0.52f);
+            petal->color = fl.bloomColor;
+            branchRoot->addChild(petal);
+        }
+
+        // Golden stamen center firmly embedded in the middle of the blossom
         auto stamen = std::make_shared<SceneNode>(prefix + "_Stamen_" + std::to_string(i));
         stamen->mesh = &meshes.sphere;
-        stamen->transform.position = fl.bloomPos + glm::vec3(0.0f, fl.bloomScale * 0.28f, 0.0f);
-        stamen->transform.scale = glm::vec3(fl.bloomScale * 0.35f);
-        stamen->color = glm::vec4(0.98f, 0.90f, 0.30f, 1.0f);
-        root->addChild(stamen);
-
-        auto leaf = std::make_shared<SceneNode>(prefix + "_Leaf_" + std::to_string(i));
-        leaf->mesh = &meshes.cube;
-        leaf->transform.position = fl.stemPos + glm::vec3(0.02f, -0.04f, 0.02f);
-        leaf->transform.rotation = fl.stemRot + glm::vec3(35.0f, 45.0f, 0.0f);
-        leaf->transform.scale = glm::vec3(0.015f, 0.12f, 0.06f);
-        leaf->color = leafColor;
-        root->addChild(leaf);
+        stamen->transform.position = glm::vec3(0.0f, fl.stemLen + fl.bloomScale * 0.40f, 0.0f);
+        stamen->transform.scale = glm::vec3(fl.bloomScale * 0.36f, fl.bloomScale * 0.28f, fl.bloomScale * 0.36f);
+        stamen->color = glm::vec4(0.98f, 0.88f, 0.20f, 1.0f);
+        branchRoot->addChild(stamen);
     }
 
     return root;
@@ -852,14 +933,36 @@ public:
         // 2B. GROUND FLOOR WINDOWS (Authentic Shoji Sliding Windows)
         // =========================================================
         // Front Street Sliding Window (at X = 4.05, Z in [0.90, 3.10])
-        auto winF1_OuterFrame = std::make_shared<SceneNode>(name + "_WinF1_Frame");
-        winF1_OuterFrame->mesh = &meshes.cube;
-        winF1_OuterFrame->transform.position = glm::vec3(4.08f, 1.85f, 2.00f);
-        winF1_OuterFrame->transform.scale = glm::vec3(0.18f, 2.05f, 2.40f);
-        winF1_OuterFrame->color = darkWood;
-        root->addChild(winF1_OuterFrame);
+        // Window frame: 4-piece open border (top, bottom, left, right bars) so sashes are visible
+        auto winF1_FrameTop = std::make_shared<SceneNode>(name + "_WinF1_FrameTop");
+        winF1_FrameTop->mesh = &meshes.cube;
+        winF1_FrameTop->transform.position = glm::vec3(4.08f, 2.84f, 2.00f);
+        winF1_FrameTop->transform.scale = glm::vec3(0.12f, 0.12f, 2.44f);
+        winF1_FrameTop->color = darkWood;
+        root->addChild(winF1_FrameTop);
 
-        // Window Sill Ledge
+        auto winF1_FrameBot = std::make_shared<SceneNode>(name + "_WinF1_FrameBot");
+        winF1_FrameBot->mesh = &meshes.cube;
+        winF1_FrameBot->transform.position = glm::vec3(4.08f, 0.88f, 2.00f);
+        winF1_FrameBot->transform.scale = glm::vec3(0.12f, 0.12f, 2.44f);
+        winF1_FrameBot->color = darkWood;
+        root->addChild(winF1_FrameBot);
+
+        auto winF1_FrameL = std::make_shared<SceneNode>(name + "_WinF1_FrameL");
+        winF1_FrameL->mesh = &meshes.cube;
+        winF1_FrameL->transform.position = glm::vec3(4.08f, 1.85f, 3.18f);
+        winF1_FrameL->transform.scale = glm::vec3(0.12f, 1.84f, 0.10f);
+        winF1_FrameL->color = darkWood;
+        root->addChild(winF1_FrameL);
+
+        auto winF1_FrameR = std::make_shared<SceneNode>(name + "_WinF1_FrameR");
+        winF1_FrameR->mesh = &meshes.cube;
+        winF1_FrameR->transform.position = glm::vec3(4.08f, 1.85f, 0.82f);
+        winF1_FrameR->transform.scale = glm::vec3(0.12f, 1.84f, 0.10f);
+        winF1_FrameR->color = darkWood;
+        root->addChild(winF1_FrameR);
+
+        // Window Sill Ledge (exterior shelf)
         auto winF1_SillLedge = std::make_shared<SceneNode>(name + "_WinF1_SillLedge");
         winF1_SillLedge->mesh = &meshes.cube;
         winF1_SillLedge->transform.position = glm::vec3(4.22f, 0.88f, 2.00f);
@@ -867,42 +970,69 @@ public:
         winF1_SillLedge->color = darkWood;
         root->addChild(winF1_SillLedge);
 
-        // Ground Floor Window Sashes (Inner Left & Outer Right sliding sashes)
+        // Ground Floor Window Sashes (Inner Left & Outer Right on dual sill tracks)
+        // Left sash: inner track at X=4.05, Right sash: outer track at X=4.11
         auto winF1_SashL = std::make_shared<SceneNode>(name + "_WinF1_SashL");
         winF1_SashL->mesh = &meshes.cube;
-        winF1_SashL->transform.position = glm::vec3(4.06f, 1.85f, 1.48f);
-        winF1_SashL->transform.scale = glm::vec3(0.04f, 1.90f, 1.05f);
+        winF1_SashL->transform.position = glm::vec3(4.05f, 1.85f, 1.48f);
+        winF1_SashL->transform.scale = glm::vec3(0.035f, 1.84f, 1.05f);
         winF1_SashL->isWindow = true;
         winF1_SashL->color = paperColor;
         root->addChild(winF1_SashL);
         windows.push_back(winF1_SashL);
 
+        // Left sash vertical kumiko rib (slightly in front of paper)
         auto winF1_RibL = std::make_shared<SceneNode>(name + "_WinF1_RibL");
         winF1_RibL->mesh = &meshes.cube;
         winF1_RibL->transform.position = glm::vec3(4.07f, 1.85f, 1.48f);
-        winF1_RibL->transform.scale = glm::vec3(0.04f, 1.86f, 0.06f);
+        winF1_RibL->transform.scale = glm::vec3(0.025f, 1.80f, 0.05f);
         winF1_RibL->color = darkWood;
         root->addChild(winF1_RibL);
 
+        // Left sash horizontal kumiko bars
+        for (int hb = 0; hb < 3; ++hb) {
+            auto hbar = std::make_shared<SceneNode>(name + "_WinF1_HBarL_" + std::to_string(hb));
+            hbar->mesh = &meshes.cube;
+            hbar->transform.position = glm::vec3(4.07f, 1.25f + (float)hb * 0.60f, 1.48f);
+            hbar->transform.scale = glm::vec3(0.025f, 0.025f, 1.02f);
+            hbar->color = darkWood;
+            root->addChild(hbar);
+        }
+
         auto winF1_SashR = std::make_shared<SceneNode>(name + "_WinF1_SashR");
         winF1_SashR->mesh = &meshes.cube;
-        winF1_SashR->transform.position = glm::vec3(4.12f, 1.85f, 2.52f);
-        winF1_SashR->transform.scale = glm::vec3(0.04f, 1.90f, 1.05f);
+        winF1_SashR->transform.position = glm::vec3(4.11f, 1.85f, 2.52f);
+        winF1_SashR->transform.scale = glm::vec3(0.035f, 1.84f, 1.05f);
         winF1_SashR->isWindow = true;
         winF1_SashR->color = paperColor;
         root->addChild(winF1_SashR);
         windows.push_back(winF1_SashR);
 
+        // Right sash vertical kumiko rib (slightly in front of paper)
         auto winF1_RibR = std::make_shared<SceneNode>(name + "_WinF1_RibR");
         winF1_RibR->mesh = &meshes.cube;
         winF1_RibR->transform.position = glm::vec3(4.13f, 1.85f, 2.52f);
-        winF1_RibR->transform.scale = glm::vec3(0.04f, 1.86f, 0.06f);
+        winF1_RibR->transform.scale = glm::vec3(0.025f, 1.80f, 0.05f);
         winF1_RibR->color = darkWood;
         root->addChild(winF1_RibR);
 
-        // Register interactive sliding animation for right sash (slides along +Z by 0.90m)
-        slidingWindowSashes.push_back({ winF1_SashR, winF1_SashR->transform.position, glm::vec3(0.0f, 0.0f, 0.85f) });
-        slidingWindowSashes.push_back({ winF1_RibR, winF1_RibR->transform.position, glm::vec3(0.0f, 0.0f, 0.85f) });
+        // Right sash horizontal kumiko bars (also slide with the sash)
+        std::vector<std::shared_ptr<SceneNode>> winF1_HBarsR;
+        for (int hb = 0; hb < 3; ++hb) {
+            auto hbarR = std::make_shared<SceneNode>(name + "_WinF1_HBarR_" + std::to_string(hb));
+            hbarR->mesh = &meshes.cube;
+            hbarR->transform.position = glm::vec3(4.13f, 1.25f + (float)hb * 0.60f, 2.52f);
+            hbarR->transform.scale = glm::vec3(0.025f, 0.025f, 1.02f);
+            hbarR->color = darkWood;
+            root->addChild(hbarR);
+            winF1_HBarsR.push_back(hbarR);
+        }
+
+        // Register interactive sliding animation for right sash (slides along -Z by 0.95m behind left sash)
+        slidingWindowSashes.push_back({ winF1_SashR, winF1_SashR->transform.position, glm::vec3(0.0f, 0.0f, -0.95f) });
+        slidingWindowSashes.push_back({ winF1_RibR, winF1_RibR->transform.position, glm::vec3(0.0f, 0.0f, -0.95f) });
+        for (auto& hb : winF1_HBarsR)
+            slidingWindowSashes.push_back({ hb, hb->transform.position, glm::vec3(0.0f, 0.0f, -0.95f) });
 
         // Ground Floor Window Garden Decorations:
         // Window Flower Planter Box on exterior window sill
@@ -918,32 +1048,86 @@ public:
         root->addChild(kokedamaF1);
 
         // Back Wall Garden Sliding Window (at X = -3.95, Z = 0.0)
-        auto winBack_Frame = std::make_shared<SceneNode>(name + "_WinBack_Frame");
-        winBack_Frame->mesh = &meshes.cube;
-        winBack_Frame->transform.position = glm::vec3(-3.95f, 1.90f, 0.0f);
-        winBack_Frame->transform.scale = glm::vec3(0.18f, 2.00f, 2.40f);
-        winBack_Frame->color = darkWood;
-        root->addChild(winBack_Frame);
+        // 4-piece open border frame (top, bottom, left, right bars)
+        auto winBack_FrameTop = std::make_shared<SceneNode>(name + "_WinBack_FrameTop");
+        winBack_FrameTop->mesh = &meshes.cube;
+        winBack_FrameTop->transform.position = glm::vec3(-3.95f, 2.86f, 0.0f);
+        winBack_FrameTop->transform.scale = glm::vec3(0.12f, 0.12f, 2.44f);
+        winBack_FrameTop->color = darkWood;
+        root->addChild(winBack_FrameTop);
 
+        auto winBack_FrameBot = std::make_shared<SceneNode>(name + "_WinBack_FrameBot");
+        winBack_FrameBot->mesh = &meshes.cube;
+        winBack_FrameBot->transform.position = glm::vec3(-3.95f, 0.94f, 0.0f);
+        winBack_FrameBot->transform.scale = glm::vec3(0.12f, 0.12f, 2.44f);
+        winBack_FrameBot->color = darkWood;
+        root->addChild(winBack_FrameBot);
+
+        auto winBack_FrameL = std::make_shared<SceneNode>(name + "_WinBack_FrameL");
+        winBack_FrameL->mesh = &meshes.cube;
+        winBack_FrameL->transform.position = glm::vec3(-3.95f, 1.90f, 1.18f);
+        winBack_FrameL->transform.scale = glm::vec3(0.12f, 1.80f, 0.10f);
+        winBack_FrameL->color = darkWood;
+        root->addChild(winBack_FrameL);
+
+        auto winBack_FrameR = std::make_shared<SceneNode>(name + "_WinBack_FrameR");
+        winBack_FrameR->mesh = &meshes.cube;
+        winBack_FrameR->transform.position = glm::vec3(-3.95f, 1.90f, -1.18f);
+        winBack_FrameR->transform.scale = glm::vec3(0.12f, 1.80f, 0.10f);
+        winBack_FrameR->color = darkWood;
+        root->addChild(winBack_FrameR);
+
+        // Left sash (inner track at X = -3.94)
         auto winBack_SashL = std::make_shared<SceneNode>(name + "_WinBack_SashL");
         winBack_SashL->mesh = &meshes.cube;
         winBack_SashL->transform.position = glm::vec3(-3.94f, 1.90f, -0.52f);
-        winBack_SashL->transform.scale = glm::vec3(0.04f, 1.85f, 1.05f);
+        winBack_SashL->transform.scale = glm::vec3(0.035f, 1.85f, 1.05f);
         winBack_SashL->isWindow = true;
         winBack_SashL->color = paperColor;
         root->addChild(winBack_SashL);
         windows.push_back(winBack_SashL);
 
+        auto winBack_RibL = std::make_shared<SceneNode>(name + "_WinBack_RibL");
+        winBack_RibL->mesh = &meshes.cube;
+        winBack_RibL->transform.position = glm::vec3(-3.92f, 1.90f, -0.52f);
+        winBack_RibL->transform.scale = glm::vec3(0.025f, 1.80f, 0.05f);
+        winBack_RibL->color = darkWood;
+        root->addChild(winBack_RibL);
+
+        // Right sash (outer track at X = -3.98)
         auto winBack_SashR = std::make_shared<SceneNode>(name + "_WinBack_SashR");
         winBack_SashR->mesh = &meshes.cube;
-        winBack_SashR->transform.position = glm::vec3(-3.96f, 1.90f, 0.52f);
-        winBack_SashR->transform.scale = glm::vec3(0.04f, 1.85f, 1.05f);
+        winBack_SashR->transform.position = glm::vec3(-3.98f, 1.90f, 0.52f);
+        winBack_SashR->transform.scale = glm::vec3(0.035f, 1.85f, 1.05f);
         winBack_SashR->isWindow = true;
         winBack_SashR->color = paperColor;
         root->addChild(winBack_SashR);
         windows.push_back(winBack_SashR);
 
-        slidingWindowSashes.push_back({ winBack_SashR, winBack_SashR->transform.position, glm::vec3(0.0f, 0.0f, 0.85f) });
+        auto winBack_RibR = std::make_shared<SceneNode>(name + "_WinBack_RibR");
+        winBack_RibR->mesh = &meshes.cube;
+        winBack_RibR->transform.position = glm::vec3(-4.00f, 1.90f, 0.52f);
+        winBack_RibR->transform.scale = glm::vec3(0.025f, 1.80f, 0.05f);
+        winBack_RibR->color = darkWood;
+        root->addChild(winBack_RibR);
+
+        // Right sash horizontal kumiko bars
+        std::vector<std::shared_ptr<SceneNode>> winBack_HBarsR;
+        for (int hb = 0; hb < 3; ++hb) {
+            auto hbarR = std::make_shared<SceneNode>(name + "_WinBack_HBarR_" + std::to_string(hb));
+            hbarR->mesh = &meshes.cube;
+            hbarR->transform.position = glm::vec3(-4.00f, 1.30f + (float)hb * 0.60f, 0.52f);
+            hbarR->transform.scale = glm::vec3(0.025f, 0.025f, 1.02f);
+            hbarR->color = darkWood;
+            root->addChild(hbarR);
+            winBack_HBarsR.push_back(hbarR);
+        }
+
+        // Register interactive sliding animation for back right sash (slides along -Z by 0.95m behind left sash)
+        slidingWindowSashes.push_back({ winBack_SashR, winBack_SashR->transform.position, glm::vec3(0.0f, 0.0f, -0.95f) });
+        slidingWindowSashes.push_back({ winBack_RibR, winBack_RibR->transform.position, glm::vec3(0.0f, 0.0f, -0.95f) });
+        for (auto& hb : winBack_HBarsR)
+            slidingWindowSashes.push_back({ hb, hb->transform.position, glm::vec3(0.0f, 0.0f, -0.95f) });
 
         // Planter box at back garden window
         auto planterBack = createWindowPlanterBox(meshes, name + "_BackPlanter", glm::vec3(-4.18f, 0.90f, 0.0f), 2.00f, 180.0f);
@@ -1220,32 +1404,118 @@ public:
         newelTop->color = darkWood;
         root->addChild(newelTop);
 
-        // Intermediate Eaves Roof dividing 1st & 2nd floors (Hisashi)
-        auto eaves1 = std::make_shared<SceneNode>(name + "_Eaves1");
-        eaves1->mesh = &meshes.cube;
-        eaves1->transform.position = glm::vec3(0.0f, 4.40f, 0.0f);
-        eaves1->transform.scale = glm::vec3(8.80f, 0.35f, 10.00f);
-        eaves1->color = roofSlate;
-        root->addChild(eaves1);
+        // Intermediate Eaves Roof dividing 1st & 2nd floors (Exterior Hisashi overhangs)
+        // Exterior sloped eaves protecting outer walls, leaving the interior and stairwell completely open
+        auto eavesFront = std::make_shared<SceneNode>(name + "_EavesFront");
+        eavesFront->mesh = &meshes.cube;
+        eavesFront->transform.position = glm::vec3(4.25f, 4.35f, 0.0f);
+        eavesFront->transform.rotation.z = -14.0f;
+        eavesFront->transform.scale = glm::vec3(0.90f, 0.18f, 9.40f);
+        eavesFront->color = roofSlate;
+        root->addChild(eavesFront);
+
+        auto eavesBack = std::make_shared<SceneNode>(name + "_EavesBack");
+        eavesBack->mesh = &meshes.cube;
+        eavesBack->transform.position = glm::vec3(-4.25f, 4.35f, 0.0f);
+        eavesBack->transform.rotation.z = 14.0f;
+        eavesBack->transform.scale = glm::vec3(0.90f, 0.18f, 9.40f);
+        eavesBack->color = roofSlate;
+        root->addChild(eavesBack);
+
+        auto eavesLeft = std::make_shared<SceneNode>(name + "_EavesLeft");
+        eavesLeft->mesh = &meshes.cube;
+        eavesLeft->transform.position = glm::vec3(0.0f, 4.35f, 4.70f);
+        eavesLeft->transform.rotation.x = 14.0f;
+        eavesLeft->transform.scale = glm::vec3(8.20f, 0.18f, 0.90f);
+        eavesLeft->color = roofSlate;
+        root->addChild(eavesLeft);
+
+        auto eavesRight = std::make_shared<SceneNode>(name + "_EavesRight");
+        eavesRight->mesh = &meshes.cube;
+        eavesRight->transform.position = glm::vec3(0.0f, 4.35f, -4.70f);
+        eavesRight->transform.rotation.x = -14.0f;
+        eavesRight->transform.scale = glm::vec3(8.20f, 0.18f, 0.90f);
+        eavesRight->color = roofSlate;
+        root->addChild(eavesRight);
 
         // =========================================================
         // 5. SECOND FLOOR: BEDROOM (Shinshitsu) & FURNISHINGS
         // =========================================================
-        // Second Floor Tatami Floor Slab (Y = 4.30, with cut-out stairwell opening)
-        auto floor2Tatami = std::make_shared<SceneNode>(name + "_Floor2Tatami");
-        floor2Tatami->mesh = &meshes.cube;
-        floor2Tatami->transform.position = glm::vec3(0.50f, 4.30f, 0.50f);
-        floor2Tatami->transform.scale = glm::vec3(6.50f, 0.16f, 7.20f);
-        floor2Tatami->color = tatamiColor;
-        root->addChild(floor2Tatami);
+        // Full Second Floor Tatami Floor System (top walking surface exactly Y = 4.30m)
+        // 1. Main Bedroom Tatami Slab (spanning Z from -2.90m to +4.15m across full X from -3.70m to +3.70m)
+        auto floor2Main = std::make_shared<SceneNode>(name + "_Floor2TatamiMain");
+        floor2Main->mesh = &meshes.cube;
+        floor2Main->transform.position = glm::vec3(0.0f, 4.22f, 0.625f);
+        floor2Main->transform.scale = glm::vec3(7.40f, 0.16f, 7.05f);
+        floor2Main->color = tatamiColor;
+        root->addChild(floor2Main);
 
-        // Protective Guardrail around Upper Stairwell Opening
-        auto stairGuard = std::make_shared<SceneNode>(name + "_StairGuardRail");
-        stairGuard->mesh = &meshes.cube;
-        stairGuard->transform.position = glm::vec3(-2.20f, 4.85f, -2.85f);
-        stairGuard->transform.scale = glm::vec3(2.80f, 0.85f, 0.08f);
-        stairGuard->color = darkWood;
-        root->addChild(stairGuard);
+        // 2. Stair Top Landing Tatami Slab (seamlessly meets the top step at X = -3.50m, leaving zero gap!)
+        auto floor2Landing = std::make_shared<SceneNode>(name + "_Floor2TatamiLanding");
+        floor2Landing->mesh = &meshes.cube;
+        floor2Landing->transform.position = glm::vec3(-3.55f, 4.22f, -3.525f);
+        floor2Landing->transform.scale = glm::vec3(0.32f, 0.16f, 1.25f);
+        floor2Landing->color = tatamiColor;
+        root->addChild(floor2Landing);
+
+        // 3. Front Floor Area beside stairwell (from X = -0.55m to +3.70m along Z = -3.525m)
+        auto floor2Front = std::make_shared<SceneNode>(name + "_Floor2TatamiFront");
+        floor2Front->mesh = &meshes.cube;
+        floor2Front->transform.position = glm::vec3(1.575f, 4.22f, -3.525f);
+        floor2Front->transform.scale = glm::vec3(4.25f, 0.16f, 1.25f);
+        floor2Front->color = tatamiColor;
+        root->addChild(floor2Front);
+
+        // Cedar Threshold Beam at edge of stairwell
+        auto stairSill = std::make_shared<SceneNode>(name + "_StairSill");
+        stairSill->mesh = &meshes.cube;
+        stairSill->transform.position = glm::vec3(-0.55f, 4.32f, -3.525f);
+        stairSill->transform.scale = glm::vec3(0.10f, 0.08f, 1.25f);
+        stairSill->color = darkWood;
+        root->addChild(stairSill);
+
+        // Authentic Japanese Balustrade Guardrail around Upper Stairwell Opening
+        // Top handrail beam along open bedroom edge
+        auto guardTopRail = std::make_shared<SceneNode>(name + "_StairGuardTopRail");
+        guardTopRail->mesh = &meshes.cube;
+        guardTopRail->transform.position = glm::vec3(-2.00f, 5.15f, -2.88f);
+        guardTopRail->transform.scale = glm::vec3(2.95f, 0.07f, 0.07f);
+        guardTopRail->color = darkWood;
+        root->addChild(guardTopRail);
+
+        // Bottom base rail along floor
+        auto guardBotRail = std::make_shared<SceneNode>(name + "_StairGuardBotRail");
+        guardBotRail->mesh = &meshes.cube;
+        guardBotRail->transform.position = glm::vec3(-2.00f, 4.36f, -2.88f);
+        guardBotRail->transform.scale = glm::vec3(2.95f, 0.07f, 0.07f);
+        guardBotRail->color = darkWood;
+        root->addChild(guardBotRail);
+
+        // End corner newel posts
+        auto guardPostStart = std::make_shared<SceneNode>(name + "_StairGuardPostStart");
+        guardPostStart->mesh = &meshes.cube;
+        guardPostStart->transform.position = glm::vec3(-0.55f, 4.75f, -2.88f);
+        guardPostStart->transform.scale = glm::vec3(0.08f, 0.88f, 0.08f);
+        guardPostStart->color = darkWood;
+        root->addChild(guardPostStart);
+
+        auto guardPostEnd = std::make_shared<SceneNode>(name + "_StairGuardPostEnd");
+        guardPostEnd->mesh = &meshes.cube;
+        guardPostEnd->transform.position = glm::vec3(-3.45f, 4.75f, -2.88f);
+        guardPostEnd->transform.scale = glm::vec3(0.08f, 0.88f, 0.08f);
+        guardPostEnd->color = darkWood;
+        root->addChild(guardPostEnd);
+
+        // Vertical cedar balusters evenly spaced along the guardrail
+        for (int gb = 0; gb < 6; ++gb) {
+            float gbx = -0.95f - (float)gb * 0.42f;
+            auto bal = std::make_shared<SceneNode>(name + "_StairGuardBal_" + std::to_string(gb));
+            bal->mesh = &meshes.cylinder;
+            bal->transform.position = glm::vec3(gbx, 4.75f, -2.88f);
+            bal->transform.scale = glm::vec3(0.035f, 0.72f, 0.035f);
+            bal->color = darkWood;
+            root->addChild(bal);
+        }
 
         // Second floor exterior walls
         auto floor2WallBack = std::make_shared<SceneNode>(name + "_F2WallBack");
@@ -1269,12 +1539,52 @@ public:
         floor2WallRight->color = timber;
         root->addChild(floor2WallRight);
 
-        auto floor2WallFront = std::make_shared<SceneNode>(name + "_F2WallFront");
-        floor2WallFront->mesh = &meshes.cube;
-        floor2WallFront->transform.position = glm::vec3(3.70f, 6.10f, 0.0f);
-        floor2WallFront->transform.scale = glm::vec3(0.20f, 3.60f, 8.40f);
-        floor2WallFront->color = timber;
-        root->addChild(floor2WallFront);
+        // 2nd Floor Front Facade: Framed Walls with Open Window Bay Cutouts
+        // Central wall section between the two windows
+        auto f2WallFrontCenter = std::make_shared<SceneNode>(name + "_F2WallFrontCenter");
+        f2WallFrontCenter->mesh = &meshes.cube;
+        f2WallFrontCenter->transform.position = glm::vec3(3.70f, 6.10f, 0.0f);
+        f2WallFrontCenter->transform.scale = glm::vec3(0.20f, 3.60f, 2.00f);
+        f2WallFrontCenter->color = timber;
+        root->addChild(f2WallFrontCenter);
+
+        // Far-left front wall section
+        auto f2WallFrontLeft = std::make_shared<SceneNode>(name + "_F2WallFrontLeft");
+        f2WallFrontLeft->mesh = &meshes.cube;
+        f2WallFrontLeft->transform.position = glm::vec3(3.70f, 6.10f, 3.70f);
+        f2WallFrontLeft->transform.scale = glm::vec3(0.20f, 3.60f, 1.00f);
+        f2WallFrontLeft->color = timber;
+        root->addChild(f2WallFrontLeft);
+
+        // Far-right front wall section
+        auto f2WallFrontRight = std::make_shared<SceneNode>(name + "_F2WallFrontRight");
+        f2WallFrontRight->mesh = &meshes.cube;
+        f2WallFrontRight->transform.position = glm::vec3(3.70f, 6.10f, -3.70f);
+        f2WallFrontRight->transform.scale = glm::vec3(0.20f, 3.60f, 1.00f);
+        f2WallFrontRight->color = timber;
+        root->addChild(f2WallFrontRight);
+
+        // Wall sections below and above the two windows
+        float f2WinZ[2] = { -2.10f, 2.10f };
+        for (int w = 0; w < 2; ++w) {
+            float wz = f2WinZ[w];
+
+            // Sub-window sill wall
+            auto f2WallSill = std::make_shared<SceneNode>(name + "_F2WallSill_" + std::to_string(w));
+            f2WallSill->mesh = &meshes.cube;
+            f2WallSill->transform.position = glm::vec3(3.70f, 4.725f, wz);
+            f2WallSill->transform.scale = glm::vec3(0.20f, 0.85f, 2.20f);
+            f2WallSill->color = timber;
+            root->addChild(f2WallSill);
+
+            // Header wall above window
+            auto f2WallHeader = std::make_shared<SceneNode>(name + "_F2WallHeader_" + std::to_string(w));
+            f2WallHeader->mesh = &meshes.cube;
+            f2WallHeader->transform.position = glm::vec3(3.70f, 7.575f, wz);
+            f2WallHeader->transform.scale = glm::vec3(0.20f, 0.65f, 2.20f);
+            f2WallHeader->color = timber;
+            root->addChild(f2WallHeader);
+        }
 
         // Exposed Ceiling Crossbeams across the Second Floor
         for (int b = -1; b <= 1; ++b) {
@@ -1287,56 +1597,111 @@ public:
         }
 
         // SECOND FLOOR SLIDING WINDOWS (2 pairs facing festival street, at Z = -2.1 and Z = 2.1)
-        float f2WinZ[2] = { -2.10f, 2.10f };
+        // Authentic Shoji Windows with 4-piece open border frames, dual-track sashes, and kumiko lattice mullions
         for (int w = 0; w < 2; ++w)
         {
             float wz = f2WinZ[w];
 
-            // Window Outer Timber Frame
-            auto winFrame = std::make_shared<SceneNode>(name + "_F2WinFrame_" + std::to_string(w));
-            winFrame->mesh = &meshes.cube;
-            winFrame->transform.position = glm::vec3(3.74f, 6.20f, wz);
-            winFrame->transform.scale = glm::vec3(0.16f, 2.10f, 2.20f);
-            winFrame->color = darkWood;
-            root->addChild(winFrame);
+            // 4-piece open border timber frame (top, bottom, left, right border bars)
+            auto winFrameTop = std::make_shared<SceneNode>(name + "_F2WinFrameTop_" + std::to_string(w));
+            winFrameTop->mesh = &meshes.cube;
+            winFrameTop->transform.position = glm::vec3(3.74f, 7.20f, wz);
+            winFrameTop->transform.scale = glm::vec3(0.12f, 0.10f, 2.24f);
+            winFrameTop->color = darkWood;
+            root->addChild(winFrameTop);
 
-            // Left Sliding Sash
+            auto winFrameBot = std::make_shared<SceneNode>(name + "_F2WinFrameBot_" + std::to_string(w));
+            winFrameBot->mesh = &meshes.cube;
+            winFrameBot->transform.position = glm::vec3(3.74f, 5.20f, wz);
+            winFrameBot->transform.scale = glm::vec3(0.12f, 0.10f, 2.24f);
+            winFrameBot->color = darkWood;
+            root->addChild(winFrameBot);
+
+            auto winFrameL = std::make_shared<SceneNode>(name + "_F2WinFrameL_" + std::to_string(w));
+            winFrameL->mesh = &meshes.cube;
+            winFrameL->transform.position = glm::vec3(3.74f, 6.20f, wz + 1.07f);
+            winFrameL->transform.scale = glm::vec3(0.12f, 1.90f, 0.10f);
+            winFrameL->color = darkWood;
+            root->addChild(winFrameL);
+
+            auto winFrameR = std::make_shared<SceneNode>(name + "_F2WinFrameR_" + std::to_string(w));
+            winFrameR->mesh = &meshes.cube;
+            winFrameR->transform.position = glm::vec3(3.74f, 6.20f, wz - 1.07f);
+            winFrameR->transform.scale = glm::vec3(0.12f, 1.90f, 0.10f);
+            winFrameR->color = darkWood;
+            root->addChild(winFrameR);
+
+            // Exterior Window Sill Ledge
+            auto winSillLedge = std::make_shared<SceneNode>(name + "_F2WinSillLedge_" + std::to_string(w));
+            winSillLedge->mesh = &meshes.cube;
+            winSillLedge->transform.position = glm::vec3(3.88f, 5.16f, wz);
+            winSillLedge->transform.scale = glm::vec3(0.30f, 0.08f, 2.30f);
+            winSillLedge->color = darkWood;
+            root->addChild(winSillLedge);
+
+            // Left Sliding Sash (Inner track at X = 3.71)
             auto sashL = std::make_shared<SceneNode>(name + "_F2SashL_" + std::to_string(w));
             sashL->mesh = &meshes.cube;
-            sashL->transform.position = glm::vec3(3.72f, 6.20f, wz - 0.48f);
-            sashL->transform.scale = glm::vec3(0.04f, 1.95f, 1.00f);
+            sashL->transform.position = glm::vec3(3.71f, 6.20f, wz - 0.48f);
+            sashL->transform.scale = glm::vec3(0.035f, 1.88f, 1.00f);
             sashL->isWindow = true;
             sashL->color = paperColor;
             root->addChild(sashL);
             windows.push_back(sashL);
 
+            // Left sash vertical kumiko rib (offset slightly outward to eliminate Z-fighting)
             auto ribL = std::make_shared<SceneNode>(name + "_F2RibL_" + std::to_string(w));
             ribL->mesh = &meshes.cube;
             ribL->transform.position = glm::vec3(3.73f, 6.20f, wz - 0.48f);
-            ribL->transform.scale = glm::vec3(0.04f, 1.90f, 0.06f);
+            ribL->transform.scale = glm::vec3(0.025f, 1.84f, 0.05f);
             ribL->color = darkWood;
             root->addChild(ribL);
 
-            // Right Sliding Sash
+            // Left sash horizontal kumiko lattice bars
+            for (int hb = 0; hb < 3; ++hb) {
+                auto hbarL = std::make_shared<SceneNode>(name + "_F2HBarL_" + std::to_string(w) + "_" + std::to_string(hb));
+                hbarL->mesh = &meshes.cube;
+                hbarL->transform.position = glm::vec3(3.73f, 5.60f + (float)hb * 0.60f, wz - 0.48f);
+                hbarL->transform.scale = glm::vec3(0.025f, 0.025f, 0.98f);
+                hbarL->color = darkWood;
+                root->addChild(hbarL);
+            }
+
+            // Right Sliding Sash (Outer track at X = 3.76)
             auto sashR = std::make_shared<SceneNode>(name + "_F2SashR_" + std::to_string(w));
             sashR->mesh = &meshes.cube;
             sashR->transform.position = glm::vec3(3.76f, 6.20f, wz + 0.48f);
-            sashR->transform.scale = glm::vec3(0.04f, 1.95f, 1.00f);
+            sashR->transform.scale = glm::vec3(0.035f, 1.88f, 1.00f);
             sashR->isWindow = true;
             sashR->color = paperColor;
             root->addChild(sashR);
             windows.push_back(sashR);
 
+            // Right sash vertical kumiko rib (offset slightly outward to eliminate Z-fighting)
             auto ribR = std::make_shared<SceneNode>(name + "_F2RibR_" + std::to_string(w));
             ribR->mesh = &meshes.cube;
-            ribR->transform.position = glm::vec3(3.77f, 6.20f, wz + 0.48f);
-            ribR->transform.scale = glm::vec3(0.04f, 1.90f, 0.06f);
+            ribR->transform.position = glm::vec3(3.78f, 6.20f, wz + 0.48f);
+            ribR->transform.scale = glm::vec3(0.025f, 1.84f, 0.05f);
             ribR->color = darkWood;
             root->addChild(ribR);
 
-            // Register right sash to slide open
-            slidingWindowSashes.push_back({ sashR, sashR->transform.position, glm::vec3(0.0f, 0.0f, 0.80f) });
-            slidingWindowSashes.push_back({ ribR, ribR->transform.position, glm::vec3(0.0f, 0.0f, 0.80f) });
+            // Right sash horizontal kumiko lattice bars (also slide when window opens)
+            std::vector<std::shared_ptr<SceneNode>> f2HBarsR;
+            for (int hb = 0; hb < 3; ++hb) {
+                auto hbarR = std::make_shared<SceneNode>(name + "_F2HBarR_" + std::to_string(w) + "_" + std::to_string(hb));
+                hbarR->mesh = &meshes.cube;
+                hbarR->transform.position = glm::vec3(3.78f, 5.60f + (float)hb * 0.60f, wz + 0.48f);
+                hbarR->transform.scale = glm::vec3(0.025f, 0.025f, 0.98f);
+                hbarR->color = darkWood;
+                root->addChild(hbarR);
+                f2HBarsR.push_back(hbarR);
+            }
+
+            // Register right sash to slide open neatly behind left sash (slides along -Z by 0.90m)
+            slidingWindowSashes.push_back({ sashR, sashR->transform.position, glm::vec3(0.0f, 0.0f, -0.90f) });
+            slidingWindowSashes.push_back({ ribR, ribR->transform.position, glm::vec3(0.0f, 0.0f, -0.90f) });
+            for (auto& hb : f2HBarsR)
+                slidingWindowSashes.push_back({ hb, hb->transform.position, glm::vec3(0.0f, 0.0f, -0.90f) });
 
             // Exterior Window Sill Planter Box on 2nd Floor
             auto planterF2 = createWindowPlanterBox(meshes, name + "_F2Planter_" + std::to_string(w), glm::vec3(3.96f, 5.25f, wz), 2.10f, 0.0f);

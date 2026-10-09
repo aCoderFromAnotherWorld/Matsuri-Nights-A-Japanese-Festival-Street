@@ -12,6 +12,55 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Machiya Townhouse Bug Fixes & Refinements: Windows Architecture, Stairwell-Floor Connection, and Fully Connected Floral Anatomy
+
+#### 1. Windows Architecture, Wall Cutouts & Dual-Track Sliding Mechanics Fix
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Issues Resolved:**
+  * **Frame Occlusion:** Previously, window outer frames were solid cubes (`winF1_OuterFrame`, `winFrame`) that completely obstructed the window apertures and hid the paper sashes behind solid wood.
+  * **Solid 2nd Floor Facade:** The second-floor front wall was a solid monolithic block without window openings, causing windows to render inside the wall.
+  * **Wall Penetration on Slide:** Sliding sashes had positive $Z$ sliding offsets ($+0.85\text{m}$, $+0.80\text{m}$) that pushed the geometry outward through the window jamb and into solid building walls.
+  * **Z-Fighting on Lattice Ribs:** Wooden mullion ribs were coplanar with paper sashes at identical depth coordinates, causing flickering.
+* **Solutions Implemented:**
+  * **4-Piece Open Border Frames:** Replaced all solid window frames (Ground Floor front, Ground Floor back, and Second Floor front pairs) with 4-piece timber surrounds (top header, bottom sill, left jamb, right jamb) forming real hollow window apertures.
+  * **2nd Floor Framed Facade Wall Cutouts:** Divided the second-floor front wall into framed timber sections (center wall, left wall, right wall, sub-sill walls, and lintel header walls) providing true open window bays so visitors can look outside onto the festival avenue and vice-versa.
+  * **Dual-Track Parallel Sliding (-0.95m / -0.90m):** Sashes now slide along parallel wooden guide tracks (inner track vs outer track). When opened, the sliding sash retreats neatly behind the stationary sash, opening half the window aperture with **zero wall penetration**.
+  * **Z-Fighting Elimination & Kumiko Grid:** Ribs and 3 horizontal lattice mullions per sash are offset slightly in front of the rice paper, eliminating coplanar depth conflicts while reproducing authentic Japanese Shoji craftsmanship. All lattice bars are registered to slide synchronously with the sash.
+
+#### 2. Stairwell-to-Upper-Floor Connection & Kinematic Safety Fix
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Issues Resolved:**
+  * **Interior Eaves Blockade:** An intermediate roof slab (`eaves1`, $8.8\text{m} \times 0.35\text{m} \times 10.0\text{m}$) was rendered as a solid cube across the entire house at $Y = 4.40\text{m}$, physically cutting across the staircase and ceiling.
+  * **0.85m Floor Void at Stair Top:** The second-floor tatami slab stopped at $X = -2.75\text{m}$ while the top step ended at $X = -3.50\text{m}$, leaving a gaping hole between the staircase and the bedroom.
+  * **Step Discontinuity:** Height difference between the top stair tread ($Y = 4.30\text{m}$) and the floor surface created a step bump.
+* **Solutions Implemented:**
+  * **Exterior Overhanging Eaves (*Hisashi*):** Converted `eaves1` into 4 exterior sloped cedar overhangs projecting outward over street, garden, and side walls, leaving the entire interior living space and stairwell open to the second floor.
+  * **Full Tatami Floor System & Seamless Landing:**
+    * `floor2Main`: Covers the main bedroom ($Z \in [-2.90\text{m}, +4.15\text{m}], X \in [-3.70\text{m}, +3.70\text{m}]$).
+    * `floor2Landing`: Dedicated upper stair landing ($X \in [-3.70\text{m}, -3.40\text{m}], Z \in [-4.15\text{m}, -2.90\text{m}]$) that meets the top step tread flush at $Y = 4.30\text{m}$, completely eliminating the floor gap.
+    * `floor2Front`: Covers the floor in front of the stair base ($X \in [-0.55\text{m}, +3.70\text{m}]$).
+  * **Turned Cedar Balustrade:** Replaced the plain guard block with a crafted handrail, base rail, corner newel posts, and 6 vertical turned cedar balusters along the open stairwell edge ($Z = -2.88\text{m}$).
+  * **Collision Kinematics & Solid Guardrail:** Updated `resolveCollision` so the player cannot accidentally walk off the bedroom floor into the stairwell opening; the solid guardrail physically stops the player, requiring them to enter through the top landing to walk down the stairs.
+
+#### 3. Fully Connected Floral Anatomy Fix (Ikebana & Window Planters)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Issues Resolved:**
+  * **Disconnected Ikebana Petals & Leaves:** Leaves and bloom spheres were placed using hardcoded world offsets that did not match rotated stem endpoints, causing petals to float in mid-air and leaves to detach.
+  * **Hovering Planter Flowers:** Window planter blooms hovered in mid-air over soil without any stems.
+* **Solutions Implemented:**
+  * **Hierarchical Parent-Child Transforms (`createIkebanaVase`):**
+    * Each flower branch is now a dedicated hierarchical `SceneNode` parent anchored at the vase rim.
+    * The stem cylinder extends from $Y = 0$ to $Y = \text{stemLen}$.
+    * Green leaves sprout directly off the stem at $0.42 \times \text{stemLen}$ and $0.68 \times \text{stemLen}$.
+    * A green calyx cup cradles the stem tip.
+    * Central blossom spheres and sculpted petal lobes are parented directly to the stem tip.
+    * Golden stamen centers sit inside the petal core.
+    * Because all components are child nodes, all floral parts remain rigidly and realistically connected regardless of branch rotation or scaling.
+  * **Rooted Window Planters (`createWindowPlanterBox`):** Added slender green stems anchored into the soil bed ($Y = 0.18\text{m}$), green leaves, calyx cups, and golden stamen centers for every bloom.
+  * **Material Shader Exemption:** Added `Calyx`, `Stem`, and `Branch` to `Scene::applyTexturesAndMaterials` to preserve rich organic vegetative colors without wood texture overrides.
+
+---
+
 ### [2026-10-10] — Realistic Interior Lamps, Bright Room Illumination, Interactive Sliding Windows, 14-Step Hakokaidan Stair Kinematics, Authentic 2-Storied Machiya Rooms, Corner Ikebana Flower Vases, Detailed Sakura Blossom Tree, and Window Gardens (Planters, Bonsai & Kokedama)
 
 #### 1. Realistic Interior Lamps (Andon Floor Lamps & Ceiling Pendant Washi Chandeliers)

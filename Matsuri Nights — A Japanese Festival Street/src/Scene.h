@@ -277,6 +277,9 @@ public:
                          node->name.find("Petal") != std::string::npos ||
                          node->name.find("Leaf") != std::string::npos ||
                          node->name.find("Leaves") != std::string::npos ||
+                         node->name.find("Calyx") != std::string::npos ||
+                         node->name.find("Stem") != std::string::npos ||
+                         node->name.find("Branch") != std::string::npos ||
                          node->name.find("Moss") != std::string::npos ||
                          node->name.find("Vine") != std::string::npos ||
                          node->name.find("Stamen") != std::string::npos ||
@@ -1092,10 +1095,10 @@ public:
             // 5. Interior Floors, Ceiling & 14-Step Staircase (when inside footprint)
             if (newL.x > bMinX && newL.x < bMaxX && newL.z > bMinZ && newL.z < bMaxZ)
             {
-                // Staircase zone: X in [-3.70, -0.50], Z in [-4.10, -2.85]
-                if (newL.x >= -3.70f && newL.x <= -0.50f && newL.z >= -4.10f && newL.z <= -2.85f && newL.y <= 6.2f)
+                // Staircase zone: X in [-3.60, -0.55], Z in [-4.15, -2.85]
+                if (newL.x >= -3.60f && newL.x <= -0.55f && newL.z >= -4.15f && newL.z <= -2.85f && newL.y <= 6.2f)
                 {
-                    float stairT = (-0.50f - newL.x) / 3.10f;
+                    float stairT = (-0.55f - newL.x) / 2.95f;
                     stairT = std::clamp(stairT, 0.0f, 1.0f);
                     float stairFloorY = glm::mix(0.20f, 4.30f, stairT);
                     float targetEyeY = stairFloorY + 1.45f;
@@ -1104,17 +1107,24 @@ public:
                 // Second Floor
                 else if (newL.y >= 3.6f)
                 {
-                    bool inStairwellOpening = (newL.x >= -3.75f && newL.x <= -0.50f && newL.z >= -4.15f && newL.z <= -2.80f);
-                    if (!inStairwellOpening)
+                    // Guardrail collision along open stairwell edge (Z = -2.85m, between X = -3.45m and X = -0.55m)
+                    if (oldL.z >= -2.85f && newL.z < -2.85f + radius && newL.x >= -3.45f && newL.x <= -0.55f)
                     {
-                        newL.y = std::max(newL.y, 4.30f + 1.45f); // 5.75m standing height on 2nd floor tatami
+                        newL.z = -2.85f + radius; // Solid guardrail stops player from falling off edge
+                    }
+
+                    // Stairwell vertical opening is strictly between X = -3.40m and -0.55m
+                    bool inStairwellShaft = (newL.x >= -3.40f && newL.x <= -0.55f && newL.z >= -4.15f && newL.z <= -2.85f);
+                    if (!inStairwellShaft)
+                    {
+                        newL.y = std::max(newL.y, 4.30f + 1.45f); // 5.75m standing height on 2nd floor tatami & landing
                     }
                     newL.y = std::min(newL.y, 7.80f);
                 }
                 else
                 {
                     // Ground floor inside: standing height
-                    newL.y = std::max(newL.y, 1.45f);
+                    newL.y = std::max(newL.y, 1.65f);
                 }
             }
 
