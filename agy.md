@@ -12,6 +12,47 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-09] — Implementation of Dual Ray Tracing Architecture (Real-Time GPU Mode + CPU Snapshot Export)
+
+#### 1. Real-Time GPU Ray Tracer (Interactive Full-Screen Pass)
+* **Files Added / Modified:**
+  * Added [`Matsuri Nights — A Japanese Festival Street/shaders/raytrace.vert`](file:///C:/Users/mdabu\OneDrive\Desktop\practice\Graphics\Matsuri-Nights-A-Japanese-Festival-Street\Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/raytrace.vert)
+  * Added [`Matsuri Nights — A Japanese Festival Street/shaders/raytrace.frag`](file:///C:/Users/mdabu\OneDrive\Desktop\practice\Graphics\Matsuri-Nights-A-Japanese-Festival-Street\Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/raytrace.frag)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu\OneDrive\Desktop\practice\Graphics\Matsuri-Nights-A-Japanese-Festival-Street\Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/Main.cpp`](file:///C:/Users/mdabu\OneDrive\Desktop\practice\Graphics\Matsuri-Nights-A-Japanese-Festival-Street\Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp)
+* **Features:**
+  * **Interactive 60+ FPS Performance:** Full-screen quad rendering pass driven by per-pixel ray casting on the GPU.
+  * **Primary Ray Reconstruction:** Generated directly from camera eye position, gaze direction (`Front`), `Up`, `Right`, FOV, and aspect ratio.
+  * **Analytical Geometric Primitives:**
+    * **Spheres:** Quadratic discriminant $\|\mathbf{P} - \mathbf{C}\|^2 = r^2$ for the magic orb, chochin lanterns, tree blossom puffs, and character heads.
+    * **Boxes / Slabs:** Kay-Kajiya bounding interval method for 4 Machiya houses, roofs, shoji doors, stalls, magic stage, golden byobu screen, and vanishing box.
+    * **Cylinders:** Vertical $Y$-cylinder equations for Torii shrine pillars, cedar street poles, and sakura tree trunk.
+    * **Planes:** Ground plane with procedural mortar cobblestone calculation and curb borders.
+  * **Analytical Hard Shadow Rays:** Shot from hit points to directional sun/moon and dynamic point lights (magic orb, stall lanterns, fireworks flash).
+  * **Multi-Bounce Recursive Specular Reflections:** Evaluates up to 3 reflection bounces across reflective surfaces ($k_r > 0$):
+    * Crystal Magic Orb ($k_r = 0.85$): Reflects the stage and sky dome.
+    * Metallic Vanishing Box ($k_r = 0.60$) & Gold Byobu Screen ($k_r = 0.65$): High metallic sheen.
+    * Magic Stage Floor ($k_r = 0.40$): Polished dark lacquer wood floor reflecting the magician, orb, and props.
+    * Wet Cobblestone Pavement ($k_r = 0.22$): Reflects the overhead hanging lanterns!
+  * **Live Controls Integration:** Hotkey **<kbd>Z</kbd>** seamlessly toggles between rasterized and ray-traced modes while retaining full camera flight navigation (<kbd>W</kbd>/<kbd>A</kbd>/<kbd>S</kbd>/<kbd>D</kbd> + Mouse) and Day/Night transitions (<kbd>N</kbd>).
+
+#### 2. Multi-Threaded CPU Software Ray Tracer (`src/RayTracer.h`)
+* **Files Added:**
+  * Added [`Matsuri Nights — A Japanese Festival Street/src/RayTracer.h`](file:///C:/Users/mdabu\OneDrive\Desktop\practice\Graphics\Matsuri-Nights-A-Japanese-Festival-Street\Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/RayTracer.h)
+* **Features:**
+  * Multithreaded execution across all CPU hardware cores (`std::thread::hardware_concurrency()`).
+  * Traces primary rays, analytical shadow rays, and 3 recursive reflection bounces.
+  * Applies standard display gamma correction ($2.2$).
+  * Exports 24-bit uncompressed bitmap image snapshot to **`raytraced_snapshot.bmp`** on disk via `TextureGenerator::writeBMP24`.
+  * Triggered via hotkey **<kbd>F9</kbd>**; logs resolution, core count, elapsed rendering time, and output path to console.
+
+#### 3. Documentation & Verification
+* Updated [`controls.md`](file:///C:/Users/mdabu\OneDrive\Desktop\practice\Graphics\Matsuri-Nights-A-Japanese-Festival-Street\controls.md) with <kbd>Z</kbd> and <kbd>F9</kbd> reference manual entries.
+* Updated [`color_changes.md`](file:///C:/Users/mdabu\OneDrive\Desktop\practice\Graphics\Matsuri-Nights-A-Japanese-Festival-Street\color_changes.md) with ray tracing optics, analytical formulas, and reflectivity parameters.
+* Verified zero-warning, zero-error MSBuild compilation.
+
+---
+
 ### [2026-10-09] — Completion of Course Phase 2 (Lighting & Illumination) & Phase 3 (Texturing & Material Pipeline)
 
 #### 1. Phase 2: Blinn-Phong Illumination & Multi-Light Engine

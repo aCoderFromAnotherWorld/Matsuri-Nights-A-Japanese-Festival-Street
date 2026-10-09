@@ -27,3 +27,7 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
+
+# Ray tracing local snapshots
+raytraced_snapshot.bmp
+*.snapshot.bmp

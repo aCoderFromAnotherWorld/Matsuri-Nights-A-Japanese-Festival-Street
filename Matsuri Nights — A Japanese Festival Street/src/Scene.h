@@ -7,6 +7,7 @@
 #include "Light.h"
 #include "Texture.h"
 #include "TextureGenerator.h"
+#include "RayTracer.h"
 
 #include <vector>
 #include <memory>
@@ -74,6 +75,12 @@ public:
     std::vector<InspectableObject> inspectables;
     int selectedIndex = 0;
 
+    // Ray Tracing Engine
+    bool rayTracingMode = false;
+    std::unique_ptr<Shader> rayTraceShader;
+    unsigned int quadVAO = 0;
+    unsigned int quadVBO = 0;
+
     Scene()
     {
         meshes.init();
@@ -84,6 +91,21 @@ public:
         applyTexturesAndMaterials();
         initLighting();
         setupInspectables();
+        initRayTracing();
+    }
+
+    ~Scene()
+    {
+        if (quadVAO != 0)
+        {
+            glDeleteVertexArrays(1, &quadVAO);
+            quadVAO = 0;
+        }
+        if (quadVBO != 0)
+        {
+            glDeleteBuffers(1, &quadVBO);
+            quadVBO = 0;
+        }
     }
 
     void loadTextures()
@@ -792,5 +814,128 @@ public:
 
         // Traverse scene graph and issue draw calls
         rootNode->draw(shader);
+    }
+
+    void initRayTracing()
+    {
+        // Setup Full-Screen Quad VAO & VBO
+        float quadVertices[] = {
+            -1.0f,  1.0f,
+            -1.0f, -1.0f,
+             1.0f, -1.0f,
+
+            -1.0f,  1.0f,
+             1.0f, -1.0f,
+             1.0f,  1.0f
+        };
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glBindVertexArray(0);
+
+        // Load Ray Tracing Shader Program
+        rayTraceShader = std::make_unique<Shader>("shaders/raytrace.vert", "shaders/raytrace.frag");
+    }
+
+    void toggleRayTracing()
+    {
+        rayTracingMode = !rayTracingMode;
+        std::cout << "\n========================================================" << std::endl;
+        if (rayTracingMode)
+        {
+            std::cout << " [RAY TRACING] Real-Time GPU Ray Tracer: ENABLED (Press 'Z' to toggle)" << std::endl;
+            std::cout << " - Primary camera rays traced per-pixel in real-time" << std::endl;
+            std::cout << " - Analytical ray-primitive intersections across festival street" << std::endl;
+            std::cout << " - Real-time hard shadow rays for all active light sources" << std::endl;
+            std::cout << " - Multi-bounce recursive specular mirror reflections (Orb, Stage, Gold Box)" << std::endl;
+        }
+        else
+        {
+            std::cout << " [RAY TRACING] Standard Rasterization Pipeline (Blinn-Phong) RESTORED" << std::endl;
+        }
+        std::cout << "========================================================\n" << std::endl;
+    }
+
+    void renderRayTraced(const Camera& camera, int screenWidth, int screenHeight)
+    {
+        if (!rayTraceShader || quadVAO == 0) return;
+
+        rayTraceShader->use();
+        float aspect = (screenHeight > 0) ? (float)screenWidth / (float)screenHeight : 1.0f;
+
+        rayTraceShader->setVec3("uCamPos", camera.Position);
+        rayTraceShader->setVec3("uCamFront", camera.Front);
+        rayTraceShader->setVec3("uCamUp", camera.Up);
+        rayTraceShader->setVec3("uCamRight", camera.Right);
+        rayTraceShader->setVec2("uResolution", glm::vec2((float)screenWidth, (float)screenHeight));
+        rayTraceShader->setFloat("uFov", camera.Zoom);
+        rayTraceShader->setFloat("uAspect", aspect);
+        rayTraceShader->setFloat("uTime", totalTime);
+        rayTraceShader->setFloat("uNightFactor", dayNightFactor);
+
+        // Dynamic Magic Orb position
+        glm::vec3 orbPos = pointLights.empty() ? glm::vec3(-4.0f, 1.8f, -19.0f) : pointLights[0].position;
+        rayTraceShader->setVec3("uOrbPos", orbPos);
+
+        // Dynamic Vanishing Box
+        if (vanishingBox && vanishingBox->boxNode)
+        {
+            rayTraceShader->setVec3("uBoxPos", vanishingBox->boxNode->getWorldPosition());
+            rayTraceShader->setVec3("uBoxScale", vanishingBox->boxNode->transform.scale);
+        }
+        else
+        {
+            rayTraceShader->setVec3("uBoxPos", glm::vec3(-4.8f, 1.45f, -19.0f));
+            rayTraceShader->setVec3("uBoxScale", glm::vec3(1.0f));
+        }
+
+        // Spotlight
+        rayTraceShader->setVec3("uSpotPos", spotLight.position);
+        rayTraceShader->setVec3("uSpotDir", spotLight.direction);
+
+        // Fireworks
+        glm::vec3 fwPos(0.0f);
+        glm::vec3 fwCol(1.0f);
+        bool fwActive = fireworks && fireworks->getActiveBurst(fwPos, fwCol);
+        rayTraceShader->setVec3("uFireworksPos", fwPos);
+        rayTraceShader->setVec3("uFireworksColor", fwCol);
+        rayTraceShader->setFloat("uFireworksActive", fwActive ? 1.0f : 0.0f);
+
+        rayTraceShader->setInt("uMaxBounces", 3);
+
+        glDisable(GL_DEPTH_TEST);
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    void captureCPURayTracedSnapshot(const Camera& camera, int width = 1280, int height = 720, const std::string& filename = "raytraced_snapshot.bmp")
+    {
+        CPU_RayTracer::SceneSnapshotData snapData;
+        snapData.dayNightFactor = dayNightFactor;
+        snapData.orbPos = pointLights.empty() ? glm::vec3(-4.0f, 1.8f, -19.0f) : pointLights[0].position;
+        if (vanishingBox && vanishingBox->boxNode)
+        {
+            snapData.boxPos = vanishingBox->boxNode->getWorldPosition();
+            snapData.boxScale = vanishingBox->boxNode->transform.scale;
+        }
+        snapData.spotPos = spotLight.position;
+        snapData.spotDir = spotLight.direction;
+
+        glm::vec3 fwPos(0.0f);
+        glm::vec3 fwCol(1.0f);
+        if (fireworks && fireworks->getActiveBurst(fwPos, fwCol))
+        {
+            snapData.fireworkPos = fwPos;
+            snapData.fireworkColor = fwCol;
+            snapData.fireworkActive = 1.0f;
+        }
+
+        CPU_RayTracer::renderSnapshot(camera, width, height, snapData, filename, 3);
     }
 };

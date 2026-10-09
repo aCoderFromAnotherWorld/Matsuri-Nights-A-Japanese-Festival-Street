@@ -46,7 +46,28 @@ Every visual mesh in the project belongs to a `SceneNode` in the hierarchical sc
   $$\text{Effective Diffuse} = \text{baseColor} \times \text{textureColor}(\mathbf{uv} \cdot \text{tiling})$$
 * **Texture Toggle (<kbd>X</kbd>):** Can disable texture sampling dynamically to compare shaded untextured polygons against textured surfaces.
 
-### D. Special Material Modes
+### D. Ray Tracing Pipeline & Whitted Optics (Advanced Feature)
+* The project includes a dual-engine **Ray Tracing System**:
+  1. **Real-Time GPU Ray Tracer (<kbd>Z</kbd>):** Executed per-fragment on a full-screen quad at 60+ FPS (`shaders/raytrace.frag`).
+  2. **Multi-Threaded CPU Software Ray Tracer (<kbd>F9</kbd>):** Executed across all CPU hardware threads exporting high-resolution rendered stills to `raytraced_snapshot.bmp` (`src/RayTracer.h`).
+* **Analytical Ray-Primitive Intersections:**
+  * **Spheres:** Quadratic discriminant solution $\|\mathbf{P} - \mathbf{C}\|^2 = r^2$.
+  * **Boxes / Slabs:** Kay-Kajiya bounding interval slab tests for houses, roofs, stalls, stage, and vanishing box.
+  * **Cylinders:** Vertical $Y$-cylinder equations for Torii shrine pillars, cedar street poles, and tree trunk.
+  * **Planes:** Ground plane with procedural cobblestone paver and mortar calculation.
+* **Analytical Shadow Rays:**
+  * From any intersection point $\mathbf{P} + \epsilon \mathbf{N}$, a shadow ray is shot toward active light sources (directional sun/moon, magic orb, food stall lanterns, and fireworks). If occluded by geometry, diffuse and specular illumination are zeroed out (casting true physical hard shadows).
+* **Multi-Bounce Recursive Reflections:**
+  * Evaluates up to 3 recursive bounces using reflection direction:
+    $$\mathbf{R} = \text{reflect}(\mathbf{D}, \mathbf{N})$$
+  * **Surface Reflectivity ($k_r$):**
+    * **Magic Orb ($k_r = 0.85$):** Highly reflective crystalline arcane sphere.
+    * **Vanishing Box ($k_r = 0.60$):** Gold leaf foil reflection.
+    * **Golden Byobu Screen ($k_r = 0.65$):** Gilded folding screen mirror.
+    * **Magic Stage Floor ($k_r = 0.40$):** Polished dark lacquer wood floor reflecting magician and orb.
+    * **Wet Stone Pavement ($k_r = 0.22$):** Nighttime festival cobblestone reflecting overhead red lanterns!
+
+### E. Special Material Modes
 1. **Emissive Objects (`isEmissive = true`):**
    * Used for the **Chochin Lanterns**, **Magic Orb**, **Spotlight Lens**, and **Fireworks**.
    * Radiates self-illuminated light that intensifies at night:

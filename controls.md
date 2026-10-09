@@ -23,6 +23,8 @@
 | **<kbd>F</kbd>** | Manually launch a Firework rocket |
 | **<kbd>P</kbd>** | Cycle Shading Mode (Blinn-Phong $\rightarrow$ Diffuse Only $\rightarrow$ Ambient Only) |
 | **<kbd>X</kbd>** | Toggle Diffuse Textures ON / OFF |
+| **<kbd>Z</kbd>** | Toggle **Real-Time GPU Ray Tracing Mode** ON / OFF (60+ FPS Whitted Ray Tracer) |
+| **<kbd>F9</kbd>** | Capture & Export **CPU Multi-Threaded Ray-Traced Snapshot** to `raytraced_snapshot.bmp` |
 | **<kbd>T</kbd>** | Cycle selectable object for **Live Inspection & Transformation** |
 | **<kbd>I</kbd> / <kbd>K</kbd>** | Translate selected object along $\pm Y$ (Up / Down) |
 | **<kbd>J</kbd> / <kbd>L</kbd>** | Translate selected object along $\pm X$ (Left / Right) |
@@ -93,6 +95,22 @@ Press the number keys to quickly showcase key areas to the evaluator:
   * Globally toggles texture sampling on and off.
   * When ON, procedural high-res textures (`wood_timber.bmp`, `roof_tiles.bmp`, `stone_pavement.bmp`, `tatami_cloth.bmp`, `gold_leaf.bmp`, `sakura_bark.bmp`, `lantern_paper.bmp`) are mapped across the scene with UV tiling and modulated by base color.
   * When OFF, clean untextured base material colors are rendered for comparative evaluation.
+* **Toggle Real-Time GPU Ray Tracing (<kbd>Z</kbd>):**
+  * Instantly switches the entire rendering pipeline from standard rasterization to a full **Real-Time GPU Whitted Ray Tracer** running at 60+ FPS (`shaders/raytrace.frag`):
+    * **Per-Pixel Primary Rays:** Cast from camera origin through view plane screen pixels.
+    * **Analytical Primitives:** Tests ray intersection against mathematical planes (ground pavement), cylinders (Torii pillars, lantern poles, tree trunk), spheres (magic orb, hanging chochin lanterns, blossom canopy), and boxes (4 Machiya houses, roofs, shoji screens, food stalls, magic stage, golden byobu screen, and vanishing box).
+    * **Analytical Hard Shadow Rays:** Traced from hit points to directional sun/moon and all dynamic point lights (magic orb, stall lanterns, fireworks flash).
+    * **Multi-Bounce Recursive Specular Reflections:** Traces up to 3 reflection bounces across reflective surfaces:
+      * **Magic Orb:** Crystal mirror reflection of stage and sky.
+      * **Vanishing Box & Golden Byobu:** Metallic gold specular reflections.
+      * **Magic Stage Floor:** Polished dark lacquer mirror reflection of magician and props.
+      * **Wet Stone Pavement:** Reflects the warm glowing lanterns overhead!
+  * Free fly camera navigation (<kbd>W</kbd>/<kbd>A</kbd>/<kbd>S</kbd>/<kbd>D</kbd> + Mouse) and Day/Night mode (<kbd>N</kbd>) continue to operate live in ray-traced mode!
+* **Capture CPU Multi-Threaded Ray-Traced Snapshot (<kbd>F9</kbd>):**
+  * Freezes the current frame and executes a high-fidelity CPU software ray tracer (`src/RayTracer.h`) across all CPU cores (`std::thread::hardware_concurrency()`).
+  * Traces primary rays, analytical shadows, and 3 recursive reflection bounces.
+  * Applies gamma correction ($2.2$) and exports the rendered image to **`raytraced_snapshot.bmp`** on disk.
+  * Displays performance metrics (elapsed execution time, resolution, core count) in the console window.
 
 ---
 
@@ -210,6 +228,26 @@ if (key == GLFW_KEY_N && g_Scene)
 // Change Firework rocket trigger:
 if (key == GLFW_KEY_F && g_Scene)
     g_Scene->triggerFirework();
+
+// Cycle Shading Mode:
+if (key == GLFW_KEY_P && g_Scene)
+    g_Scene->cycleShadingMode();
+
+// Toggle Textures:
+if (key == GLFW_KEY_X && g_Scene)
+    g_Scene->toggleTextures();
+
+// Toggle Real-Time GPU Ray Tracing:
+if (key == GLFW_KEY_Z && g_Scene)
+    g_Scene->toggleRayTracing();
+
+// Capture & Export CPU Ray-Traced Snapshot to BMP:
+if (key == GLFW_KEY_F9 && g_Scene)
+{
+    int w, h;
+    glfwGetFramebufferSize(window, &w, &h);
+    g_Scene->captureCPURayTracedSnapshot(camera, w, h, "raytraced_snapshot.bmp");
+}
 
 // Change cycle inspectable key:
 if (key == GLFW_KEY_T && g_Scene)

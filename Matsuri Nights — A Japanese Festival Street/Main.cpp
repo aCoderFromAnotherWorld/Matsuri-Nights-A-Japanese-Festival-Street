@@ -95,6 +95,8 @@ int main()
     std::cout << "  [N]             : Smooth Day <-> Festival Night transition\n";
     std::cout << "  [P]             : Cycle Shading Mode (Blinn-Phong -> Diffuse-Only -> Ambient/Flat)\n";
     std::cout << "  [X]             : Toggle Texturing (Textures ON / OFF)\n";
+    std::cout << "  [Z]             : Toggle Real-Time GPU Ray Tracing Mode (ON / OFF)\n";
+    std::cout << "  [F9]            : Capture & Export CPU Ray-Traced Snapshot to BMP\n";
     std::cout << "  [F]             : Launch Firework rocket\n";
     std::cout << "  [1 / 2 / 3]     : Preset camera viewpoints (Street, Magic Stage, Torii)\n";
     std::cout << "  [T]             : Cycle object for Live In-Class Inspection & Transform\n";
@@ -123,11 +125,19 @@ int main()
         glClearColor(0.08f, 0.09f, 0.14f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Render entire scene
+        // Render entire scene (Ray-Traced or Rasterized)
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
         float aspect = (height > 0) ? (float)width / (float)height : 1.0f;
-        scene.render(basicShader, camera, aspect);
+
+        if (scene.rayTracingMode)
+        {
+            scene.renderRayTraced(camera, width, height);
+        }
+        else
+        {
+            scene.render(basicShader, camera, aspect);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -209,6 +219,24 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     // Phase 3: Toggle Textures (Textures ON / OFF)
     if (key == GLFW_KEY_X && g_Scene)
         g_Scene->toggleTextures();
+
+    // Ray Tracing: Toggle Real-Time GPU Ray Tracing Mode
+    if (key == GLFW_KEY_Z && g_Scene)
+    {
+        g_Scene->toggleRayTracing();
+        if (g_Scene->rayTracingMode)
+            glfwSetWindowTitle(window, "Matsuri Nights [REAL-TIME RAY TRACING ACTIVE] - A Japanese Festival Street");
+        else
+            glfwSetWindowTitle(window, "Matsuri Nights - A Japanese Festival Street");
+    }
+
+    // Ray Tracing: Capture High-Fidelity CPU Ray-Traced Snapshot to BMP
+    if (key == GLFW_KEY_F9 && g_Scene)
+    {
+        int w, h;
+        glfwGetFramebufferSize(window, &w, &h);
+        g_Scene->captureCPURayTracedSnapshot(camera, w, h, "raytraced_snapshot.bmp");
+    }
 
     // Toggle mouse cursor capture
     if (key == GLFW_KEY_C)
