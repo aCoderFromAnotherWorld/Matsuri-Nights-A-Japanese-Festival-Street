@@ -12,6 +12,36 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Fix: Magician Wand in Left Hand, Right Hand Rest/Sway, Audience-Facing Alignment & Articulated Kinematics
+
+#### 1. Left-Hand Wand Grasp & Magic Orb Reference Frame (`Objects.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Problem Addressed:**
+  * The wand and orb were previously attached to the right hand, whereas requirements specify the left hand must grasp the magic wand and command the magic orb, with the right hand serving as the companion arm.
+* **Fix & Articulated Rig Updates:**
+  * **Left Arm Spellcasting Hierarchy:** Configured the left arm as the spellcasting limb:
+    $$\text{root} \xrightarrow{\text{Shoulder}} \text{leftArm} \xrightarrow{\text{Elbow}} \text{leftForearm} \xrightarrow{\text{Wrist}} \text{leftHand} \xrightarrow{\text{Grasp}} \text{wand} \ \& \ \text{orbNode}$$
+    * Shoulder: Position $(-0.36\text{m}, 1.62\text{m}, 0.05\text{m})$, raised forward and abducted outward.
+    * Elbow: Position $(0.0\text{m}, -0.38\text{m}, 0.0\text{m})$, bent upward/forward at $+42^\circ$ pitch toward the orb.
+    * Wrist (`leftHand`): Located at forearm distal condyle $(0.0\text{m}, -0.36\text{m}, 0.0\text{m})$.
+    * Left Palm: Positioned at $(-0.01\text{m}, 0.035\text{m}, 0.065\text{m})$ with rotation $(-65.0^\circ, -10.0^\circ, 15.0^\circ)$, grasping the wand forward toward the orb.
+    * Wand: Positioned at $(-0.01\text{m}, 0.060\text{m}, 0.15\text{m})$ with rotation $(-65.0^\circ, -10.0^\circ, 15.0^\circ)$, extending forward/upward toward the audience and orb.
+    * Orb & Tails: Transformed directly relative to `leftHand`'s moving reference frame in a 3D helical orbit, with Point Light 0 tracking the orb in world space.
+  * **Right Arm Companion Hierarchy:** Configured the right arm as the relaxed companion limb:
+    * Shoulder: Position $(+0.36\text{m}, 1.62\text{m}, 0.05\text{m})$, hanging naturally at side.
+    * Elbow: Position $(0.0\text{m}, -0.38\text{m}, 0.0\text{m})$, bent gently at $+35^\circ$ pitch.
+    * Right Hand: Placed at $(0.0\text{m}, -0.42\text{m}, 0.0\text{m})$ with rotation $(10.0^\circ, 0.0^\circ, 180.0^\circ)$. Fingertips extend downward along the side of the yukata/robe, wrist connects flush to forearm distal joint without gaps, and palm rests comfortably along the hip.
+
+#### 2. Audience-Facing Alignment & Interactive Gaze Kinematics (`Objects.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Alignment Details:**
+  * Magician root stands on the stage at $(6.2\text{m}, 0.95\text{m}, -19.0\text{m})$ facing $+Z$ (`rotation = (0, 0, 0)`), directly facing the spectator benches placed in front of the stage at $Z \in [-14.5\text{m}, -12.7\text{m}]$ (which face $-Z$ at $180^\circ$ yaw).
+  * Magician's head is tilted downward at $+4.0^\circ$ pitch (`rotation = (4.0f, 0.0f, 0.0f)`), making direct eye contact with the seated spectators below.
+  * Hat brim and cone are parented directly to `head` (offsets $Y = +0.27\text{m}$ and $+0.82\text{m}$), staying locked with head rotation.
+  * In `Magician::update(float time)`, the left arm performs dynamic spellcasting flourishes ($\pm 16^\circ$ shoulder, $\pm 18^\circ$ elbow, $\pm 22^\circ$ wrist flicking), the right arm performs subtle breathing and posture swaying ($\pm 4^\circ$ shoulder, $\pm 5^\circ$ elbow, $\pm 3^\circ$ wrist), and the head scans smoothly across the seated audience ($\pm 4^\circ$ yaw).
+
+---
+
 ### [2026-10-10] — Fix: Magician Hands Orientation & Stall Vendor Streetward Facing Correction
 
 #### 1. Magician Anatomical Hand & Wand Alignment (`Objects.h`)
