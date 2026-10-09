@@ -61,6 +61,10 @@ public:
     Texture texTatami;
     Texture texGold;
     Texture texBark;
+    Texture texTakoyaki;
+
+    // Interactive Accessibility & Wall Collision System
+    bool collisionEnabled = true;
 
     // Day / Night state machine
     float dayNightFactor = 0.0f; // 0.0 = day, 1.0 = night
@@ -139,6 +143,7 @@ public:
         texTatami.loadFromFile("assets/textures/tatami_cloth.bmp");
         texGold.loadFromFile("assets/textures/gold_leaf.bmp");
         texBark.loadFromFile("assets/textures/sakura_bark.bmp");
+        texTakoyaki.loadFromFile("assets/textures/takoyaki_food.bmp");
     }
 
     void buildScene()
@@ -246,23 +251,45 @@ public:
             if (!b || !b->root) continue;
             auto assignBuilding = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
                 if (!node) return;
-                if (node->name.find("Roof") != std::string::npos)
+                if (node->name.find("Roof") != std::string::npos || node->name.find("Eaves") != std::string::npos)
                 {
                     node->texture = &texRoof;
                     node->textureTiling = 5.0f;
                     node->shininess = 32.0f;
                     node->specularStrength = 0.45f;
                 }
-                else if (node->name.find("Window") != std::string::npos)
+                else if (node->name.find("Tatami") != std::string::npos)
                 {
+                    node->texture = &texTatami;
+                    node->textureTiling = 4.0f;
+                    node->shininess = 16.0f;
+                    node->specularStrength = 0.15f;
+                }
+                else if (node->name.find("Stone") != std::string::npos || node->name.find("Genkan") != std::string::npos)
+                {
+                    node->texture = &texStone;
+                    node->textureTiling = 2.0f;
+                    node->shininess = 20.0f;
+                    node->specularStrength = 0.20f;
+                }
+                else if (node->name.find("Paper") != std::string::npos || node->name.find("Andon") != std::string::npos || node->name.find("Lamp") != std::string::npos || node->isWindow || node->isEmissive)
+                {
+                    node->texture = nullptr;
                     node->shininess = 8.0f;
                     node->specularStrength = 0.10f;
+                }
+                else if (node->name.find("Zabuton") != std::string::npos || node->name.find("Futon") != std::string::npos)
+                {
+                    node->texture = &texTatami;
+                    node->textureTiling = 2.0f;
+                    node->shininess = 14.0f;
+                    node->specularStrength = 0.20f;
                 }
                 else
                 {
                     node->texture = &texWood;
                     node->textureTiling = 2.5f;
-                    node->shininess = 16.0f;
+                    node->shininess = 20.0f;
                     node->specularStrength = 0.25f;
                 }
                 for (auto& ch : node->children)
@@ -368,6 +395,19 @@ public:
                 {
                     node->texture = &texLantern;
                     node->textureTiling = 1.0f;
+                }
+                else if (node->name.find("TakoBall") != std::string::npos)
+                {
+                    node->texture = &texTakoyaki;
+                    node->textureTiling = 1.0f;
+                    node->shininess = 64.0f;
+                    node->specularStrength = 0.70f;
+                }
+                else if (node->name.find("TakoSauce") != std::string::npos || node->name.find("TakoMayo") != std::string::npos || node->name.find("TakoAonori") != std::string::npos)
+                {
+                    node->texture = nullptr;
+                    node->shininess = 72.0f;
+                    node->specularStrength = 0.85f;
                 }
                 else
                 {
@@ -773,6 +813,11 @@ public:
             audience->update(totalTime);
             crowd->update(totalTime, dt);
             fireworks->update(dt, dayNightFactor > 0.6f);
+
+            for (auto& bld : buildings)
+            {
+                if (bld) bld->update(dt);
+            }
         }
 
         // Recursively compute and propagate world matrices across the scene graph
@@ -780,6 +825,176 @@ public:
 
         // Update all dynamic light sources (positions, directions, and day/night intensities)
         updateLighting(dt);
+    }
+
+    void interactNearestDoor(const glm::vec3& playerPos)
+    {
+        float minDist = 999.0f;
+        MachiyaBuilding* nearestBld = nullptr;
+
+        for (auto& bld : buildings)
+        {
+            if (!bld) continue;
+            glm::vec3 doorLocal(4.14f, 1.2f, -0.90f);
+            glm::vec3 doorWorld;
+            if (std::abs(bld->rotationY - 180.0f) < 1.0f)
+                doorWorld = bld->worldPos + glm::vec3(-doorLocal.x, doorLocal.y, -doorLocal.z);
+            else
+                doorWorld = bld->worldPos + doorLocal;
+
+            float d = glm::distance(playerPos, doorWorld);
+            if (d < minDist)
+            {
+                minDist = d;
+                nearestBld = bld.get();
+            }
+        }
+
+        if (nearestBld && minDist < 5.0f)
+        {
+            nearestBld->toggleDoor();
+            std::cout << "\n========================================================" << std::endl;
+            std::cout << " [DOOR INTERACTION] " << (nearestBld->isDoorOpen ? "Slid OPEN" : "Slid CLOSED")
+                      << " front Shoji door of " << nearestBld->root->name << std::endl;
+            std::cout << "========================================================\n" << std::endl;
+        }
+        else
+        {
+            std::cout << "\n[DOOR INTERACTION] Walk closer to a house entrance (within 5m) and press [H] to interact.\n" << std::endl;
+        }
+    }
+
+    void toggleCollision()
+    {
+        collisionEnabled = !collisionEnabled;
+        std::cout << "\n========================================================" << std::endl;
+        std::cout << " [WALL COLLISION] " << (collisionEnabled ? "ENABLED (Walk Mode: Solid walls & stairs active, no passing walls)" : "DISABLED (Noclip Fly Mode)") << std::endl;
+        std::cout << "========================================================\n" << std::endl;
+    }
+
+    glm::vec3 resolveCollision(const glm::vec3& oldPos, const glm::vec3& newPos)
+    {
+        if (!collisionEnabled)
+            return newPos;
+
+        glm::vec3 pos = newPos;
+        // Never allow sinking below ground
+        pos.y = std::max(pos.y, 0.45f);
+
+        const float radius = 0.35f;
+
+        for (auto& bld : buildings)
+        {
+            if (!bld) continue;
+
+            glm::vec3 bPos = bld->worldPos;
+            float rotY = bld->rotationY;
+            bool isRot180 = (std::abs(rotY - 180.0f) < 1.0f);
+
+            auto toLocal = [&](const glm::vec3& wp) -> glm::vec3 {
+                glm::vec3 rel = wp - bPos;
+                if (isRot180)
+                    return glm::vec3(-rel.x, rel.y, -rel.z);
+                return rel;
+            };
+
+            auto toWorld = [&](const glm::vec3& lp) -> glm::vec3 {
+                if (isRot180)
+                    return bPos + glm::vec3(-lp.x, lp.y, -lp.z);
+                return bPos + lp;
+            };
+
+            glm::vec3 oldL = toLocal(oldPos);
+            glm::vec3 newL = toLocal(pos);
+
+            // Broadphase check: building footprint is [-4.2, 4.2] x [-4.7, 4.7]
+            if (std::abs(newL.x) > 5.8f || std::abs(newL.z) > 6.2f || newL.y > 9.8f)
+                continue;
+
+            const float bMinX = -4.0f, bMaxX = 4.0f;
+            const float bMinZ = -4.5f, bMaxZ = 4.5f;
+
+            // 1. Back Wall (X = -4.0)
+            if (newL.z >= bMinZ && newL.z <= bMaxZ && newL.y <= 8.2f)
+            {
+                if (oldL.x <= bMinX && newL.x > bMinX - radius)
+                    newL.x = bMinX - radius;
+                else if (oldL.x >= bMinX && newL.x < bMinX + radius)
+                    newL.x = bMinX + radius;
+            }
+
+            // 2. Left Wall (Z = +4.5)
+            if (newL.x >= bMinX && newL.x <= bMaxX && newL.y <= 8.2f)
+            {
+                if (oldL.z >= bMaxZ && newL.z < bMaxZ + radius)
+                    newL.z = bMaxZ + radius;
+                else if (oldL.z <= bMaxZ && newL.z > bMaxZ - radius)
+                    newL.z = bMaxZ - radius;
+            }
+
+            // 3. Right Wall (Z = -4.5)
+            if (newL.x >= bMinX && newL.x <= bMaxX && newL.y <= 8.2f)
+            {
+                if (oldL.z <= bMinZ && newL.z > bMinZ - radius)
+                    newL.z = bMinZ - radius;
+                else if (oldL.z >= bMinZ && newL.z < bMinZ + radius)
+                    newL.z = bMinZ + radius;
+            }
+
+            // 4. Front Wall (X = +4.0) with Doorway portal
+            if (newL.z >= bMinZ && newL.z <= bMaxZ && newL.y <= 8.2f)
+            {
+                const float doorMinZ = -2.05f;
+                const float doorMaxZ = 0.25f;
+                bool inDoorwayH = (newL.z >= doorMinZ + radius && newL.z <= doorMaxZ - radius);
+                bool inDoorwayV = (newL.y >= 0.0f && newL.y <= 2.55f);
+                bool canPassDoor = inDoorwayH && inDoorwayV && bld->isDoorOpen;
+
+                // Crossing from street into house
+                if (oldL.x >= bMaxX && newL.x < bMaxX + radius)
+                {
+                    if (!canPassDoor)
+                        newL.x = bMaxX + radius;
+                }
+                // Crossing from house onto street
+                else if (oldL.x <= bMaxX && newL.x > bMaxX - radius)
+                {
+                    if (!canPassDoor)
+                        newL.x = bMaxX - radius;
+                }
+            }
+
+            // 5. Interior Floors, Ceiling & Staircase (when inside footprint)
+            if (newL.x > bMinX && newL.x < bMaxX && newL.z > bMinZ && newL.z < bMaxZ)
+            {
+                // Ground floor inside: standing height
+                newL.y = std::max(newL.y, 1.45f);
+
+                // Staircase zone: X in [-3.6, -0.9], Z in [-4.1, -2.9]
+                if (newL.x >= -3.6f && newL.x <= -0.9f && newL.z >= -4.1f && newL.z <= -2.9f)
+                {
+                    float stairT = (-0.9f - newL.x) / 2.7f;
+                    stairT = std::clamp(stairT, 0.0f, 1.0f);
+                    float stairFloorY = glm::mix(0.22f, 4.30f, stairT);
+                    float targetEyeY = stairFloorY + 1.45f;
+                    newL.y = std::max(newL.y, targetEyeY);
+                }
+                // Second Floor
+                else if (newL.y >= 4.5f)
+                {
+                    bool inStairwellOpening = (newL.x >= -3.7f && newL.x <= -0.8f && newL.z >= -4.2f && newL.z <= -2.8f);
+                    if (!inStairwellOpening)
+                    {
+                        newL.y = std::max(newL.y, 4.30f + 1.45f);
+                    }
+                    newL.y = std::min(newL.y, 7.80f);
+                }
+            }
+
+            pos = toWorld(newL);
+        }
+
+        return pos;
     }
 
     void initShadows()
@@ -851,6 +1066,12 @@ public:
 
         shader.use();
 
+        // Keep sky dome centered at camera position (true infinite distance)
+        if (skyDome && skyDome->root)
+        {
+            skyDome->root->transform.position = camera.Position;
+        }
+
         // Global camera view and projection matrices
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = camera.GetProjectionMatrix(aspectRatio);
@@ -859,6 +1080,7 @@ public:
         shader.setMat4("projection", projection);
         shader.setVec3("viewPos", camera.Position);
         shader.setFloat("dayNightFactor", dayNightFactor);
+        shader.setFloat("totalTime", totalTime);
 
         // Phase 2: Shading mode & Lights
         shader.setInt("shadingMode", shadingMode);

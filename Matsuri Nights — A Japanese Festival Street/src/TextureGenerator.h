@@ -240,6 +240,82 @@ namespace TextureGenerator
         writeBMP24(path, size, size, rgb);
     }
 
+    inline void generateTakoyakiFood(const std::string& path, int size = 256)
+    {
+        std::vector<unsigned char> rgb(size * size * 3);
+        for (int y = 0; y < size; ++y)
+        {
+            for (int x = 0; x < size; ++x)
+            {
+                float u = (float)x / (float)size;
+                float v = (float)y / (float)size;
+
+                // 1. Fried batter base: warm golden ochre with porous batter variations
+                float noise1 = pseudoNoise(x * 2, y * 2);
+                float noise2 = pseudoNoise(x * 5 + 13, y * 5 + 37);
+                float batter = 0.80f + 0.20f * noise1;
+
+                // Griddle scorch / toasted caramelization specks
+                float scorch = (noise2 > 0.82f) ? 0.65f : 1.0f;
+
+                float r = (218.0f * batter + 10.0f) * scorch;
+                float g = (152.0f * batter + 5.0f) * scorch;
+                float b = (62.0f * batter) * scorch;
+
+                // 2. Rich Dark Savory Takoyaki Sauce (drizzled streams and pooled glaze)
+                // Flowing glossy ribbons across center/upper latitudes
+                float saucePattern = std::sin(u * 14.0f + std::sin(v * 8.0f) * 2.5f) * 0.5f + 0.5f;
+                float sauceCoverage = std::sin(v * 3.14159f); // Thicker toward center
+                bool isSauce = (saucePattern * sauceCoverage > 0.42f) || (std::abs(v - 0.50f) < 0.22f && noise1 > 0.35f);
+
+                if (isSauce)
+                {
+                    // Glossy dark mahogany / sweet soy fruit glaze
+                    float sauceGloss = 0.85f + 0.25f * noise1;
+                    r = 52.0f * sauceGloss;
+                    g = 22.0f * sauceGloss;
+                    b = 10.0f * sauceGloss;
+                }
+
+                // 3. Creamy Japanese Kewpie Mayonnaise (criss-cross zig-zag stripes)
+                float mayo1 = std::abs(std::sin((u + v) * 24.0f));
+                float mayo2 = std::abs(std::sin((u - v) * 24.0f));
+                bool isMayo = (mayo1 < 0.15f || mayo2 < 0.15f) && (isSauce || noise2 > 0.4f) && (v > 0.15f && v < 0.85f);
+                if (isMayo)
+                {
+                    // Ivory pale-cream egg mayonnaise
+                    r = 248.0f;
+                    g = 242.0f;
+                    b = 210.0f;
+                }
+
+                // 4. Emerald Green Aonori (dried seaweed flake sprinkles)
+                float aonoriNoise = pseudoNoise(x * 11 + 101, y * 11 + 203);
+                if (aonoriNoise > 0.88f && (isSauce || isMayo))
+                {
+                    r = 24.0f;
+                    g = 128.0f;
+                    b = 36.0f;
+                }
+
+                // 5. Curled Katsuobushi (shaved bonito tuna flakes)
+                float bonitoNoise = pseudoNoise(x / 4, y / 3);
+                if (bonitoNoise > 0.78f && noise1 > 0.55f && v > 0.25f && v < 0.75f)
+                {
+                    r = 210.0f;
+                    g = 152.0f;
+                    b = 115.0f;
+                }
+
+                int idx = (y * size + x) * 3;
+                rgb[idx + 0] = (unsigned char)std::clamp(r, 0.0f, 255.0f);
+                rgb[idx + 1] = (unsigned char)std::clamp(g, 0.0f, 255.0f);
+                rgb[idx + 2] = (unsigned char)std::clamp(b, 0.0f, 255.0f);
+            }
+        }
+        writeBMP24(path, size, size, rgb);
+    }
+
     inline void ensureTextureAssetsExist(const std::string& dir = "assets/textures")
     {
         try
@@ -256,6 +332,7 @@ namespace TextureGenerator
             std::string fTatami = dir + "/tatami_cloth.bmp";
             std::string fGold = dir + "/gold_leaf.bmp";
             std::string fBark = dir + "/sakura_bark.bmp";
+            std::string fTakoyaki = dir + "/takoyaki_food.bmp";
 
             if (!std::filesystem::exists(fWood)) generateWoodTimber(fWood);
             if (!std::filesystem::exists(fRoof)) generateRoofTiles(fRoof);
@@ -264,6 +341,7 @@ namespace TextureGenerator
             if (!std::filesystem::exists(fTatami)) generateTatamiCloth(fTatami);
             if (!std::filesystem::exists(fGold)) generateGoldLeaf(fGold);
             if (!std::filesystem::exists(fBark)) generateSakuraBark(fBark);
+            if (!std::filesystem::exists(fTakoyaki)) generateTakoyakiFood(fTakoyaki);
 
             std::cout << "[TextureGenerator] Texture assets verified in: " << dir << std::endl;
         }

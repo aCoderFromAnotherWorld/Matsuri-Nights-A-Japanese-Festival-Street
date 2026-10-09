@@ -96,6 +96,8 @@ int main()
     std::cout << "  [P]             : Cycle Shading Mode (Blinn-Phong -> Diffuse-Only -> Ambient/Flat)\n";
     std::cout << "  [X]             : Toggle Texturing (Textures ON / OFF)\n";
     std::cout << "  [V]             : Toggle Realistic Soft Shadows (ON / OFF)\n";
+    std::cout << "  [H]             : Interact with nearest house front door (Slide Open / Close)\n";
+    std::cout << "  [B]             : Toggle Wall Collision (Walk Mode: solid walls & stairs <-> Noclip)\n";
     std::cout << "  [Z]             : Toggle Real-Time GPU Ray Tracing Mode (ON / OFF)\n";
     std::cout << "  [F9]            : Capture & Export CPU Ray-Traced Snapshot to BMP\n";
     std::cout << "  [F]             : Launch Firework rocket\n";
@@ -154,6 +156,8 @@ void processContinuousInput(GLFWwindow* window, Scene& scene)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
+    glm::vec3 oldCameraPos = camera.Position;
+
     // Camera movement
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -167,6 +171,9 @@ void processContinuousInput(GLFWwindow* window, Scene& scene)
         camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
+
+    // Apply interactive wall collision detection (prevent walking through walls)
+    camera.Position = scene.resolveCollision(oldCameraPos, camera.Position);
 
     // Live transformation of selected object (CSE4102 requirement: live manual transform testing)
     float tSpeed = 2.5f * deltaTime;
@@ -242,6 +249,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     // Realistic Shadows: Toggle Soft PCF Shadow Mapping
     if (key == GLFW_KEY_V && g_Scene)
         g_Scene->toggleShadows();
+
+    // Interactive House Door: Slide Open / Close nearest house front Shoji door
+    if (key == GLFW_KEY_H && g_Scene)
+        g_Scene->interactNearestDoor(camera.Position);
+
+    // Wall Collision: Toggle Walk Mode (Solid Walls) vs Noclip Fly Mode
+    if (key == GLFW_KEY_B && g_Scene)
+        g_Scene->toggleCollision();
 
     // Toggle mouse cursor capture
     if (key == GLFW_KEY_C)

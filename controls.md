@@ -24,6 +24,8 @@
 | **<kbd>P</kbd>** | Cycle Shading Mode (Blinn-Phong $\rightarrow$ Diffuse Only $\rightarrow$ Ambient Only) |
 | **<kbd>X</kbd>** | Toggle Diffuse Textures ON / OFF |
 | **<kbd>V</kbd>** | Toggle **Realistic PCF Soft Shadows** ON / OFF (16-sample filter & shadow acne bias) |
+| **<kbd>H</kbd>** | **Interact with Nearest House Door** (Smoothly slide Shoji door open / close) |
+| **<kbd>B</kbd>** | Toggle **Wall Collision Mode** (Walk Mode: solid walls & stairs $\longleftrightarrow$ Noclip Fly Mode) |
 | **<kbd>Z</kbd>** | Toggle **Real-Time GPU Ray Tracing Mode** ON / OFF (60+ FPS Whitted Ray Tracer) |
 | **<kbd>F9</kbd>** | Capture & Export **CPU Multi-Threaded Ray-Traced Snapshot** to `raytraced_snapshot.bmp` |
 | **<kbd>T</kbd>** | Cycle selectable object for **Live Inspection & Transformation** |
@@ -330,4 +332,37 @@ After changing any key binding in `Main.cpp` or speed in `src/Camera.h`:
    ```powershell
    & "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\amd64\MSBuild.exe" "Matsuri Nights — A Japanese Festival Street\Matsuri Nights — A Japanese Festival Street.vcxproj" /p:Configuration=Debug /p:Platform=x64
    ```
+
+---
+
+## 7. Interactive House Visiting, Collision & Celestial Sky Guide
+
+### A. Visiting the Traditional Machiya Houses
+* **Interactive Shoji Doors (<kbd>H</kbd>):**
+  * Walk up to any of the 4 Machiya townhouse entrances along the street.
+  * Press **<kbd>H</kbd>** to smoothly slide the front Shoji lattice door open or closed.
+  * Proximity auto-open: Standing right at the entrance threshold also slides the door open for seamless entry.
+* **Ground Floor Living & Tea Room (*Zashiki*):**
+  * Step over the stone Genkan entryway and wooden threshold (*Agari-kamachi*).
+  * Explore the living room featuring woven Tatami floor mats, traditional low wooden floor table (*Chabudai*), 4 silk floor cushions (*Zabuton* in crimson and indigo), authentic ceramic green-tea teapot (*Kyusu*), 2 celadon teacups (*Yunomi*) on a bamboo serving tray, a decorative hanging wall scroll (*Kakemono*), and glowing paper floor lantern (*Andon*).
+* **Ascending the Wooden Staircase (*Kaidan*):**
+  * Walk into the wooden staircase along the wall; collision detection automatically steps the camera up each of the 9 timber steps, leading straight up to the second floor!
+* **Second Floor Bedroom (*Shinshitsu*):**
+  * Arrive on the upper tatami floor with its protective stairwell balustrade.
+  * Look out of the 3 Shoji windows over the lively festival street and swinging lanterns below.
+  * Inspect the traditional Japanese **Futon bed** (white mattress, folded crimson/gold duvet quilt, navy buckwheat pillow), antique stepped chest (*Tansu*), and bedside glowing paper lamp.
+
+### B. Wall Collision System (<kbd>B</kbd>)
+* **Solid Wall Walk Mode (Default: ON):**
+  * Prevents clipping or passing through exterior house walls, roofs, or interior barriers.
+  * Enforces entering and exiting strictly through the front doorway when the door is open.
+* **Toggle Noclip (<kbd>B</kbd>):**
+  * Press **<kbd>B</kbd>** to switch between Solid Wall Walk Mode and free Noclip Fly Mode.
+
+### C. Celestial Sun, Moon, and Twinkling Night Stars
+* **Infinite Position Celestial Projection:**
+  * Rendered at astronomical infinity with zero translational parallax.
+  * **The Sun:** Radiant golden-white solar disk with glowing atmospheric corona bloom.
+  * **The Moon:** Silvery lunar disk with procedural crater maria and soft nocturnal aura.
+  * **Night Stars:** Hundreds of sparkling, twinkling stars with scintillation and atmospheric horizon extinction that emerge dynamically as twilight falls into festival night (<kbd>N</kbd>).
 

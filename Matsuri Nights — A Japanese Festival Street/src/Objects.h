@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <string>
+#include <algorithm>
 
 // Shared primitive meshes created once and reused across all scene nodes
 struct SceneMeshes
@@ -83,8 +84,15 @@ class MachiyaBuilding
 public:
     std::shared_ptr<SceneNode> root;
     std::vector<std::shared_ptr<SceneNode>> windows;
+    std::shared_ptr<SceneNode> slidingDoorGroup;
+
+    glm::vec3 worldPos;
+    float rotationY;
+    bool isDoorOpen = false;
+    float doorSlideProgress = 0.0f; // 0.0 = closed, 1.0 = fully open (shifted by 1.35m along +Z)
 
     MachiyaBuilding(SceneMeshes& meshes, const std::string& name, const glm::vec3& pos, float rotY, const glm::vec3& scale = glm::vec3(1.0f))
+        : worldPos(pos), rotationY(rotY)
     {
         root = std::make_shared<SceneNode>(name);
         root->transform.position = pos;
@@ -93,30 +101,82 @@ public:
 
         glm::vec4 timber(0.36f, 0.22f, 0.13f, 1.0f);
         glm::vec4 darkWood(0.18f, 0.11f, 0.06f, 1.0f);
+        glm::vec4 plaster(0.88f, 0.86f, 0.82f, 1.0f);
         glm::vec4 roofSlate(0.16f, 0.17f, 0.20f, 1.0f);
         glm::vec4 paperColor(0.92f, 0.88f, 0.80f, 1.0f);
-        glm::vec4 stone(0.42f, 0.42f, 0.44f, 1.0f);
+        glm::vec4 stone(0.38f, 0.38f, 0.40f, 1.0f);
+        glm::vec4 tatamiColor(0.80f, 0.78f, 0.60f, 1.0f);
+        glm::vec4 tableWood(0.16f, 0.09f, 0.05f, 1.0f);
 
-        // Ground floor wooden body
-        auto floor1 = std::make_shared<SceneNode>(name + "_Floor1");
-        floor1->mesh = &meshes.cube;
-        floor1->transform.position = glm::vec3(0.0f, 2.2f, 0.0f);
-        floor1->transform.scale = glm::vec3(8.0f, 4.4f, 9.0f);
-        floor1->color = timber;
-        root->addChild(floor1);
+        // =========================================================
+        // 1. GROUND FLOOR PERIMETER WALLS (Hollow Interior Shell)
+        // =========================================================
+        // Back Wall (Local X = -3.95)
+        auto wallBack = std::make_shared<SceneNode>(name + "_WallBack");
+        wallBack->mesh = &meshes.cube;
+        wallBack->transform.position = glm::vec3(-3.95f, 2.15f, 0.0f);
+        wallBack->transform.scale = glm::vec3(0.20f, 4.30f, 9.00f);
+        wallBack->color = timber;
+        root->addChild(wallBack);
 
-        // ---------------------------------------------------------
-        // FRONT ENTRANCE DOOR (facing road on local +X facade)
-        // ---------------------------------------------------------
-        // Dark interior recess backing (sits flush against front wall X = 4.00, prevents see-through)
-        auto doorBacking = std::make_shared<SceneNode>(name + "_DoorBacking");
-        doorBacking->mesh = &meshes.cube;
-        doorBacking->transform.position = glm::vec3(4.015f, 1.35f, -0.90f);
-        doorBacking->transform.scale = glm::vec3(0.03f, 2.50f, 2.25f);
-        doorBacking->color = glm::vec4(0.12f, 0.08f, 0.05f, 1.0f);
-        root->addChild(doorBacking);
+        // Left Side Wall (Local Z = +4.45)
+        auto wallLeft = std::make_shared<SceneNode>(name + "_WallLeft");
+        wallLeft->mesh = &meshes.cube;
+        wallLeft->transform.position = glm::vec3(0.0f, 2.15f, 4.45f);
+        wallLeft->transform.scale = glm::vec3(8.00f, 4.30f, 0.20f);
+        wallLeft->color = timber;
+        root->addChild(wallLeft);
 
-        // Outer Timber Frame: Left Jamb Post (at Z = 0.25)
+        // Right Side Wall (Local Z = -4.45)
+        auto wallRight = std::make_shared<SceneNode>(name + "_WallRight");
+        wallRight->mesh = &meshes.cube;
+        wallRight->transform.position = glm::vec3(0.0f, 2.15f, -4.45f);
+        wallRight->transform.scale = glm::vec3(8.00f, 4.30f, 0.20f);
+        wallRight->color = timber;
+        root->addChild(wallRight);
+
+        // Front Wall Left Section (with Shoji window, Z in [0.25, 4.45])
+        auto wallFrontL = std::make_shared<SceneNode>(name + "_WallFrontL");
+        wallFrontL->mesh = &meshes.cube;
+        wallFrontL->transform.position = glm::vec3(3.95f, 2.15f, 2.35f);
+        wallFrontL->transform.scale = glm::vec3(0.20f, 4.30f, 4.20f);
+        wallFrontL->color = timber;
+        root->addChild(wallFrontL);
+
+        // Front Wall Right Section (Z in [-4.45, -2.05])
+        auto wallFrontR = std::make_shared<SceneNode>(name + "_WallFrontR");
+        wallFrontR->mesh = &meshes.cube;
+        wallFrontR->transform.position = glm::vec3(3.95f, 2.15f, -3.25f);
+        wallFrontR->transform.scale = glm::vec3(0.20f, 4.30f, 2.40f);
+        wallFrontR->color = timber;
+        root->addChild(wallFrontR);
+
+        // Front Doorway Header / Lintel Wall (above entrance door, Y in [2.50, 4.30])
+        auto wallFrontHeader = std::make_shared<SceneNode>(name + "_WallFrontHeader");
+        wallFrontHeader->mesh = &meshes.cube;
+        wallFrontHeader->transform.position = glm::vec3(3.95f, 3.40f, -0.90f);
+        wallFrontHeader->transform.scale = glm::vec3(0.20f, 1.80f, 2.30f);
+        wallFrontHeader->color = timber;
+        root->addChild(wallFrontHeader);
+
+        // Timber Corner Structural Studs
+        float cx[2] = { -3.95f, 3.95f };
+        float cz[2] = { -4.45f, 4.45f };
+        for (int i = 0; i < 2; ++i) {
+            for (int j = 0; j < 2; ++j) {
+                auto post = std::make_shared<SceneNode>(name + "_Post_" + std::to_string(i) + "_" + std::to_string(j));
+                post->mesh = &meshes.cube;
+                post->transform.position = glm::vec3(cx[i], 2.15f, cz[j]);
+                post->transform.scale = glm::vec3(0.28f, 4.30f, 0.28f);
+                post->color = darkWood;
+                root->addChild(post);
+            }
+        }
+
+        // =========================================================
+        // 2. ENTRANCE DOOR FRAME & INTERACTIVE SLIDING SHOJI DOOR
+        // =========================================================
+        // Doorway Outer Timber Frame: Left Jamb Post (at Z = 0.25)
         auto doorJambL = std::make_shared<SceneNode>(name + "_DoorJambL");
         doorJambL->mesh = &meshes.cube;
         doorJambL->transform.position = glm::vec3(4.14f, 1.35f, 0.26f);
@@ -140,7 +200,7 @@ public:
         doorLintel->color = darkWood;
         root->addChild(doorLintel);
 
-        // Bottom Threshold Sill Beam (Shikii)
+        // Bottom Threshold Sill Beam (Shikii with guide tracks)
         auto doorSill = std::make_shared<SceneNode>(name + "_DoorSill");
         doorSill->mesh = &meshes.cube;
         doorSill->transform.position = glm::vec3(4.14f, 0.08f, -0.90f);
@@ -148,73 +208,7 @@ public:
         doorSill->color = darkWood;
         root->addChild(doorSill);
 
-        // Inner Sliding Shoji Door Panel (Right side: Z = -1.45, Layer X = 4.08)
-        auto doorPanel1 = std::make_shared<SceneNode>(name + "_DoorPanel1");
-        doorPanel1->mesh = &meshes.cube;
-        doorPanel1->transform.position = glm::vec3(4.08f, 1.35f, -1.45f);
-        doorPanel1->transform.scale = glm::vec3(0.04f, 2.40f, 1.05f);
-        doorPanel1->isWindow = true;
-        doorPanel1->color = paperColor;
-        root->addChild(doorPanel1);
-        windows.push_back(doorPanel1);
-
-        // Inner Door Timber Frame Rails & Stiles
-        auto doorFrame1_Top = std::make_shared<SceneNode>(name + "_DoorF1_Top");
-        doorFrame1_Top->mesh = &meshes.cube;
-        doorFrame1_Top->transform.position = glm::vec3(4.10f, 2.48f, -1.45f);
-        doorFrame1_Top->transform.scale = glm::vec3(0.05f, 0.12f, 1.05f);
-        doorFrame1_Top->color = darkWood;
-        root->addChild(doorFrame1_Top);
-
-        auto doorFrame1_Bot = std::make_shared<SceneNode>(name + "_DoorF1_Bot");
-        doorFrame1_Bot->mesh = &meshes.cube;
-        doorFrame1_Bot->transform.position = glm::vec3(4.10f, 0.22f, -1.45f);
-        doorFrame1_Bot->transform.scale = glm::vec3(0.05f, 0.12f, 1.05f);
-        doorFrame1_Bot->color = darkWood;
-        root->addChild(doorFrame1_Bot);
-
-        // Inner Door lattice wood ribs (X = 4.11)
-        auto doorRib1 = std::make_shared<SceneNode>(name + "_DoorRib1");
-        doorRib1->mesh = &meshes.cube;
-        doorRib1->transform.position = glm::vec3(4.11f, 1.35f, -1.45f);
-        doorRib1->transform.scale = glm::vec3(0.04f, 2.36f, 0.06f);
-        doorRib1->color = darkWood;
-        root->addChild(doorRib1);
-
-        // Outer Sliding Shoji Door Panel (Left side: Z = -0.35, Layer X = 4.17)
-        auto doorPanel2 = std::make_shared<SceneNode>(name + "_DoorPanel2");
-        doorPanel2->mesh = &meshes.cube;
-        doorPanel2->transform.position = glm::vec3(4.17f, 1.35f, -0.35f);
-        doorPanel2->transform.scale = glm::vec3(0.04f, 2.40f, 1.05f);
-        doorPanel2->isWindow = true;
-        doorPanel2->color = paperColor;
-        root->addChild(doorPanel2);
-        windows.push_back(doorPanel2);
-
-        // Outer Door Timber Frame Rails & Stiles
-        auto doorFrame2_Top = std::make_shared<SceneNode>(name + "_DoorF2_Top");
-        doorFrame2_Top->mesh = &meshes.cube;
-        doorFrame2_Top->transform.position = glm::vec3(4.19f, 2.48f, -0.35f);
-        doorFrame2_Top->transform.scale = glm::vec3(0.05f, 0.12f, 1.05f);
-        doorFrame2_Top->color = darkWood;
-        root->addChild(doorFrame2_Top);
-
-        auto doorFrame2_Bot = std::make_shared<SceneNode>(name + "_DoorF2_Bot");
-        doorFrame2_Bot->mesh = &meshes.cube;
-        doorFrame2_Bot->transform.position = glm::vec3(4.19f, 0.22f, -0.35f);
-        doorFrame2_Bot->transform.scale = glm::vec3(0.05f, 0.12f, 1.05f);
-        doorFrame2_Bot->color = darkWood;
-        root->addChild(doorFrame2_Bot);
-
-        // Outer Door lattice wood ribs (X = 4.20)
-        auto doorRib2 = std::make_shared<SceneNode>(name + "_DoorRib2");
-        doorRib2->mesh = &meshes.cube;
-        doorRib2->transform.position = glm::vec3(4.20f, 1.35f, -0.35f);
-        doorRib2->transform.scale = glm::vec3(0.04f, 2.36f, 0.06f);
-        doorRib2->color = darkWood;
-        root->addChild(doorRib2);
-
-        // Entrance Stone Step Threshold (Kutsunugi-ishi) sitting on ground level
+        // Doorway Outdoor Stone Step (Kutsunugi-ishi)
         auto stoneStep = std::make_shared<SceneNode>(name + "_StoneStep");
         stoneStep->mesh = &meshes.cube;
         stoneStep->transform.position = glm::vec3(4.35f, 0.08f, -0.90f);
@@ -239,7 +233,73 @@ public:
         noren->color = glm::vec4(0.16f, 0.22f, 0.45f, 1.0f); // indigo dye
         root->addChild(noren);
 
-        // Ground Floor Window (alongside door on local +X facade)
+        // INTERACTIVE SLIDING DOOR ROOT GROUP (Animates along +Z when opened)
+        slidingDoorGroup = std::make_shared<SceneNode>(name + "_SlidingDoorGroup");
+        root->addChild(slidingDoorGroup);
+
+        // Inner Sliding Shoji Door Panel (Right side: Z = -1.45, Layer X = 4.08)
+        auto doorPanel1 = std::make_shared<SceneNode>(name + "_DoorPanel1");
+        doorPanel1->mesh = &meshes.cube;
+        doorPanel1->transform.position = glm::vec3(4.08f, 1.35f, -1.45f);
+        doorPanel1->transform.scale = glm::vec3(0.04f, 2.40f, 1.05f);
+        doorPanel1->isWindow = true;
+        doorPanel1->color = paperColor;
+        slidingDoorGroup->addChild(doorPanel1);
+        windows.push_back(doorPanel1);
+
+        auto doorFrame1_Top = std::make_shared<SceneNode>(name + "_DoorF1_Top");
+        doorFrame1_Top->mesh = &meshes.cube;
+        doorFrame1_Top->transform.position = glm::vec3(4.10f, 2.48f, -1.45f);
+        doorFrame1_Top->transform.scale = glm::vec3(0.05f, 0.12f, 1.05f);
+        doorFrame1_Top->color = darkWood;
+        slidingDoorGroup->addChild(doorFrame1_Top);
+
+        auto doorFrame1_Bot = std::make_shared<SceneNode>(name + "_DoorF1_Bot");
+        doorFrame1_Bot->mesh = &meshes.cube;
+        doorFrame1_Bot->transform.position = glm::vec3(4.10f, 0.22f, -1.45f);
+        doorFrame1_Bot->transform.scale = glm::vec3(0.05f, 0.12f, 1.05f);
+        doorFrame1_Bot->color = darkWood;
+        slidingDoorGroup->addChild(doorFrame1_Bot);
+
+        auto doorRib1 = std::make_shared<SceneNode>(name + "_DoorRib1");
+        doorRib1->mesh = &meshes.cube;
+        doorRib1->transform.position = glm::vec3(4.11f, 1.35f, -1.45f);
+        doorRib1->transform.scale = glm::vec3(0.04f, 2.36f, 0.06f);
+        doorRib1->color = darkWood;
+        slidingDoorGroup->addChild(doorRib1);
+
+        // Outer Sliding Shoji Door Panel (Left side: Z = -0.35, Layer X = 4.17)
+        auto doorPanel2 = std::make_shared<SceneNode>(name + "_DoorPanel2");
+        doorPanel2->mesh = &meshes.cube;
+        doorPanel2->transform.position = glm::vec3(4.17f, 1.35f, -0.35f);
+        doorPanel2->transform.scale = glm::vec3(0.04f, 2.40f, 1.05f);
+        doorPanel2->isWindow = true;
+        doorPanel2->color = paperColor;
+        slidingDoorGroup->addChild(doorPanel2);
+        windows.push_back(doorPanel2);
+
+        auto doorFrame2_Top = std::make_shared<SceneNode>(name + "_DoorF2_Top");
+        doorFrame2_Top->mesh = &meshes.cube;
+        doorFrame2_Top->transform.position = glm::vec3(4.19f, 2.48f, -0.35f);
+        doorFrame2_Top->transform.scale = glm::vec3(0.05f, 0.12f, 1.05f);
+        doorFrame2_Top->color = darkWood;
+        slidingDoorGroup->addChild(doorFrame2_Top);
+
+        auto doorFrame2_Bot = std::make_shared<SceneNode>(name + "_DoorF2_Bot");
+        doorFrame2_Bot->mesh = &meshes.cube;
+        doorFrame2_Bot->transform.position = glm::vec3(4.19f, 0.22f, -0.35f);
+        doorFrame2_Bot->transform.scale = glm::vec3(0.05f, 0.12f, 1.05f);
+        doorFrame2_Bot->color = darkWood;
+        slidingDoorGroup->addChild(doorFrame2_Bot);
+
+        auto doorRib2 = std::make_shared<SceneNode>(name + "_DoorRib2");
+        doorRib2->mesh = &meshes.cube;
+        doorRib2->transform.position = glm::vec3(4.20f, 1.35f, -0.35f);
+        doorRib2->transform.scale = glm::vec3(0.04f, 2.36f, 0.06f);
+        doorRib2->color = darkWood;
+        slidingDoorGroup->addChild(doorRib2);
+
+        // Ground Floor Street Shoji Window (on local +X facade at Z = 2.20)
         auto winF1_Frame = std::make_shared<SceneNode>(name + "_ShojiF1_Frame");
         winF1_Frame->mesh = &meshes.cube;
         winF1_Frame->transform.position = glm::vec3(4.08f, 1.90f, 2.20f);
@@ -256,21 +316,217 @@ public:
         root->addChild(winF1);
         windows.push_back(winF1);
 
-        auto winF1_RibV = std::make_shared<SceneNode>(name + "_WinF1_RibV");
-        winF1_RibV->mesh = &meshes.cube;
-        winF1_RibV->transform.position = glm::vec3(4.09f, 1.90f, 2.20f);
-        winF1_RibV->transform.scale = glm::vec3(0.04f, 2.24f, 0.08f);
-        winF1_RibV->color = darkWood;
-        root->addChild(winF1_RibV);
+        // =========================================================
+        // 3. GROUND FLOOR INTERIOR: GENKAN & TEA ROOM / LIVING ROOM
+        // =========================================================
+        // Genkan Entryway Sunken Stone Floor (just inside sliding door)
+        auto genkanFloor = std::make_shared<SceneNode>(name + "_GenkanFloor");
+        genkanFloor->mesh = &meshes.cube;
+        genkanFloor->transform.position = glm::vec3(3.20f, 0.05f, -0.90f);
+        genkanFloor->transform.scale = glm::vec3(1.40f, 0.10f, 2.40f);
+        genkanFloor->color = stone;
+        root->addChild(genkanFloor);
 
-        auto winF1_RibH = std::make_shared<SceneNode>(name + "_WinF1_RibH");
-        winF1_RibH->mesh = &meshes.cube;
-        winF1_RibH->transform.position = glm::vec3(4.09f, 1.90f, 2.20f);
-        winF1_RibH->transform.scale = glm::vec3(0.04f, 0.08f, 2.30f);
-        winF1_RibH->color = darkWood;
-        root->addChild(winF1_RibH);
+        // Agari-kamachi (Polished wooden threshold stepping up to tatami)
+        auto agariKamachi = std::make_shared<SceneNode>(name + "_AgariKamachi");
+        agariKamachi->mesh = &meshes.cube;
+        agariKamachi->transform.position = glm::vec3(2.45f, 0.14f, -0.90f);
+        agariKamachi->transform.scale = glm::vec3(0.16f, 0.20f, 2.40f);
+        agariKamachi->color = darkWood;
+        root->addChild(agariKamachi);
 
-        // First floor eaves roof
+        // Traditional Geta-bako Shoe Storage Bench in Genkan
+        auto shoeCabinet = std::make_shared<SceneNode>(name + "_ShoeCabinet");
+        shoeCabinet->mesh = &meshes.cube;
+        shoeCabinet->transform.position = glm::vec3(3.25f, 0.45f, 0.12f);
+        shoeCabinet->transform.scale = glm::vec3(0.55f, 0.70f, 0.35f);
+        shoeCabinet->color = darkWood;
+        root->addChild(shoeCabinet);
+
+        // Main Living Room Raised Tatami Floor (spanning X in [-3.8, 2.4], Z in [-4.3, 4.3])
+        auto tatamiFloor = std::make_shared<SceneNode>(name + "_TatamiFloorF1");
+        tatamiFloor->mesh = &meshes.cube;
+        tatamiFloor->transform.position = glm::vec3(-0.75f, 0.18f, 0.65f);
+        tatamiFloor->transform.scale = glm::vec3(6.20f, 0.14f, 7.30f);
+        tatamiFloor->color = tatamiColor;
+        root->addChild(tatamiFloor);
+
+        // ---------------------------------------------------------
+        // Living Room Chabudai Floor Table & Silk Zabuton Cushions
+        // ---------------------------------------------------------
+        auto chabudaiTable = std::make_shared<SceneNode>(name + "_ChabudaiTable");
+        chabudaiTable->mesh = &meshes.cube;
+        chabudaiTable->transform.position = glm::vec3(-0.30f, 0.52f, 1.10f);
+        chabudaiTable->transform.scale = glm::vec3(1.70f, 0.08f, 1.30f);
+        chabudaiTable->color = tableWood;
+        chabudaiTable->shininess = 48.0f;
+        chabudaiTable->specularStrength = 0.60f;
+        root->addChild(chabudaiTable);
+
+        // 4 Table Legs
+        float lx[2] = { -0.95f, 0.35f };
+        float lz[2] = { 0.60f, 1.60f };
+        for (int x = 0; x < 2; ++x) {
+            for (int z = 0; z < 2; ++z) {
+                auto leg = std::make_shared<SceneNode>(name + "_TableLeg_" + std::to_string(x) + "_" + std::to_string(z));
+                leg->mesh = &meshes.cylinder;
+                leg->transform.position = glm::vec3(lx[x], 0.28f, lz[z]);
+                leg->transform.scale = glm::vec3(0.08f, 0.44f, 0.08f);
+                leg->color = tableWood;
+                root->addChild(leg);
+            }
+        }
+
+        // 4 Silk Zabuton Floor Cushions
+        // Front & Back Crimson Cushions
+        auto zabutonF = std::make_shared<SceneNode>(name + "_Zabuton_F");
+        zabutonF->mesh = &meshes.cube;
+        zabutonF->transform.position = glm::vec3(-0.30f, 0.23f, 0.22f);
+        zabutonF->transform.scale = glm::vec3(0.60f, 0.08f, 0.55f);
+        zabutonF->color = glm::vec4(0.78f, 0.16f, 0.16f, 1.0f);
+        root->addChild(zabutonF);
+
+        auto zabutonB = std::make_shared<SceneNode>(name + "_Zabuton_B");
+        zabutonB->mesh = &meshes.cube;
+        zabutonB->transform.position = glm::vec3(-0.30f, 0.23f, 1.98f);
+        zabutonB->transform.scale = glm::vec3(0.60f, 0.08f, 0.55f);
+        zabutonB->color = glm::vec4(0.78f, 0.16f, 0.16f, 1.0f);
+        root->addChild(zabutonB);
+
+        // Left & Right Indigo Cushions
+        auto zabutonL = std::make_shared<SceneNode>(name + "_Zabuton_L");
+        zabutonL->mesh = &meshes.cube;
+        zabutonL->transform.position = glm::vec3(-1.35f, 0.23f, 1.10f);
+        zabutonL->transform.scale = glm::vec3(0.55f, 0.08f, 0.60f);
+        zabutonL->color = glm::vec4(0.18f, 0.26f, 0.55f, 1.0f);
+        root->addChild(zabutonL);
+
+        auto zabutonR = std::make_shared<SceneNode>(name + "_Zabuton_R");
+        zabutonR->mesh = &meshes.cube;
+        zabutonR->transform.position = glm::vec3(0.75f, 0.23f, 1.10f);
+        zabutonR->transform.scale = glm::vec3(0.55f, 0.08f, 0.60f);
+        zabutonR->color = glm::vec4(0.18f, 0.26f, 0.55f, 1.0f);
+        root->addChild(zabutonR);
+
+        // ---------------------------------------------------------
+        // Authentic Japanese Green Tea Set on Chabudai Table
+        // ---------------------------------------------------------
+        // Bamboo Serving Tray
+        auto teaTray = std::make_shared<SceneNode>(name + "_TeaTray");
+        teaTray->mesh = &meshes.cube;
+        teaTray->transform.position = glm::vec3(-0.30f, 0.58f, 1.10f);
+        teaTray->transform.scale = glm::vec3(0.60f, 0.04f, 0.42f);
+        teaTray->color = glm::vec4(0.48f, 0.36f, 0.20f, 1.0f);
+        root->addChild(teaTray);
+
+        // Traditional Dark Ceramic Kyusu Teapot with side handle
+        auto teapot = std::make_shared<SceneNode>(name + "_KyusuPot");
+        teapot->mesh = &meshes.sphere;
+        teapot->transform.position = glm::vec3(-0.38f, 0.66f, 1.10f);
+        teapot->transform.scale = glm::vec3(0.18f, 0.14f, 0.18f);
+        teapot->color = glm::vec4(0.18f, 0.16f, 0.16f, 1.0f);
+        root->addChild(teapot);
+
+        auto potSpout = std::make_shared<SceneNode>(name + "_KyusuSpout");
+        potSpout->mesh = &meshes.cylinder;
+        potSpout->transform.position = glm::vec3(-0.48f, 0.68f, 1.10f);
+        potSpout->transform.rotation.z = 45.0f;
+        potSpout->transform.scale = glm::vec3(0.04f, 0.12f, 0.04f);
+        potSpout->color = glm::vec4(0.18f, 0.16f, 0.16f, 1.0f);
+        root->addChild(potSpout);
+
+        auto potHandle = std::make_shared<SceneNode>(name + "_KyusuHandle");
+        potHandle->mesh = &meshes.cylinder;
+        potHandle->transform.position = glm::vec3(-0.38f, 0.68f, 1.22f);
+        potHandle->transform.rotation.x = 90.0f;
+        potHandle->transform.scale = glm::vec3(0.03f, 0.14f, 0.03f);
+        potHandle->color = darkWood;
+        root->addChild(potHandle);
+
+        // 2 Celadon Jade Teacups (Yunomi)
+        auto cup1 = std::make_shared<SceneNode>(name + "_Yunomi_1");
+        cup1->mesh = &meshes.cylinder;
+        cup1->transform.position = glm::vec3(-0.18f, 0.64f, 1.02f);
+        cup1->transform.scale = glm::vec3(0.08f, 0.10f, 0.08f);
+        cup1->color = glm::vec4(0.38f, 0.58f, 0.48f, 1.0f);
+        root->addChild(cup1);
+
+        auto cup2 = std::make_shared<SceneNode>(name + "_Yunomi_2");
+        cup2->mesh = &meshes.cylinder;
+        cup2->transform.position = glm::vec3(-0.18f, 0.64f, 1.18f);
+        cup2->transform.scale = glm::vec3(0.08f, 0.10f, 0.08f);
+        cup2->color = glm::vec4(0.38f, 0.58f, 0.48f, 1.0f);
+        root->addChild(cup2);
+
+        // Standing Paper Floor Lantern (Andon Lamp emitting warm ambient interior glow)
+        auto andonPost = std::make_shared<SceneNode>(name + "_AndonF1_Base");
+        andonPost->mesh = &meshes.cube;
+        andonPost->transform.position = glm::vec3(-3.30f, 0.55f, 3.70f);
+        andonPost->transform.scale = glm::vec3(0.40f, 0.90f, 0.40f);
+        andonPost->color = paperColor;
+        andonPost->isEmissive = true;
+        andonPost->emissiveColor = glm::vec3(1.40f, 1.10f, 0.50f);
+        root->addChild(andonPost);
+
+        // Decorative Hanging Wall Scroll (Kakemono)
+        auto scroll = std::make_shared<SceneNode>(name + "_WallScroll");
+        scroll->mesh = &meshes.cube;
+        scroll->transform.position = glm::vec3(-3.83f, 2.20f, 1.10f);
+        scroll->transform.scale = glm::vec3(0.04f, 1.60f, 0.70f);
+        scroll->color = glm::vec4(0.18f, 0.22f, 0.42f, 1.0f);
+        root->addChild(scroll);
+
+        // =========================================================
+        // 4. TRADITIONAL WOODEN STAIRCASE (Kaidan to Second Floor)
+        // =========================================================
+        // Ascends along the wall from X = -0.90 down to X = -3.50, along Z = -3.50
+        const int numSteps = 9;
+        const float stairX0 = -0.90f;
+        const float stairX1 = -3.50f;
+        const float stairY0 = 0.22f;
+        const float stairY1 = 4.30f;
+        const float stepWidth = 1.10f;
+        const float stepRun = (stairX0 - stairX1) / (float)numSteps;
+        const float stepRise = (stairY1 - stairY0) / (float)numSteps;
+
+        for (int k = 0; k < numSteps; ++k)
+        {
+            float stepX = stairX0 - (float)k * stepRun - stepRun * 0.5f;
+            float stepY = stairY0 + (float)k * stepRise + stepRise * 0.5f;
+
+            // Wooden Step Tread
+            auto stepNode = std::make_shared<SceneNode>(name + "_StairStep_" + std::to_string(k));
+            stepNode->mesh = &meshes.cube;
+            stepNode->transform.position = glm::vec3(stepX, stepY, -3.50f);
+            stepNode->transform.scale = glm::vec3(stepRun * 1.05f, 0.08f, stepWidth);
+            stepNode->color = darkWood;
+            root->addChild(stepNode);
+
+            // Wooden Step Riser Solid Body
+            auto riserNode = std::make_shared<SceneNode>(name + "_StairRiser_" + std::to_string(k));
+            riserNode->mesh = &meshes.cube;
+            riserNode->transform.position = glm::vec3(stepX, stepY * 0.5f, -3.50f);
+            riserNode->transform.scale = glm::vec3(stepRun, stepY, stepWidth);
+            riserNode->color = timber;
+            root->addChild(riserNode);
+        }
+
+        // Slanted Wooden Stair Handrail Balustrade
+        auto handrail = std::make_shared<SceneNode>(name + "_StairHandrail");
+        handrail->mesh = &meshes.cylinder;
+        float hrMx = (stairX0 + stairX1) * 0.5f;
+        float hrMy = (stairY0 + stairY1) * 0.5f + 0.90f;
+        float hrDx = stairX1 - stairX0;
+        float hrDy = stairY1 - stairY0;
+        float hrLen = std::sqrt(hrDx * hrDx + hrDy * hrDy);
+        float hrAngle = glm::degrees(std::atan2(hrDy, -hrDx));
+        handrail->transform.position = glm::vec3(hrMx, hrMy, -3.50f + stepWidth * 0.5f);
+        handrail->transform.rotation.z = -hrAngle;
+        handrail->transform.scale = glm::vec3(0.06f, hrLen, 0.06f);
+        handrail->color = darkWood;
+        root->addChild(handrail);
+
+        // First floor eaves roof dividing floors
         auto eaves1 = std::make_shared<SceneNode>(name + "_Eaves1");
         eaves1->mesh = &meshes.cube;
         eaves1->transform.position = glm::vec3(0.0f, 4.4f, 0.0f);
@@ -278,15 +534,55 @@ public:
         eaves1->color = roofSlate;
         root->addChild(eaves1);
 
-        // Second floor wooden body
-        auto floor2 = std::make_shared<SceneNode>(name + "_Floor2");
-        floor2->mesh = &meshes.cube;
-        floor2->transform.position = glm::vec3(0.0f, 6.2f, 0.0f);
-        floor2->transform.scale = glm::vec3(7.4f, 3.8f, 8.4f);
-        floor2->color = glm::vec4(0.32f, 0.20f, 0.12f, 1.0f);
-        root->addChild(floor2);
+        // =========================================================
+        // 5. SECOND FLOOR: BEDROOM (Shinshitsu) & FURNISHINGS
+        // =========================================================
+        // Second Floor Tatami Floor Slab (Y = 4.30, with cut-out stairwell opening)
+        auto floor2Tatami = std::make_shared<SceneNode>(name + "_Floor2Tatami");
+        floor2Tatami->mesh = &meshes.cube;
+        floor2Tatami->transform.position = glm::vec3(0.50f, 4.30f, 0.50f);
+        floor2Tatami->transform.scale = glm::vec3(6.50f, 0.16f, 7.20f);
+        floor2Tatami->color = tatamiColor;
+        root->addChild(floor2Tatami);
 
-        // Floor 2 Windows (3 windows facing road on local +X facade)
+        // Protective Guardrail around Upper Stairwell Opening
+        auto stairGuard = std::make_shared<SceneNode>(name + "_StairGuardRail");
+        stairGuard->mesh = &meshes.cube;
+        stairGuard->transform.position = glm::vec3(-2.20f, 4.85f, -2.85f);
+        stairGuard->transform.scale = glm::vec3(2.80f, 0.85f, 0.08f);
+        stairGuard->color = darkWood;
+        root->addChild(stairGuard);
+
+        // Second floor exterior walls
+        auto floor2WallBack = std::make_shared<SceneNode>(name + "_F2WallBack");
+        floor2WallBack->mesh = &meshes.cube;
+        floor2WallBack->transform.position = glm::vec3(-3.70f, 6.10f, 0.0f);
+        floor2WallBack->transform.scale = glm::vec3(0.20f, 3.60f, 8.40f);
+        floor2WallBack->color = timber;
+        root->addChild(floor2WallBack);
+
+        auto floor2WallLeft = std::make_shared<SceneNode>(name + "_F2WallLeft");
+        floor2WallLeft->mesh = &meshes.cube;
+        floor2WallLeft->transform.position = glm::vec3(0.0f, 6.10f, 4.20f);
+        floor2WallLeft->transform.scale = glm::vec3(7.40f, 3.60f, 0.20f);
+        floor2WallLeft->color = timber;
+        root->addChild(floor2WallLeft);
+
+        auto floor2WallRight = std::make_shared<SceneNode>(name + "_F2WallRight");
+        floor2WallRight->mesh = &meshes.cube;
+        floor2WallRight->transform.position = glm::vec3(0.0f, 6.10f, -4.20f);
+        floor2WallRight->transform.scale = glm::vec3(7.40f, 3.60f, 0.20f);
+        floor2WallRight->color = timber;
+        root->addChild(floor2WallRight);
+
+        auto floor2WallFront = std::make_shared<SceneNode>(name + "_F2WallFront");
+        floor2WallFront->mesh = &meshes.cube;
+        floor2WallFront->transform.position = glm::vec3(3.70f, 6.10f, 0.0f);
+        floor2WallFront->transform.scale = glm::vec3(0.20f, 3.60f, 8.40f);
+        floor2WallFront->color = timber;
+        root->addChild(floor2WallFront);
+
+        // Floor 2 Windows (3 windows facing festival street on local +X facade)
         float winZ[3] = { -2.4f, 0.0f, 2.4f };
         for (int i = 0; i < 3; ++i)
         {
@@ -308,13 +604,59 @@ public:
         }
 
         // ---------------------------------------------------------
-        // UPPER MAIN PITCHED ROOF: TRUE UPSIDE-DOWN "V" (^) GABLE
+        // Second Floor Bedroom: Traditional Japanese Futon Bed
         // ---------------------------------------------------------
+        // Base Shikibuton Mattress
+        auto futonBase = std::make_shared<SceneNode>(name + "_FutonBase");
+        futonBase->mesh = &meshes.cube;
+        futonBase->transform.position = glm::vec3(0.0f, 4.38f, 1.20f);
+        futonBase->transform.scale = glm::vec3(2.10f, 0.12f, 1.50f);
+        futonBase->color = glm::vec4(0.95f, 0.94f, 0.90f, 1.0f); // white cotton mattress
+        root->addChild(futonBase);
+
+        // Folded Kakebuton Duvet Quilt
+        auto futonQuilt = std::make_shared<SceneNode>(name + "_FutonQuilt");
+        futonQuilt->mesh = &meshes.cube;
+        futonQuilt->transform.position = glm::vec3(0.28f, 4.47f, 1.20f);
+        futonQuilt->transform.scale = glm::vec3(1.40f, 0.16f, 1.54f);
+        futonQuilt->color = glm::vec4(0.75f, 0.14f, 0.14f, 1.0f); // rich crimson festival pattern
+        root->addChild(futonQuilt);
+
+        // Makura Buckwheat Pillow
+        auto futonPillow = std::make_shared<SceneNode>(name + "_FutonPillow");
+        futonPillow->mesh = &meshes.cylinder;
+        futonPillow->transform.position = glm::vec3(-0.85f, 4.48f, 1.20f);
+        futonPillow->transform.rotation.x = 90.0f;
+        futonPillow->transform.scale = glm::vec3(0.18f, 0.55f, 0.18f);
+        futonPillow->color = glm::vec4(0.14f, 0.18f, 0.38f, 1.0f); // navy silk
+        root->addChild(futonPillow);
+
+        // Traditional Stepped Tansu Cabinet / Chest of Drawers
+        auto tansuChest = std::make_shared<SceneNode>(name + "_TansuChest");
+        tansuChest->mesh = &meshes.cube;
+        tansuChest->transform.position = glm::vec3(-3.25f, 4.90f, 2.70f);
+        tansuChest->transform.scale = glm::vec3(0.65f, 1.20f, 1.60f);
+        tansuChest->color = darkWood;
+        root->addChild(tansuChest);
+
+        // Bedside Paper Night Lamp (Andon)
+        auto bedroomLamp = std::make_shared<SceneNode>(name + "_BedroomLamp");
+        bedroomLamp->mesh = &meshes.cube;
+        bedroomLamp->transform.position = glm::vec3(-0.85f, 4.60f, 2.25f);
+        bedroomLamp->transform.scale = glm::vec3(0.30f, 0.55f, 0.30f);
+        bedroomLamp->color = paperColor;
+        bedroomLamp->isEmissive = true;
+        bedroomLamp->emissiveColor = glm::vec3(1.20f, 0.90f, 0.40f);
+        root->addChild(bedroomLamp);
+
+        // =========================================================
+        // 6. UPPER MAIN PITCHED ROOF: TRUE UPSIDE-DOWN "V" (^) GABLE
+        // =========================================================
         // Left slope (slopes down toward -X): +22.0 deg rotation
         auto roofLeft = std::make_shared<SceneNode>(name + "_RoofLeft");
         roofLeft->mesh = &meshes.cube;
         roofLeft->transform.position = glm::vec3(-2.0f, 8.6f, 0.0f);
-        roofLeft->transform.rotation.z = 22.0f; // Slopes DOWN toward outer edge
+        roofLeft->transform.rotation.z = 22.0f;
         roofLeft->transform.scale = glm::vec3(4.8f, 0.35f, 9.6f);
         roofLeft->color = roofSlate;
         root->addChild(roofLeft);
@@ -323,7 +665,7 @@ public:
         auto roofRight = std::make_shared<SceneNode>(name + "_RoofRight");
         roofRight->mesh = &meshes.cube;
         roofRight->transform.position = glm::vec3(2.0f, 8.6f, 0.0f);
-        roofRight->transform.rotation.z = -22.0f; // Slopes DOWN toward street eave
+        roofRight->transform.rotation.z = -22.0f;
         roofRight->transform.scale = glm::vec3(4.8f, 0.35f, 9.6f);
         roofRight->color = roofSlate;
         root->addChild(roofRight);
@@ -350,6 +692,26 @@ public:
         gableBack->transform.scale = glm::vec3(4.0f, 1.1f, 0.15f);
         gableBack->color = timber;
         root->addChild(gableBack);
+    }
+
+    void toggleDoor()
+    {
+        isDoorOpen = !isDoorOpen;
+    }
+
+    void setDoorOpen(bool open)
+    {
+        isDoorOpen = open;
+    }
+
+    void update(float dt)
+    {
+        // Smoothly animate the sliding Shoji front door along its track
+        doorSlideProgress = glm::mix(doorSlideProgress, isDoorOpen ? 1.0f : 0.0f, glm::clamp(dt * 5.0f, 0.0f, 1.0f));
+        if (slidingDoorGroup)
+        {
+            slidingDoorGroup->transform.position.z = doorSlideProgress * 1.35f;
+        }
     }
 };
 
@@ -883,7 +1245,36 @@ public:
                 auto ballNode = std::make_shared<SceneNode>("TakoBall_" + std::to_string(i) + "_" + std::to_string(j));
                 ballNode->mesh = &meshes.sphere;
                 ballNode->transform.scale = glm::vec3(0.28f, 0.28f, 0.28f);
-                ballNode->color = glm::vec4(0.85f, 0.62f, 0.28f, 1.0f); // golden browned octopus ball
+                ballNode->color = glm::vec4(0.92f, 0.72f, 0.38f, 1.0f); // golden browned crispy batter
+                ballNode->shininess = 64.0f;
+                ballNode->specularStrength = 0.65f;
+
+                // Rich Glossy Dark Savory Takoyaki Sauce Glaze (Otafuku Sauce)
+                auto sauce = std::make_shared<SceneNode>("TakoSauce_" + std::to_string(i) + "_" + std::to_string(j));
+                sauce->mesh = &meshes.sphere;
+                sauce->transform.position = glm::vec3(0.0f, 0.06f, 0.0f);
+                sauce->transform.scale = glm::vec3(0.96f, 0.46f, 0.96f);
+                sauce->color = glm::vec4(0.18f, 0.08f, 0.03f, 1.0f);
+                sauce->shininess = 72.0f;
+                sauce->specularStrength = 0.85f;
+                ballNode->addChild(sauce);
+
+                // Creamy Kewpie Mayonnaise Zig-Zag Drizzle
+                auto mayo = std::make_shared<SceneNode>("TakoMayo_" + std::to_string(i) + "_" + std::to_string(j));
+                mayo->mesh = &meshes.cylinder;
+                mayo->transform.position = glm::vec3(0.0f, 0.12f, 0.0f);
+                mayo->transform.rotation.z = 90.0f;
+                mayo->transform.scale = glm::vec3(0.05f, 0.72f, 0.05f);
+                mayo->color = glm::vec4(0.96f, 0.94f, 0.84f, 1.0f);
+                ballNode->addChild(mayo);
+
+                // Emerald Green Aonori (crushed dried seaweed flakes)
+                auto aonori = std::make_shared<SceneNode>("TakoAonori_" + std::to_string(i) + "_" + std::to_string(j));
+                aonori->mesh = &meshes.cube;
+                aonori->transform.position = glm::vec3(0.05f, 0.14f, 0.04f);
+                aonori->transform.scale = glm::vec3(0.18f, 0.04f, 0.18f);
+                aonori->color = glm::vec4(0.10f, 0.50f, 0.16f, 1.0f);
+                ballNode->addChild(aonori);
 
                 TakoyakiBall tb;
                 tb.node = ballNode;

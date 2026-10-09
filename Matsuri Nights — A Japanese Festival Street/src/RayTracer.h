@@ -458,11 +458,54 @@ namespace CPU_RayTracer
             HitRecord hit;
             if (!traceScene(curRay, data, hit))
             {
-                // Hit Sky
-                float heightRatio = std::clamp((curRay.direction.y + 0.2f) / 1.2f, 0.0f, 1.0f);
-                glm::vec3 daySky = glm::mix(glm::vec3(0.55f, 0.75f, 0.98f), glm::vec3(0.82f, 0.88f, 0.98f), heightRatio);
-                glm::vec3 nightSky = glm::mix(glm::vec3(0.02f, 0.03f, 0.08f), glm::vec3(0.06f, 0.08f, 0.18f), heightRatio);
+                // Hit Celestial Sky at Infinity
+                float heightRatio = std::clamp((curRay.direction.y + 0.15f) / 1.15f, 0.0f, 1.0f);
+                glm::vec3 daySky = glm::mix(glm::vec3(0.52f, 0.72f, 0.96f), glm::vec3(0.78f, 0.86f, 0.98f), heightRatio);
+                glm::vec3 nightSky = glm::mix(glm::vec3(0.015f, 0.02f, 0.06f), glm::vec3(0.04f, 0.06f, 0.15f), heightRatio);
                 glm::vec3 skyCol = glm::mix(daySky, nightSky, data.dayNightFactor);
+
+                // Sun
+                glm::vec3 sunDir = glm::normalize(glm::vec3(-0.40f, 0.85f, 0.50f));
+                float sunDot = glm::dot(curRay.direction, sunDir);
+                if (sunDot > 0.0f)
+                {
+                    float sunCorona = std::pow(sunDot, 64.0f) * 1.10f + std::pow(sunDot, 6.0f) * 0.40f;
+                    float sunDisk = (sunDot > 0.9975f) ? 2.5f : 0.0f;
+                    skyCol += (glm::vec3(1.25f, 0.98f, 0.65f) * sunCorona + glm::vec3(2.6f, 2.3f, 1.8f) * sunDisk) * (1.0f - data.dayNightFactor);
+                }
+
+                // Moon
+                glm::vec3 moonDir = glm::normalize(glm::vec3(0.35f, 0.75f, -0.40f));
+                float moonDot = glm::dot(curRay.direction, moonDir);
+                if (moonDot > 0.0f)
+                {
+                    float moonHalo = std::pow(moonDot, 80.0f) * 0.95f + std::pow(moonDot, 10.0f) * 0.28f;
+                    float moonDisk = (moonDot > 0.9976f) ? 1.8f : 0.0f;
+                    skyCol += (glm::vec3(0.40f, 0.60f, 0.95f) * moonHalo + glm::vec3(0.94f, 0.96f, 1.05f) * moonDisk) * data.dayNightFactor;
+                }
+
+                // Stars in night sky
+                if (data.dayNightFactor > 0.05f && curRay.direction.y > 0.0f)
+                {
+                    glm::vec3 sCoord = curRay.direction * 140.0f;
+                    int cx = (int)std::floor(sCoord.x);
+                    int cy = (int)std::floor(sCoord.y);
+                    int cz = (int)std::floor(sCoord.z);
+                    int n = cx * 73856093 ^ cy * 19349663 ^ cz * 83492791;
+                    float seed = (float)(n & 0x7fffffff) / 2147483648.0f;
+                    if (seed > 0.88f)
+                    {
+                        float fx = sCoord.x - (float)cx - 0.5f;
+                        float fy = sCoord.y - (float)cy - 0.5f;
+                        float fz = sCoord.z - (float)cz - 0.5f;
+                        float dist = std::sqrt(fx * fx + fy * fy + fz * fz);
+                        if (dist < 0.12f)
+                        {
+                            float b = (1.0f - dist / 0.12f);
+                            skyCol += glm::vec3(0.9f, 0.95f, 1.0f) * b * 2.0f * data.dayNightFactor;
+                        }
+                    }
+                }
 
                 if (data.fireworkActive > 0.01f)
                 {

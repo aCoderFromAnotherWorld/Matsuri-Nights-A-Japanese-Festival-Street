@@ -12,6 +12,78 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-09] — Visitable Realistic Machiya Houses (Interiors, Bedrooms, Tables, Stairs), Interactive Doors, Wall Collision, Photorealistic Takoyaki Food, and Celestial Sun/Moon/Stars
+
+#### 1. Visitable Traditional Machiya Townhouses (Interior & Exterior Architecture)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Architectural Overhaul:**
+  * Replaced solid outer blocks with a realistic architectural shell consisting of perimeter timber walls, plaster interiors, structural posts, and upper gable roof rafters.
+  * **Ground Floor Entryway (*Genkan*):**
+    * Sunken chiseled stone tile entryway floor ($Y = 0.05\text{m}$).
+    * Polished cedar threshold step-up beam (*Agari-kamachi*) connecting stone to living space.
+    * Traditional wooden shoe storage bench (*Geta-bako*).
+  * **Living & Tea Room (*Zashiki*):**
+    * Raised Tatami floor ($Y = 0.18\text{m}$) mapped with authentic woven tatami mats (`texTatami`) and border seams.
+    * Traditional low Japanese wooden floor table (*Chabudai*) in rich dark lacquer mahogany with 4 carved legs.
+    * 4 silk floor cushions (*Zabuton*) arranged neatly around the table (2 festival crimson silk, 2 deep indigo silk).
+    * Authentic Japanese green-tea set on bamboo serving tray: dark clay ceramic teapot (*Kyusu*) with spout, lid, and side handle, plus 2 delicate celadon jade teacups (*Yunomi*).
+    * Standing traditional floor lantern (*Andon*) in translucent paper emitting warm ambient yellow-amber night light (`emissiveColor = (1.40, 1.10, 0.50)`).
+    * Hanging Japanese decorative wall scroll (*Kakemono*).
+  * **Traditional Wooden Staircase (*Kaidan*):**
+    * 9 distinct wooden steps with polished cedar treads and risers ascending from Ground Floor $Y = 0.22\text{m}$ to Upper Floor $Y = 4.30\text{m}$.
+    * Slanted wooden handrail balustrade along the open side.
+  * **Second Floor (*Shinshitsu* / Bedroom):**
+    * Upper floor Tatami slab ($Y = 4.30\text{m}$) with cut-out stairwell opening and protective guardrail.
+    * 3 Shoji lattice windows looking directly out over the festival avenue and hanging lanterns.
+    * Traditional Japanese **Futon bed**: plush white cotton mattress (*Shikibuton*), folded crimson/gold festival duvet quilt (*Kakebuton*), and navy silk buckwheat pillow (*Makura*).
+    * Traditional stepped wooden chest (*Tansu* drawers).
+    * Bedside glowing paper lantern (*Andon*) casting cozy ambient illumination.
+    * Exposed structural ceiling timber beams beneath the classic "V" gable roof.
+
+#### 2. Interactive House Accessibility & Solid Wall Collision System
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h), [`Matsuri Nights — A Japanese Festival Street/Main.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp)
+* **Interactive Sliding Shoji Doors (<kbd>H</kbd>):**
+  * Grouped the entrance sliding door panels and timber frames into `slidingDoorGroup`.
+  * Pressing **<kbd>H</kbd>** smoothly slides the nearest house front Shoji door open or closed along its guide track ($1.35\text{m}$ travel).
+  * Added proximity auto-opening within $2.2\text{m}$ for natural walkthroughs.
+* **Solid Wall Collision Detection (<kbd>B</kbd>):**
+  * Implemented `Scene::resolveCollision(oldPos, newPos)` enabled by default:
+    * Tested against all 4 Machiya buildings using local-space bounding transformations.
+    * Solid exterior walls, roofs, and interior boundaries block camera movement, preventing flying through walls.
+    * **Doorway Portal Passage:** When the Shoji door is open, player walks smoothly inside the house; when closed, the door panel blocks entry.
+    * **Stair Climbing Kinematics:** Automatically elevates the camera step-by-step as the player walks up the staircase, and steps down smoothly when descending.
+    * Ground clamp: prevents dipping below ground level.
+  * Hotkey **<kbd>B</kbd>** toggles between Solid Wall Walk Mode and free Noclip Fly Mode.
+
+#### 3. Photorealistic Authentic Takoyaki Food Color, Texture & Details
+* **Files Added / Modified:** [`Matsuri Nights — A Japanese Festival Street/src/TextureGenerator.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/TextureGenerator.h), [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Procedural Texture Asset (`takoyaki_food.bmp`):**
+  * Generated high-resolution 24-bit bitmap texture with golden-crisp batter, toasted griddle caramelization marks, rich dark-brown Takoyaki sauce (*Otafuku* glaze), criss-crossing Kewpie mayonnaise zig-zag stripes, emerald dried seaweed flakes (*Aonori*), and shaved bonito flakes (*Katsuobushi*).
+* **3D Geometry & Material Upgrades:**
+  * Replaced plain wooden ball color with golden fried batter `glm::vec4(0.92, 0.72, 0.38, 1.0)`.
+  * Added glossy dark-brown savory sauce dome (`TakoSauce`) with high specular gloss (`shininess = 72.0, specularStrength = 0.85`).
+  * Added creamy Kewpie mayonnaise drizzle (`TakoMayo`).
+  * Added emerald green *Aonori* seaweed sprinkles (`TakoAonori`).
+  * Mapped `texTakoyaki` with high specular shine in `Scene::applyTexturesAndMaterials`.
+
+#### 4. Celestial Sun and Moon at Infinite Position + Twinkling Stars in Night Sky
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/shaders/basic.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/basic.frag), [`Matsuri Nights — A Japanese Festival Street/shaders/raytrace.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/raytrace.frag), [`Matsuri Nights — A Japanese Festival Street/src/RayTracer.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/RayTracer.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **True Infinite Astronomical Position:**
+  * Sky dome center follows camera eye position, guaranteeing zero translation parallax across the entire environment.
+* **The Celestial Sun:**
+  * Radiant golden solar disk with atmospheric corona bloom opposite the daytime directional light vector; sets smoothly as twilight transitions into night.
+* **The Celestial Moon:**
+  * Silvery-white lunar disk featuring procedural lunar maria craters and soft nocturnal ethereal halo; rises at night.
+* **Twinkling Night Stars:**
+  * Multi-frequency celestial star field with bright twinkling stars and faint background Milky Way dust.
+  * Real-time scintillation driven by `totalTime`.
+  * Spectral color temperature variation (diamond white, warm golden, cool blue).
+  * Atmospheric horizon extinction fading toward the skyline.
+* **Cross-Pipeline Synchronization:**
+  * Fully integrated across the primary Blinn-Phong rasterizer (`basic.frag`), the real-time GPU ray tracer (`raytrace.frag`), and the multi-threaded CPU software ray tracer (`RayTracer.h`), with reflections appearing on the crystal magic orb and wet stone street!
+
+---
+
 ### [2026-10-09] — Implementation of Realistic Shadow Effects (16-Sample PCF Soft Shadow Mapping & Ray-Traced Penumbra)
 
 #### 1. Directional Light PCF Soft Shadow Mapping (Primary Rasterizer Pipeline)

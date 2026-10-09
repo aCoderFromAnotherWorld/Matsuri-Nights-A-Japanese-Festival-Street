@@ -120,22 +120,34 @@ glm::vec4 black(0.12f, 0.12f, 0.14f, 1.0f);     // Central tablet strut (Gakuzuk
 glm::vec4 stone(0.45f, 0.45f, 0.48f, 1.0f);     // Pedestal bases (Kamebara)
 ```
 
-### 2. Traditional Machiya Townhouses & Front Doors
-* **File:** `src/Objects.h` (around lines 94–105)
-* **Code to edit:**
+### 2. Traditional Machiya Townhouses (Interior & Exterior)
+* **File:** `src/Objects.h` inside `MachiyaBuilding`
+* **Exterior & Structural Frame:**
 ```cpp
-glm::vec4 timber(0.36f, 0.22f, 0.13f, 1.0f);     // House wall body
-glm::vec4 darkWood(0.18f, 0.11f, 0.06f, 1.0f);   // Door frame, lattice ribs, window frame
+glm::vec4 timber(0.36f, 0.22f, 0.13f, 1.0f);     // House wall body & timber siding
+glm::vec4 darkWood(0.18f, 0.11f, 0.06f, 1.0f);   // Door frame, lattice ribs, window frames
 glm::vec4 roofSlate(0.16f, 0.17f, 0.20f, 1.0f);  // Pitch roof tiles & door canopies
 glm::vec4 paperColor(0.92f, 0.88f, 0.80f, 1.0f); // Shoji screen paper
 ```
-* **Front Door Noren Curtain:** (around line 239)
+* **Interior Rooms & Furnishings:**
 ```cpp
-noren->color = glm::vec4(0.16f, 0.22f, 0.45f, 1.0f); // Indigo dyed entrance curtain
-```
-* **Front Stone Step (*Kutsunugi-ishi*):** (around line 222)
-```cpp
-stoneStep->color = stone; // Threshold stone step
+// Tatami floor mats (living room & upper bedroom):
+tatamiFloor->color = glm::vec4(0.80f, 0.78f, 0.60f, 1.0f);
+// Low Japanese Chabudai table:
+chabudaiTable->color = glm::vec4(0.16f, 0.09f, 0.05f, 1.0f); // dark lacquer mahogany
+// Silk Zabuton floor cushions:
+zabutonCrimson->color = glm::vec4(0.78f, 0.16f, 0.16f, 1.0f); // festival crimson silk
+zabutonIndigo->color  = glm::vec4(0.18f, 0.26f, 0.55f, 1.0f); // deep indigo blue silk
+// Authentic Japanese green-tea Kyusu teapot:
+teapot->color = glm::vec4(0.18f, 0.16f, 0.16f, 1.0f);         // dark clay ceramic
+// Celadon green Yunomi teacups:
+teacup->color = glm::vec4(0.38f, 0.58f, 0.48f, 1.0f);         // celadon jade
+// Standing Andon room lantern (warm night light):
+andon->emissiveColor = glm::vec3(1.40f, 1.10f, 0.50f);
+// Second floor Futon bed:
+futonBase->color   = glm::vec4(0.95f, 0.94f, 0.90f, 1.0f);    // ivory cotton mattress
+futonQuilt->color  = glm::vec4(0.75f, 0.14f, 0.14f, 1.0f);    // crimson festival pattern
+futonPillow->color = glm::vec4(0.14f, 0.18f, 0.38f, 1.0f);    // navy silk
 ```
 
 ### 3. Chochin Hanging Paper Lanterns
@@ -149,18 +161,27 @@ capTop->color = glm::vec4(0.12f, 0.12f, 0.12f, 1.0f);  // Top black cap
 capBot->color = glm::vec4(0.12f, 0.12f, 0.12f, 1.0f);  // Bottom black cap
 ```
 
-### 4. Takoyaki Food Stall
-* **File:** `src/Objects.h` (around lines 630–640)
-* **Code to edit:**
+### 4. Takoyaki Food Stall & Authentic Food Details
+* **File:** `src/Objects.h` inside `TakoyakiStall`
+* **Stall Structure:**
 ```cpp
 glm::vec4 wood(0.42f, 0.28f, 0.18f, 1.0f);  // Stall counter base and corner poles
 glm::vec4 red(0.88f, 0.20f, 0.15f, 1.0f);   // Slanted awning roof
 glm::vec4 white(0.92f, 0.90f, 0.88f, 1.0f); // Front hanging Noren banner
 ```
-* **Grill Plate & Takoyaki Balls:** (around lines 685–705)
+* **Cast Iron Grill Plate & Authentic Takoyaki Food:**
 ```cpp
-grill->color = glm::vec4(0.14f, 0.14f, 0.15f, 1.0f);    // Cast iron grill plate
-ballNode->color = glm::vec4(0.85f, 0.62f, 0.28f, 1.0f); // Golden browned octopus ball
+grill->color = glm::vec4(0.14f, 0.14f, 0.15f, 1.0f);    // Dimpled cast-iron grill plate
+// Fried Takoyaki Batter Ball:
+ballNode->color = glm::vec4(0.92f, 0.72f, 0.38f, 1.0f); // Golden browned crispy batter
+ballNode->shininess = 64.0f; ballNode->specularStrength = 0.65f;
+// Glossy Dark Savory Takoyaki Sauce (Otafuku Sauce):
+sauce->color = glm::vec4(0.18f, 0.08f, 0.03f, 1.0f);    // Deep sweet soy glaze
+sauce->shininess = 72.0f; sauce->specularStrength = 0.85f;
+// Creamy Japanese Kewpie Mayonnaise:
+mayo->color = glm::vec4(0.96f, 0.94f, 0.84f, 1.0f);     // Pale-cream egg mayo
+// Emerald Green Aonori (dried seaweed flakes):
+aonori->color = glm::vec4(0.10f, 0.50f, 0.16f, 1.0f);   // Seaweed flake sprinkles
 ```
 
 ### 5. Kakigori (Shaved Ice) Food Stall

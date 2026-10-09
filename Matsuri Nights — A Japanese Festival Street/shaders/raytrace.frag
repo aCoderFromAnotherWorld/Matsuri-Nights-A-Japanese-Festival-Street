@@ -560,11 +560,64 @@ void main()
         HitInfo hit;
         if (!traceScene(curRo, curRd, hit))
         {
-            // Ray missed all geometry -> Sample Dynamic Sky Dome
-            float heightRatio = clamp((curRd.y + 0.2) / 1.2, 0.0, 1.0);
-            vec3 daySky = mix(vec3(0.55, 0.75, 0.98), vec3(0.82, 0.88, 0.98), heightRatio);
-            vec3 nightSky = mix(vec3(0.02, 0.03, 0.08), vec3(0.06, 0.08, 0.18), heightRatio);
+            // Ray missed all geometry -> Sample Dynamic Sky Dome at Infinity
+            float heightRatio = clamp((curRd.y + 0.15) / 1.15, 0.0, 1.0);
+            vec3 daySky = mix(vec3(0.52, 0.72, 0.96), vec3(0.78, 0.86, 0.98), heightRatio);
+            vec3 nightSky = mix(vec3(0.015, 0.02, 0.06), vec3(0.04, 0.06, 0.15), heightRatio);
             vec3 skyCol = mix(daySky, nightSky, uNightFactor);
+
+            // Celestial Sun at infinity
+            vec3 sunDir = normalize(vec3(-0.40, 0.85, 0.50));
+            float sunDot = dot(curRd, sunDir);
+            if (sunDot > 0.0)
+            {
+                float sunCorona = pow(sunDot, 64.0) * 1.10 + pow(sunDot, 6.0) * 0.40;
+                vec3 coronaCol = vec3(1.25, 0.98, 0.65) * sunCorona;
+                float sunDisk = smoothstep(0.9972, 0.9985, sunDot);
+                vec3 sunCore = vec3(2.6, 2.3, 1.8) * sunDisk;
+                skyCol += (coronaCol + sunCore) * (1.0 - uNightFactor);
+            }
+
+            // Celestial Moon with craters & halo at infinity
+            vec3 moonDir = normalize(vec3(0.35, 0.75, -0.40));
+            float moonDot = dot(curRd, moonDir);
+            if (moonDot > 0.0)
+            {
+                float moonHalo = pow(moonDot, 80.0) * 0.95 + pow(moonDot, 10.0) * 0.28;
+                vec3 haloCol = vec3(0.40, 0.60, 0.95) * moonHalo;
+                if (moonDot > 0.9975)
+                {
+                    float moonEdge = smoothstep(0.9975, 0.9984, moonDot);
+                    vec3 moonDiskCol = vec3(0.94, 0.96, 1.05) * 1.8;
+                    skyCol += (haloCol + moonDiskCol * moonEdge) * uNightFactor;
+                }
+                else
+                {
+                    skyCol += haloCol * uNightFactor;
+                }
+            }
+
+            // Twinkling Night Stars
+            if (uNightFactor > 0.04 && curRd.y > -0.04)
+            {
+                vec3 sCoord = curRd * 160.0;
+                vec3 cell = floor(sCoord);
+                vec3 f = fract(sCoord) - vec3(0.5);
+                float starSeed = fract(sin(dot(cell, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+                if (starSeed > 0.82)
+                {
+                    float starDist = length(f);
+                    float starRadius = 0.07 + 0.08 * fract(starSeed * 13.3);
+                    if (starDist < starRadius)
+                    {
+                        float starBrightness = smoothstep(starRadius, 0.0, starDist);
+                        float twinkle = 0.65 + 0.35 * sin(uTime * (2.5 + starSeed * 4.0) + starSeed * 62.8);
+                        vec3 starTint = mix(vec3(0.95, 0.98, 1.0), vec3(0.70, 0.85, 1.0), fract(starSeed * 7.1));
+                        float horizonFade = smoothstep(-0.02, 0.22, curRd.y);
+                        skyCol += starTint * starBrightness * twinkle * horizonFade * pow(uNightFactor, 1.25) * 2.0;
+                    }
+                }
+            }
 
             if (uFireworksActive > 0.01)
             {
