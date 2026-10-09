@@ -3130,8 +3130,8 @@ public:
 
         auto leftHand = std::make_shared<SceneNode>(name + "_LeftHand");
         leftHand->mesh = &meshes.humanHand;
-        leftHand->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
-        leftHand->transform.rotation.z = 90.0f;
+        leftHand->transform.position = glm::vec3(0.0f, -0.42f, 0.0f);
+        leftHand->transform.rotation = glm::vec3(10.0f, 0.0f, 180.0f);
         leftHand->color = skin;
         leftForearm->addChild(leftHand);
 
@@ -3155,19 +3155,19 @@ public:
         foreMesh->color = skin;
         foreArm->addChild(foreMesh);
 
-        // Anatomical Hand
+        // Anatomical Hand grasping cooking utensil
         hand = std::make_shared<SceneNode>(name + "_Hand");
         hand->mesh = &meshes.humanHand;
-        hand->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
-        hand->transform.rotation.x = -30.0f;
+        hand->transform.position = glm::vec3(0.0f, -0.34f, 0.065f);
+        hand->transform.rotation = glm::vec3(-65.0f, -10.0f, 10.0f);
         hand->color = skin;
         foreArm->addChild(hand);
 
         // Cooking turner utensil held firmly in hand
         auto utensil = std::make_shared<SceneNode>(name + "_Utensil");
         utensil->mesh = &meshes.cylinder;
-        utensil->transform.position = glm::vec3(0.0f, -0.06f, 0.18f);
-        utensil->transform.rotation.x = -75.0f;
+        utensil->transform.position = glm::vec3(0.0f, 0.04f, 0.12f);
+        utensil->transform.rotation.x = -70.0f;
         utensil->transform.scale = glm::vec3(0.03f, 0.45f, 0.03f);
         utensil->color = glm::vec4(0.75f, 0.75f, 0.78f, 1.0f); // steel pick
         hand->addChild(utensil);
@@ -3330,10 +3330,11 @@ public:
         leftForearm->color = skin;
         leftArm->addChild(leftForearm);
 
+        // Left hand continuing naturally from forearm wrist along side of body
         auto leftHand = std::make_shared<SceneNode>("Magician_LeftHand");
         leftHand->mesh = &meshes.humanHand;
-        leftHand->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
-        leftHand->transform.rotation.z = 90.0f;
+        leftHand->transform.position = glm::vec3(0.0f, -0.42f, 0.0f);
+        leftHand->transform.rotation = glm::vec3(10.0f, 0.0f, 180.0f);
         leftHand->color = skin;
         leftForearm->addChild(leftHand);
 
@@ -3358,19 +3359,19 @@ public:
         rightHand->transform.rotation = glm::vec3(-15.0f, 0.0f, -20.0f);
         rightForearm->addChild(rightHand);
 
-        // Hand palm contoured mesh
+        // Hand palm contoured mesh grasping the wand forward toward the orb
         auto palm = std::make_shared<SceneNode>("Magician_Palm");
         palm->mesh = &meshes.humanHand;
-        palm->transform.position = glm::vec3(0.0f, -0.02f, 0.0f);
-        palm->transform.rotation.x = -15.0f;
+        palm->transform.position = glm::vec3(0.01f, 0.035f, 0.065f);
+        palm->transform.rotation = glm::vec3(-65.0f, 10.0f, -15.0f);
         palm->color = skin;
         rightHand->addChild(palm);
 
-        // Magic Wand held firmly in hand
+        // Magic Wand held firmly in hand pointing directly toward magic orb
         wand = std::make_shared<SceneNode>("Magic_Wand");
         wand->mesh = &meshes.cylinder;
-        wand->transform.position = glm::vec3(0.02f, 0.06f, 0.18f);
-        wand->transform.rotation.x = -65.0f;
+        wand->transform.position = glm::vec3(0.01f, 0.060f, 0.15f);
+        wand->transform.rotation = glm::vec3(-65.0f, 10.0f, -15.0f);
         wand->transform.scale = glm::vec3(0.035f, 0.65f, 0.035f);
         wand->color = gold;
         rightHand->addChild(wand);

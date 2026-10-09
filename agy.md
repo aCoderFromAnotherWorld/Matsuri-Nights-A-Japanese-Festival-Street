@@ -12,6 +12,31 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Fix: Magician Hands Orientation & Stall Vendor Streetward Facing Correction
+
+#### 1. Magician Anatomical Hand & Wand Alignment (`Objects.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Problem Addressed:**
+  * Magician's left hand was rotated with a rigid 90-degree Z-axis tilt (`rotation.z = 90.0f`), protruding awkwardly sideways from the body instead of naturally following the downward vector of the forearm.
+  * Magician's right hand mesh (`palm`) had inverted Y/Z axes relative to forearm space (`rotation.x = -15.0f`), directing fingertips backward into the magician's sleeve rather than forward grasping the wand towards the hovering spellcasting orb.
+* **Fix & Anatomical Realignment:**
+  * **Left Hand Natural Extension:** Realigned left hand to `transform.position = (0.0f, -0.42f, 0.0f)` with `rotation = (10.0f, 0.0f, 180.0f)`. Flips the hand geometry so fingertips point downwards in line with the forearm, carpal wrist connects flush to forearm $(0, -0.36, 0)$ without a visible gap, and the palm rests naturally against the side of the yukata/robe.
+  * **Right Hand & Wand Grasp Realignment:** Realigned `palm` and `wand` along matching pitch and yaw angles:
+    * `palm`: `position = (0.01f, 0.035f, 0.065f)`, `rotation = (-65.0f, 10.0f, -15.0f)`
+    * `wand`: `position = (0.01f, 0.060f, 0.15f)`, `rotation = (-65.0f, 10.0f, -15.0f)`
+    The wrist connects flush to the wrist joint $(0, 0, 0)$, fingers grasp the wand handle firmly, and the wand extends forward and upward directly aiming into the dynamic orb's helical orbit.
+  * **Vendor Figure Hand Alignment:** Applied matching anatomical corrections to `VendorFigure` left and right hands in `Objects.h` so resting arm hands hang naturally and cooking hands grip their utensils facing forward over the cooking surfaces.
+
+#### 2. Stall Vendor Streetward Facing Correction (`Scene.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Problem Addressed:**
+  * Due to inverted stall placement vectors, the food stall vendors (`Vendor_Takoyaki` and `Vendor_Kakigori`) were facing the back wall away from their cooking carts, with their backs turned towards the central festival promenade road.
+* **Fix & Orientation Correction:**
+  * Corrected `Vendor_Takoyaki` at $X = -6.65\text{m}$ to yaw `+90.0f`, orienting chest, face, and forward-reaching arms towards $+X$ (through the counter at $X = -5.2\text{m}$ and directly facing the central road $X = 0$).
+  * Corrected `Vendor_Kakigori` at $X = +6.65\text{m}$ to yaw `-90.0f`, orienting chest, face, and arms towards $-X$ (through the counter at $X = +5.2\text{m}$ and directly facing the central road $X = 0$).
+
+---
+
 ### [2026-10-10] — Comprehensive Engine Optimization & Frame Rate Restoration
 
 #### 1. Performance Bottleneck Analysis & Optimization Overview
