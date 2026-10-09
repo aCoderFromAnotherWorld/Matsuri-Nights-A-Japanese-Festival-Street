@@ -12,6 +12,99 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Realistic Interior Lamps, Bright Room Illumination, Interactive Sliding Windows, 14-Step Hakokaidan Stair Kinematics, Authentic 2-Storied Machiya Rooms, Corner Ikebana Flower Vases, Detailed Sakura Blossom Tree, and Window Gardens (Planters, Bonsai & Kokedama)
+
+#### 1. Realistic Interior Lamps (Andon Floor Lamps & Ceiling Pendant Washi Chandeliers)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Architectural Lighting Implementation:**
+  * **Traditional Japanese Floor Lamp (*Andon*):** Created modular `createAndonFloorLamp` with 4 elevated corner feet, solid cedar base plinth, 4 vertical structural corner posts, fine *kumiko* lattice framing ribs, translucent washi paper diffuser panels (`color = (0.94, 0.90, 0.82)`), and an inner glowing flame core (`isEmissive = true`, `emissiveColor = (2.2, 1.6, 0.8)`). Placed beside the Tatami living room chabudai and second-floor futon bedroom in all Machiya townhouses.
+  * **Ceiling Pendant Chandelier (*Tsurigomi-andon*):** Created `createCeilingPendantLamp` suspended from the exposed ceiling rafters via a ceiling mounting rosette and slender suspension cord. Features a multi-tier octagonal cedar wooden frame, warm cream washi paper shade, and a high-intensity emissive core (`isEmissive = true`, `emissiveColor = (2.8, 2.1, 1.1)`) radiating down into the living and bedroom chambers.
+
+#### 2. Bright Interior Room Illumination (Indoor Skylight Bounce & 12-Point-Light Architecture)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/shaders/basic.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/basic.frag), [`Matsuri Nights — A Japanese Festival Street/shaders/raytrace.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/raytrace.frag), [`Matsuri Nights — A Japanese Festival Street/src/RayTracer.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/RayTracer.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Lighting Engine Expansion:**
+  * Expanded GPU uniform array `NR_POINT_LIGHTS` from 6 to 12 in `shaders/basic.frag`.
+  * Dedicated Point Lights 6 through 11 specifically for indoor townhouse illumination:
+    * **Light 6:** Machiya L1 Ground Floor living/tea room (`(1.4, 1.05, 0.65)` intensity, $16.0\text{m}$ radius).
+    * **Light 7:** Machiya L1 Second Floor master bedroom (`(1.35, 1.0, 0.6)` intensity, $16.0\text{m}$ radius).
+    * **Light 8:** Machiya R1 Ground Floor living/tea room (`(1.4, 1.05, 0.65)` intensity, $16.0\text{m}$ radius).
+    * **Light 9:** Machiya R1 Second Floor bedroom (`(1.35, 1.0, 0.6)` intensity, $16.0\text{m}$ radius).
+    * **Light 10:** Machiya L2 interior living room (`(1.2, 0.9, 0.55)` intensity, $14.0\text{m}$ radius).
+    * **Light 11:** Machiya R2 interior living room (`(1.2, 0.9, 0.55)` intensity, $14.0\text{m}$ radius).
+  * **Indoor Indirect Skylight Bounce:** Integrated ambient window bounce in `CalcDirLight`:
+    $$\text{indoorBounce} = \operatorname{mix}(0.48, 0.18, \text{dayNightFactor})$$
+    providing soft secondary photon scatter throughout enclosed rooms, completely eliminating shadow blackout and dark corners while maintaining realistic contrast.
+  * Synchronized the 6 interior point lights and indoor ambient baselines into both the GPU ray tracer (`shaders/raytrace.frag`) and multi-threaded CPU software ray tracer (`src/RayTracer.h`).
+
+#### 3. Machiya Shoji Lattice Windows & Interactive Sliding System (<kbd>G</kbd>)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h), [`Matsuri Nights — A Japanese Festival Street/Main.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp), [`controls.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/controls.md)
+* **Design & Interactive Mechanics:**
+  * Implemented matching traditional Japanese Shoji lattice sliding window pairs across both floors:
+    * Ground floor: Front street window pair and rear garden window pair.
+    * Second floor: Two front street-facing window pairs, side ventilation window, and rear window.
+  * Designed with cedar perimeter frames, horizontal and vertical *Kumiko* lattice mullions, and translucent rice paper panes (`isWindow = true`).
+  * Grouped into interactive `slidingWindowSashes` within `BuildingObject`.
+  * Added `Scene::interactNearestWindow(camera.Position)` bound to hotkey **<kbd>G</kbd>**:
+    * Smooth delta-time kinematics ($4.5 \times \Delta t$) slide the window sashes along their wooden sill tracks.
+    * Proximity auto-opening within $2.2\text{m}$ allows visitors approaching a window to look out over festival lanterns and street trees.
+
+#### 4. 14-Step Authentic Wooden Staircase (*Hakokaidan*) & Natural Bi-Directional Climbing Kinematics
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Architectural Upgrades:**
+  * Upgraded stairs from 9 steep blocks to 14 authentic cedar steps with bullnose tread overhangs, dark risers, diagonal side stringer boards, vertical balusters, and turned newel posts.
+  * Built traditional Japanese stepped under-stair storage cabinetry (*Hakokaidan* / *Kaidan-dansu*) featuring cedar drawer faces, dark borders, and brass ring pulls.
+* **Dual-Direction Kinematic Floor-Tracking:**
+  * In `Scene::resolveCollision`, replaced unilateral max-clamping with continuous kinematic floor-tracking:
+    $$Y_{\text{eye}}(x) = Y_{\text{stairBase}} + \frac{x - x_{\text{start}}}{x_{\text{end}} - x_{\text{start}}} \cdot (Y_{\text{secondFloor}} - Y_{\text{stairBase}}) + 1.45\text{m}$$
+  * Operates across $X \in [-3.70, -0.50]$ and $Z \in [-4.10, -2.85]$: player can seamlessly walk **UP** to the 2nd floor ($Y=5.75\text{m}$) and walk **DOWN** to the ground floor ($Y=1.65\text{m}$) with realistic stair stepping and zero floating!
+
+#### 5. Authentic 2-Storied Machiya Townhouses & Complete Second-Floor Living Chambers
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Complete Interior Floor Plan:**
+  * **Ground Floor (*Zashiki* & *Genkan*):** Sunken stone entryway with Agari-kamachi step-up beam, shoe cabinet, raised Tatami floor, low Chabudai table, 4 Zabuton silk cushions, Kyusu teapot, Yunomi cups, Tokonoma alcove with hanging scroll and Ikebana vase, Andon floor lamp, and ceiling pendant chandelier.
+  * **Second Floor (*Shinshitsu* / Master Chamber):**
+    * Full tatami matting with stairwell protective cedar balustrade guardrail.
+    * Exposed structural ceiling timber crossbeams (*Hari*) under the gable roof.
+    * Traditional **Futon bed**: plush white cotton mattress (*Shikibuton*), folded crimson/gold festival brocade duvet (*Kakebuton*), and navy silk buckwheat pillow (*Makura*).
+    * Three-panel folding screen (*Byoubu*) framed in dark lacquer with shimmering gold-leaf inner panels (`shininess = 64.0`, `specularStrength = 0.65`).
+    * Low study desk (*Tsukue*) with ceramic inkstone (*Suzuri*) and rolled manuscript calligraphy scroll.
+    * Traditional stepped wooden chest (*Tansu* storage cabinetry).
+    * Bedside glowing Andon lamp and ceiling pendant washi lantern.
+    * Corner flower pedestal stand with authentic ceramic vase.
+
+#### 6. Detailed Corner *Ikebana* Flower Vases with Multi-Colored Flora
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Floral Artistry (*Kado*):**
+  * Created `createIkebanaVase` featuring a glazed ceramic pedestal, bulbous vessel body, slender neck, and flared rim with high specular ceramic gloss (`shininess = 80.0`). Themed in celadon jade (`(0.48, 0.64, 0.58)`), cobalt porcelain (`(0.18, 0.28, 0.52)`), and earthy stoneware (`(0.42, 0.35, 0.28)`).
+  * Artfully composed asymmetrical Japanese floral arrangements:
+    * **Crimson Camellia (*Tsubaki*):** 5 overlapping crimson petals (`(0.88, 0.16, 0.22)`) with a golden-yellow cluster stamen core (`(0.95, 0.82, 0.20)`).
+    * **Pink Peony (*Botan*):** Layered soft rose-pink blossom petals (`(0.96, 0.65, 0.78)`).
+    * **Golden Plum Blossom (*Ume*):** Vibrant golden-yellow petals (`(0.98, 0.82, 0.22)`).
+    * **Violet Japanese Iris (*Ayame*):** Deep imperial violet petals (`(0.55, 0.25, 0.70)`).
+    * Slender arching dark green stems (`(0.24, 0.44, 0.20)`) and sculpted pointed green leaves angled outwards.
+  * Installed in house corners, Tokonoma display alcoves, and second-floor corner flower pedestals.
+
+#### 7. Photorealistic Procedural Cherry Blossom Tree (*SakuraTree*) Overhaul
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Botanical Architecture & Particle Enhancements:**
+  * **Organic Trunk & Roots:** Replaced primitive single cylinder with 5 spreading buttress root spurs anchoring into the earth, a 3-segment tapering curved organic trunk, 5 major spreading scaffold boughs, and 8 branch forks reaching gracefully outwards.
+  * **Volumetric Foliage Canopy:** Expanded from 8 to 22 volumetric cloud clusters organized with a 3-tier botanical color gradient:
+    * Inner heartwood / shadow clusters: Deep magenta sakura (`(0.88, 0.52, 0.68)`).
+    * Mid-canopy clusters: Classic festival sakura pink (`(0.98, 0.72, 0.82)`).
+    * Sunlit exterior tips: Luminous white-pink blooms (`(1.0, 0.88, 0.93)`).
+    * Weeping drooping blossom sprays cascading gently beneath the boughs.
+  * **Quadrupled Particle System:** Expanded from 8 to 32 cascading wind-blown blossom petals with 3D tumbling pitch, roll, and yaw rotations and gentle horizontal wind drift.
+  * **Ground Blossom Patches:** Added 7 fallen petal clusters scattered across the cobblestone pavement around the trunk base.
+
+#### 8. Window Gardens (Cedar Planters, Miniature Bonsai Trees & Hanging Kokedama)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Window Horticultural Features:**
+  * **Exterior Window Planter Troughs (`createWindowPlanterBox`):** Cedar wooden planter boxes with corner bracket joinery mounted onto window sills. Filled with rich organic soil and an assortment of 10 vibrantly colored flowers (festival crimson, golden marigold, rose pink, white lily, violet lavender) with green leaves.
+  * **Miniature Bonsai Trees (`createBonsaiTree`):** Sculpted Japanese miniature trees planted in glazed rectangular cobalt-blue bonsai trays with 4 corner feet. Features rich mossy soil, an accent weathered viewing stone (*Suiseki*), a gnarled twisting aged bark trunk with 3 bent branch forks, and sculpted dark-pine green foliage pads (`(0.18, 0.42, 0.22)`). Displayed on ground and second-floor window sills.
+  * **Hanging *Kokedama* Moss Balls (`createHangingKokedama`):** Traditional Japanese hanging moss balls suspended beneath townhouse roof eaves via slender braided suspension cords. Encased in lush forest moss (`(0.28, 0.52, 0.22)`), with trailing green ivy vines and dangling colorful blossoms.
+
+---
+
 ### [2026-10-09] — Visitable Realistic Machiya Houses (Interiors, Bedrooms, Tables, Stairs), Interactive Doors, Wall Collision, Photorealistic Takoyaki Food, and Celestial Sun/Moon/Stars
 
 #### 1. Visitable Traditional Machiya Townhouses (Interior & Exterior Architecture)

@@ -41,7 +41,7 @@ struct Material {
     float specularStrength;
 };
 
-#define NR_POINT_LIGHTS 6
+#define NR_POINT_LIGHTS 12
 
 uniform vec4 objectColor;
 uniform float dayNightFactor; // 0.0 = bright day, 1.0 = festival night
@@ -113,7 +113,9 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffColor, flo
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfwayDir), 0.0), max(material.shininess, 1.0));
 
-    vec3 ambient = light.ambient * diffColor;
+    // Outer light penetration & indoor ambient bounce through windows/doors
+    vec3 indoorBounce = mix(vec3(0.48, 0.45, 0.40), vec3(0.18, 0.16, 0.14), dayNightFactor) * diffColor;
+    vec3 ambient = max(light.ambient * diffColor, indoorBounce);
     vec3 diffuse = (1.0 - shadow) * light.diffuse * diff * diffColor;
     vec3 specular = (1.0 - shadow) * light.specular * (spec * material.specularStrength);
 

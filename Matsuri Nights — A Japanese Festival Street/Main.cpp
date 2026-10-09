@@ -254,6 +254,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_H && g_Scene)
         g_Scene->interactNearestDoor(camera.Position);
 
+    // Interactive House Windows: Slide Open / Close nearest house sliding Shoji windows
+    if (key == GLFW_KEY_G && g_Scene)
+        g_Scene->interactNearestWindow(camera.Position);
+
     // Wall Collision: Toggle Walk Mode (Solid Walls) vs Noclip Fly Mode
     if (key == GLFW_KEY_B && g_Scene)
         g_Scene->toggleCollision();

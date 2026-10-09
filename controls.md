@@ -25,6 +25,7 @@
 | **<kbd>X</kbd>** | Toggle Diffuse Textures ON / OFF |
 | **<kbd>V</kbd>** | Toggle **Realistic PCF Soft Shadows** ON / OFF (16-sample filter & shadow acne bias) |
 | **<kbd>H</kbd>** | **Interact with Nearest House Door** (Smoothly slide Shoji door open / close) |
+| **<kbd>G</kbd>** | **Interact with Nearest House Windows** (Smoothly slide Shoji windows open / close) |
 | **<kbd>B</kbd>** | Toggle **Wall Collision Mode** (Walk Mode: solid walls & stairs $\longleftrightarrow$ Noclip Fly Mode) |
 | **<kbd>Z</kbd>** | Toggle **Real-Time GPU Ray Tracing Mode** ON / OFF (60+ FPS Whitted Ray Tracer) |
 | **<kbd>F9</kbd>** | Capture & Export **CPU Multi-Threaded Ray-Traced Snapshot** to `raytraced_snapshot.bmp` |

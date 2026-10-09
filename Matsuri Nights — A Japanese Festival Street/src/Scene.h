@@ -272,7 +272,35 @@ public:
                     node->shininess = 20.0f;
                     node->specularStrength = 0.20f;
                 }
-                else if (node->name.find("Paper") != std::string::npos || node->name.find("Andon") != std::string::npos || node->name.find("Lamp") != std::string::npos || node->isWindow || node->isEmissive)
+                else if (node->name.find("Flower") != std::string::npos ||
+                         node->name.find("Bloom") != std::string::npos ||
+                         node->name.find("Petal") != std::string::npos ||
+                         node->name.find("Leaf") != std::string::npos ||
+                         node->name.find("Leaves") != std::string::npos ||
+                         node->name.find("Moss") != std::string::npos ||
+                         node->name.find("Vine") != std::string::npos ||
+                         node->name.find("Stamen") != std::string::npos ||
+                         node->name.find("Foliage") != std::string::npos ||
+                         node->name.find("Soil") != std::string::npos)
+                {
+                    node->texture = nullptr;
+                    node->shininess = 12.0f;
+                    node->specularStrength = 0.15f;
+                }
+                else if (node->name.find("Vase") != std::string::npos || node->name.find("Pot") != std::string::npos)
+                {
+                    node->texture = nullptr;
+                    node->shininess = 64.0f;
+                    node->specularStrength = 0.80f;
+                }
+                else if (node->name.find("Byoubu") != std::string::npos)
+                {
+                    node->texture = &texGold;
+                    node->textureTiling = 1.0f;
+                    node->shininess = 48.0f;
+                    node->specularStrength = 0.70f;
+                }
+                else if (node->name.find("Paper") != std::string::npos || node->name.find("Andon") != std::string::npos || node->name.find("Lamp") != std::string::npos || node->name.find("Shade") != std::string::npos || node->isWindow || node->isEmissive)
                 {
                     node->texture = nullptr;
                     node->shininess = 8.0f;
@@ -328,12 +356,16 @@ public:
         {
             auto assignTree = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
                 if (!node) return;
-                if (node->name.find("Trunk") != std::string::npos || node->name.find("Branch") != std::string::npos)
+                if (node->name.find("Trunk") != std::string::npos || node->name.find("Branch") != std::string::npos || node->name.find("Bough") != std::string::npos || node->name.find("Root") != std::string::npos)
                 {
                     node->texture = &texBark;
                     node->textureTiling = 2.0f;
                     node->shininess = 12.0f;
                     node->specularStrength = 0.15f;
+                }
+                else if (node->name.find("Blossom") != std::string::npos || node->name.find("Petal") != std::string::npos)
+                {
+                    node->texture = nullptr;
                 }
                 for (auto& ch : node->children)
                     self(self, ch);
@@ -531,7 +563,7 @@ public:
 
     void initLighting()
     {
-        pointLights.resize(6);
+        pointLights.resize(12);
 
         // Point Light 0: Magic Orb (Cyan/mystical blue moving light)
         pointLights[0].ambient = glm::vec3(0.05f, 0.10f, 0.15f);
@@ -583,6 +615,60 @@ public:
         pointLights[5].linear = 0.04f;
         pointLights[5].quadratic = 0.009f;
 
+        // Point Light 6: Machiya_L1 Ground Floor Living Room Lamp
+        pointLights[6].position = glm::vec3(-10.8f, 2.2f, 17.1f);
+        pointLights[6].ambient = glm::vec3(0.12f, 0.09f, 0.05f);
+        pointLights[6].diffuse = glm::vec3(1.45f, 1.20f, 0.75f);
+        pointLights[6].specular = glm::vec3(0.9f, 0.8f, 0.5f);
+        pointLights[6].constant = 1.0f;
+        pointLights[6].linear = 0.08f;
+        pointLights[6].quadratic = 0.022f;
+
+        // Point Light 7: Machiya_L1 Second Floor Bedroom Lamp
+        pointLights[7].position = glm::vec3(-11.0f, 6.0f, 17.0f);
+        pointLights[7].ambient = glm::vec3(0.10f, 0.08f, 0.05f);
+        pointLights[7].diffuse = glm::vec3(1.35f, 1.10f, 0.70f);
+        pointLights[7].specular = glm::vec3(0.8f, 0.7f, 0.45f);
+        pointLights[7].constant = 1.0f;
+        pointLights[7].linear = 0.08f;
+        pointLights[7].quadratic = 0.022f;
+
+        // Point Light 8: Machiya_R1 Ground Floor Living Room Lamp
+        pointLights[8].position = glm::vec3(10.8f, 2.2f, 14.9f);
+        pointLights[8].ambient = glm::vec3(0.12f, 0.09f, 0.05f);
+        pointLights[8].diffuse = glm::vec3(1.45f, 1.20f, 0.75f);
+        pointLights[8].specular = glm::vec3(0.9f, 0.8f, 0.5f);
+        pointLights[8].constant = 1.0f;
+        pointLights[8].linear = 0.08f;
+        pointLights[8].quadratic = 0.022f;
+
+        // Point Light 9: Machiya_R1 Second Floor Bedroom Lamp
+        pointLights[9].position = glm::vec3(11.0f, 6.0f, 15.0f);
+        pointLights[9].ambient = glm::vec3(0.10f, 0.08f, 0.05f);
+        pointLights[9].diffuse = glm::vec3(1.35f, 1.10f, 0.70f);
+        pointLights[9].specular = glm::vec3(0.8f, 0.7f, 0.45f);
+        pointLights[9].constant = 1.0f;
+        pointLights[9].linear = 0.08f;
+        pointLights[9].quadratic = 0.022f;
+
+        // Point Light 10: Machiya_L2 Ground Floor Living Room Lamp
+        pointLights[10].position = glm::vec3(-10.8f, 2.2f, -4.9f);
+        pointLights[10].ambient = glm::vec3(0.10f, 0.08f, 0.05f);
+        pointLights[10].diffuse = glm::vec3(1.35f, 1.10f, 0.70f);
+        pointLights[10].specular = glm::vec3(0.8f, 0.7f, 0.45f);
+        pointLights[10].constant = 1.0f;
+        pointLights[10].linear = 0.08f;
+        pointLights[10].quadratic = 0.022f;
+
+        // Point Light 11: Machiya_R2 Ground Floor Living Room Lamp
+        pointLights[11].position = glm::vec3(10.8f, 2.2f, -7.1f);
+        pointLights[11].ambient = glm::vec3(0.10f, 0.08f, 0.05f);
+        pointLights[11].diffuse = glm::vec3(1.35f, 1.10f, 0.70f);
+        pointLights[11].specular = glm::vec3(0.8f, 0.7f, 0.45f);
+        pointLights[11].constant = 1.0f;
+        pointLights[11].linear = 0.08f;
+        pointLights[11].quadratic = 0.022f;
+
         // Spotlight: Stage tracking spotlight
         spotLight.ambient = glm::vec3(0.05f, 0.05f, 0.04f);
         spotLight.diffuse = glm::vec3(1.5f, 1.35f, 1.1f);
@@ -602,7 +688,7 @@ public:
         glm::vec3 moonDir = glm::normalize(glm::vec3(-0.35f, -0.75f, 0.40f));
         dirLight.direction = glm::normalize(glm::mix(sunDir, moonDir, dayNightFactor));
 
-        dirLight.ambient = glm::mix(glm::vec3(0.38f, 0.36f, 0.32f), glm::vec3(0.07f, 0.09f, 0.16f), dayNightFactor);
+        dirLight.ambient = glm::mix(glm::vec3(0.42f, 0.40f, 0.36f), glm::vec3(0.12f, 0.14f, 0.22f), dayNightFactor);
         dirLight.diffuse = glm::mix(glm::vec3(0.85f, 0.82f, 0.76f), glm::vec3(0.20f, 0.25f, 0.38f), dayNightFactor);
         dirLight.specular = glm::mix(glm::vec3(0.60f, 0.60f, 0.55f), glm::vec3(0.30f, 0.35f, 0.45f), dayNightFactor);
 
@@ -654,7 +740,16 @@ public:
             pointLights[5].active = false;
         }
 
-        // 6. Spotlight: Tracks spotlight housing orientation in real-time
+        // 6. House Interior Room Point Lights (warm daylight fill, glowing radiant amber at night)
+        float roomLightScale = glm::mix(0.85f, 1.45f, dayNightFactor);
+        pointLights[6].diffuse = glm::vec3(1.45f, 1.20f, 0.75f) * roomLightScale;
+        pointLights[7].diffuse = glm::vec3(1.35f, 1.10f, 0.70f) * roomLightScale;
+        pointLights[8].diffuse = glm::vec3(1.45f, 1.20f, 0.75f) * roomLightScale;
+        pointLights[9].diffuse = glm::vec3(1.35f, 1.10f, 0.70f) * roomLightScale;
+        pointLights[10].diffuse = glm::vec3(1.35f, 1.10f, 0.70f) * roomLightScale;
+        pointLights[11].diffuse = glm::vec3(1.35f, 1.10f, 0.70f) * roomLightScale;
+
+        // 7. Spotlight: Tracks spotlight housing orientation in real-time
         if (spotlightRig && spotlightRig->lampHousing)
         {
             spotLight.position = spotlightRig->lampHousing->getWorldPosition();
@@ -864,6 +959,36 @@ public:
         }
     }
 
+    void interactNearestWindow(const glm::vec3& playerPos)
+    {
+        float minDist = 999.0f;
+        MachiyaBuilding* nearestBld = nullptr;
+
+        for (auto& bld : buildings)
+        {
+            if (!bld) continue;
+            float d = glm::distance(playerPos, bld->worldPos);
+            if (d < minDist)
+            {
+                minDist = d;
+                nearestBld = bld.get();
+            }
+        }
+
+        if (nearestBld && minDist < 14.0f)
+        {
+            nearestBld->toggleWindows();
+            std::cout << "\n========================================================" << std::endl;
+            std::cout << " [WINDOW INTERACTION] " << (nearestBld->isWindowOpen ? "Slid OPEN" : "Slid CLOSED")
+                      << " sliding Shoji windows of " << nearestBld->root->name << std::endl;
+            std::cout << "========================================================\n" << std::endl;
+        }
+        else
+        {
+            std::cout << "\n[WINDOW INTERACTION] Walk closer to a house (within 14m) and press [G] to slide windows.\n" << std::endl;
+        }
+    }
+
     void toggleCollision()
     {
         collisionEnabled = !collisionEnabled;
@@ -964,30 +1089,32 @@ public:
                 }
             }
 
-            // 5. Interior Floors, Ceiling & Staircase (when inside footprint)
+            // 5. Interior Floors, Ceiling & 14-Step Staircase (when inside footprint)
             if (newL.x > bMinX && newL.x < bMaxX && newL.z > bMinZ && newL.z < bMaxZ)
             {
-                // Ground floor inside: standing height
-                newL.y = std::max(newL.y, 1.45f);
-
-                // Staircase zone: X in [-3.6, -0.9], Z in [-4.1, -2.9]
-                if (newL.x >= -3.6f && newL.x <= -0.9f && newL.z >= -4.1f && newL.z <= -2.9f)
+                // Staircase zone: X in [-3.70, -0.50], Z in [-4.10, -2.85]
+                if (newL.x >= -3.70f && newL.x <= -0.50f && newL.z >= -4.10f && newL.z <= -2.85f && newL.y <= 6.2f)
                 {
-                    float stairT = (-0.9f - newL.x) / 2.7f;
+                    float stairT = (-0.50f - newL.x) / 3.10f;
                     stairT = std::clamp(stairT, 0.0f, 1.0f);
-                    float stairFloorY = glm::mix(0.22f, 4.30f, stairT);
+                    float stairFloorY = glm::mix(0.20f, 4.30f, stairT);
                     float targetEyeY = stairFloorY + 1.45f;
-                    newL.y = std::max(newL.y, targetEyeY);
+                    newL.y = targetEyeY; // Natural stair climbing kinematics (steps up & down smoothly!)
                 }
                 // Second Floor
-                else if (newL.y >= 4.5f)
+                else if (newL.y >= 3.6f)
                 {
-                    bool inStairwellOpening = (newL.x >= -3.7f && newL.x <= -0.8f && newL.z >= -4.2f && newL.z <= -2.8f);
+                    bool inStairwellOpening = (newL.x >= -3.75f && newL.x <= -0.50f && newL.z >= -4.15f && newL.z <= -2.80f);
                     if (!inStairwellOpening)
                     {
-                        newL.y = std::max(newL.y, 4.30f + 1.45f);
+                        newL.y = std::max(newL.y, 4.30f + 1.45f); // 5.75m standing height on 2nd floor tatami
                     }
                     newL.y = std::min(newL.y, 7.80f);
+                }
+                else
+                {
+                    // Ground floor inside: standing height
+                    newL.y = std::max(newL.y, 1.45f);
                 }
             }
 

@@ -26,15 +26,23 @@ Every visual mesh in the project belongs to a `SceneNode` in the hierarchical sc
   where $\alpha$ is the material shininess exponent (`shininess`) and $k_s$ is the specular reflectivity coefficient (`specularStrength`).
 * **Active Scene Light Sources:**
   1. **Directional Light (Sun / Moon):** Sweeps across the sky; sunlight is warm golden-white `(1.0, 0.95, 0.8)` during day; moon is cold silvery indigo `(0.15, 0.20, 0.35)` at night.
-  2. **6 Dynamic Point Lights:**
+  2. **12 Dynamic Point Lights:**
      * **Point Light 0 (Magic Orb):** Cyan-blue arcane glow `(0.2, 0.6, 1.0)` orbiting the magician.
      * **Point Light 1 (Takoyaki Stall Lantern):** Warm amber glow `(1.0, 0.6, 0.2)` illuminating food stall counters.
      * **Point Light 2 (Kakigori Stall Lantern):** Rose-magenta glow `(1.0, 0.4, 0.6)` on shaved ice syrups.
      * **Point Light 3 & 4 (Swinging Overhead Lanterns):** Warm vermilion lanterns `(1.0, 0.45, 0.15)` following rope physics.
      * **Point Light 5 (Sky Fireworks Flash):** Dynamic bursts detonating in brilliant sky colors with quadratic distance falloff.
+     * **Point Light 6 (Machiya L1 Ground Living Room):** Warm golden-amber interior illumination `(1.4, 1.05, 0.65)`.
+     * **Point Light 7 (Machiya L1 Second Floor Bedroom):** Soft warm amber chamber lighting `(1.35, 1.0, 0.60)`.
+     * **Point Light 8 (Machiya R1 Ground Living Room):** Warm golden-amber interior illumination `(1.4, 1.05, 0.65)`.
+     * **Point Light 9 (Machiya R1 Second Floor Bedroom):** Soft warm amber chamber lighting `(1.35, 1.0, 0.60)`.
+     * **Point Light 10 (Machiya L2 Living Room):** Cozy domestic interior glow `(1.2, 0.9, 0.55)`.
+     * **Point Light 11 (Machiya R2 Living Room):** Cozy domestic interior glow `(1.2, 0.9, 0.55)`.
   3. **Stage Spotlight:**
      * Conical spotlight mounted above the stage housing tracking the magician.
      * Inner cutoff angle $\cos(15^\circ)$ and outer cutoff angle $\cos(20^\circ)$ for smooth penumbra falloff.
+  4. **Indoor Indirect Skylight Bounce:**
+     * Secondary photon bounce through Shoji windows and doors (`indoorBounce = mix(0.48, 0.18, dayNightFactor)`), ensuring rooms are vibrantly illuminated without dark shadow blackouts.
 * **Realistic Soft Shadow Mapping (PCF Filtered):**
   * **Depth Pass:** Uses a $2048 \times 2048$ resolution depth framebuffer (`depthMapFBO`) to capture orthographic light-space depth values across the entire festival promenade.
   * **Adaptive Depth Bias:** Applies a slope-scaled normal bias $\text{bias} = \max(0.0035 \times (1.0 - \mathbf{N} \cdot \mathbf{L}), 0.0006)$ eliminating surface shadow acne while preserving crisp shadow contact.
@@ -102,6 +110,15 @@ Every visual mesh in the project belongs to a `SceneNode` in the hierarchical sc
 | **Matcha Moss Green** | `(77, 140, 89)` | `glm::vec4(0.30f, 0.55f, 0.35f, 1.0f)` |
 | **Crimson Red Velvet** | `(217, 38, 46)` | `glm::vec4(0.85f, 0.15f, 0.18f, 1.0f)` |
 | **Translucent Shoji Paper** | `(235, 224, 204)` | `glm::vec4(0.92f, 0.88f, 0.80f, 1.0f)` |
+| **Andon Flame Glow (Emissive)** | `(255, 204, 102)` | `glm::vec3(2.20f, 1.60f, 0.80f)` |
+| **Celadon Jade Ceramic** | `(122, 163, 148)` | `glm::vec4(0.48f, 0.64f, 0.58f, 1.0f)` |
+| **Cobalt Glaze Porcelain** | `(46, 71, 133)` | `glm::vec4(0.18f, 0.28f, 0.52f, 1.0f)` |
+| **Camellia Crimson Bloom** | `(224, 41, 56)` | `glm::vec4(0.88f, 0.16f, 0.22f, 1.0f)` |
+| **Peony Rose Pink Bloom** | `(245, 166, 199)` | `glm::vec4(0.96f, 0.65f, 0.78f, 1.0f)` |
+| **Iris Imperial Violet** | `(140, 64, 178)` | `glm::vec4(0.55f, 0.25f, 0.70f, 1.0f)` |
+| **Bonsai Pine Needle Green** | `(46, 107, 56)` | `glm::vec4(0.18f, 0.42f, 0.22f, 1.0f)` |
+| **Kokedama Forest Moss** | `(71, 133, 56)` | `glm::vec4(0.28f, 0.52f, 0.22f, 1.0f)` |
+| **Byoubu Gold Leaf Foil** | `(235, 199, 56)` | `glm::vec4(0.92f, 0.78f, 0.22f, 1.0f)` |
 | **Pure White** | `(255, 255, 255)` | `glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)` |
 | **Pure Black** | `(0, 0, 0)` | `glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)` |
 
@@ -276,6 +293,89 @@ vec3 daySky = mix(vec3(0.55, 0.75, 0.98), vec3(0.82, 0.88, 0.98), heightRatio);
 * **Night Sky Gradient:**
 ```glsl
 vec3 nightSky = mix(vec3(0.02, 0.03, 0.08), vec3(0.06, 0.08, 0.18), heightRatio);
+```
+
+### 12. Traditional House Interior Lamps (Andon & Pendant Chandelier)
+* **File:** `src/Objects.h` (in `createAndonFloorLamp` and `createCeilingPendantLamp`)
+* **Code to edit:**
+```cpp
+// Andon Floor Lamp:
+glm::vec4 frameWood(0.24f, 0.14f, 0.08f, 1.0f);     // Cedar legs, posts, kumiko ribs
+glm::vec4 washiPaper(0.94f, 0.90f, 0.82f, 1.0f);    // Translucent rice paper diffuser
+flameCore->emissiveColor = glm::vec3(2.2f, 1.6f, 0.8f); // Warm glowing oil flame core
+
+// Ceiling Pendant Chandelier:
+glm::vec4 pendantPaper(0.96f, 0.92f, 0.84f, 1.0f);  // Multi-tier octagonal washi shade
+pendantBulb->emissiveColor = glm::vec3(2.8f, 2.1f, 1.1f); // High-lumen warm chamber core
+```
+
+### 13. Ikebana Flower Vases & Asymmetrical Floral Arrangements
+* **File:** `src/Objects.h` (in `createIkebanaVase`)
+* **Code to edit:**
+```cpp
+// Vase Ceramic Glazes (based on vaseStyle index 0, 1, 2):
+glm::vec4 celadonJade(0.48f, 0.64f, 0.58f, 1.0f);   // Pale celadon crackle jade
+glm::vec4 cobaltGlaze(0.18f, 0.28f, 0.52f, 1.0f);   // Deep imperial cobalt blue
+glm::vec4 earthyClay(0.42f, 0.35f, 0.28f, 1.0f);    // Bizen unglazed stoneware
+
+// Floral Blooms & Foliage:
+glm::vec4 camelliaRed(0.88f, 0.16f, 0.22f, 1.0f);   // Crimson Camellia petals
+glm::vec4 peonyPink(0.96f, 0.65f, 0.78f, 1.0f);     // Rose-pink Peony petals
+glm::vec4 plumYellow(0.98f, 0.82f, 0.22f, 1.0f);    // Golden Plum Blossom petals
+glm::vec4 irisViolet(0.55f, 0.25f, 0.70f, 1.0f);    // Imperial Violet Iris petals
+glm::vec4 stamenGold(0.95f, 0.82f, 0.20f, 1.0f);    // Golden flower stamen center
+glm::vec4 stemGreen(0.24f, 0.44f, 0.20f, 1.0f);     // Slender green stem & leaves
+```
+
+### 14. Exterior Window Planters & Blooming Flora
+* **File:** `src/Objects.h` (in `createWindowPlanterBox`)
+* **Code to edit:**
+```cpp
+glm::vec4 cedarBox(0.38f, 0.24f, 0.14f, 1.0f);      // Weathered cedar sill trough
+glm::vec4 bracketIron(0.14f, 0.14f, 0.16f, 1.0f);   // Mounting corner brackets
+glm::vec4 pottingSoil(0.18f, 0.13f, 0.09f, 1.0f);   // Rich organic potting earth
+// Flower Colors array includes Crimson, Marigold, Pink, White, Violet, and Coral
+```
+
+### 15. Miniature Bonsai Trees & Accent Stones (*Suiseki*)
+* **File:** `src/Objects.h` (in `createBonsaiTree`)
+* **Code to edit:**
+```cpp
+glm::vec4 glazedPot(0.16f, 0.26f, 0.48f, 1.0f);     // Glazed cobalt rectangular tray
+glm::vec4 mossSoil(0.24f, 0.38f, 0.18f, 1.0f);      // Lush living green moss mound
+glm::vec4 suisekiStone(0.38f, 0.38f, 0.42f, 1.0f);  // Weathered viewing stone accent
+glm::vec4 gnarledBark(0.32f, 0.20f, 0.14f, 1.0f);   // Aged twisting pine trunk & forks
+glm::vec4 pineNeedles(0.18f, 0.42f, 0.22f, 1.0f);   // Sculpted dark-green pine pads
+```
+
+### 16. Hanging Kokedama Moss Balls & Cascading Vines
+* **File:** `src/Objects.h` (in `createHangingKokedama`)
+* **Code to edit:**
+```cpp
+glm::vec4 cordColor(0.62f, 0.54f, 0.42f, 1.0f);     // Braided jute suspension cord
+glm::vec4 mossBall(0.28f, 0.52f, 0.22f, 1.0f);      // Sphere of living green forest moss
+glm::vec4 ivyLeaf(0.20f, 0.46f, 0.18f, 1.0f);       // Cascading green ivy vine foliage
+// Trailing blossoms in Crimson, Golden, and Pale Pink
+```
+
+### 17. Second Floor Shinshitsu Furnishings
+* **File:** `src/Objects.h` (inside `createMachiyaBuilding`)
+* **Code to edit:**
+```cpp
+// Traditional Futon Bed:
+glm::vec4 shikibuton(0.96f, 0.95f, 0.92f, 1.0f);    // White cotton mattress base
+glm::vec4 kakebuton(0.78f, 0.18f, 0.22f, 1.0f);     // Crimson brocade festival quilt
+glm::vec4 kakeGoldTrim(0.92f, 0.78f, 0.25f, 1.0f);  // Gold embroidery border band
+glm::vec4 makura(0.18f, 0.24f, 0.42f, 1.0f);        // Indigo silk buckwheat pillow
+
+// Folding Screen (Byoubu):
+glm::vec4 byoubuFrame(0.14f, 0.10f, 0.08f, 1.0f);   // Ebonized dark lacquer frame
+glm::vec4 byoubuLeaf(0.92f, 0.78f, 0.22f, 1.0f);    // Shimmering gold leaf foil panels
+
+// Study Desk (Tsukue):
+glm::vec4 tsukueWood(0.28f, 0.16f, 0.10f, 1.0f);    // Polished dark cherrywood desk
+glm::vec4 suzuriStone(0.12f, 0.12f, 0.14f, 1.0f);   // Jet black ceramic inkstone
+glm::vec4 scrollPaper(0.92f, 0.88f, 0.80f, 1.0f);   // Calligraphy manuscript parchment
 ```
 
 ---

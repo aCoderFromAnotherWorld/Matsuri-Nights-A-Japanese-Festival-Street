@@ -394,8 +394,8 @@ namespace CPU_RayTracer
         glm::vec3 result(0.0f);
 
         // 1. Ambient Term with Contact Ambient Occlusion
-        glm::vec3 dayAmb(0.35f, 0.38f, 0.42f);
-        glm::vec3 nightAmb(0.06f, 0.08f, 0.14f);
+        glm::vec3 dayAmb(0.48f, 0.45f, 0.42f);
+        glm::vec3 nightAmb(0.16f, 0.15f, 0.18f);
         float contactAO = std::clamp(hit.p.y * 1.6f + 0.40f, 0.40f, 1.0f);
         glm::vec3 ambient = glm::mix(dayAmb, nightAmb, data.dayNightFactor) * hit.albedo * contactAO;
         result += ambient;
@@ -441,6 +441,38 @@ namespace CPU_RayTracer
                 float spec = std::pow(std::max(glm::dot(hit.normal, halfDir), 0.0f), hit.shininess) * hit.specularStrength;
                 glm::vec3 orbCol(0.25f, 0.75f, 1.4f);
                 result += (hit.albedo * diff + glm::vec3(spec)) * orbCol * atten * 1.8f;
+            }
+        }
+
+        // 4. Interior House Lamps
+        glm::vec3 houseLampPos[4] = {
+            glm::vec3(-10.8f, 2.2f, 17.1f),
+            glm::vec3(-11.0f, 5.8f, 17.0f),
+            glm::vec3(10.8f, 2.2f, 14.9f),
+            glm::vec3(11.0f, 5.8f, 15.0f)
+        };
+        glm::vec3 houseLampCol[4] = {
+            glm::vec3(1.4f, 1.15f, 0.75f),
+            glm::vec3(1.3f, 1.05f, 0.70f),
+            glm::vec3(1.4f, 1.15f, 0.75f),
+            glm::vec3(1.3f, 1.05f, 0.70f)
+        };
+        for (int h = 0; h < 4; ++h)
+        {
+            glm::vec3 toLamp = houseLampPos[h] - shadowOrig;
+            float distL = glm::length(toLamp);
+            if (distL < 16.0f && distL > 0.01f)
+            {
+                glm::vec3 lDir = toLamp / distL;
+                Ray lampShadowRay(shadowOrig, lDir);
+                if (!traceShadow(lampShadowRay, data, distL))
+                {
+                    float atten = 1.0f / (1.0f + 0.14f * distL + 0.035f * distL * distL);
+                    float diff = std::max(glm::dot(hit.normal, lDir), 0.0f);
+                    glm::vec3 halfDir = glm::normalize(lDir + viewDir);
+                    float spec = std::pow(std::max(glm::dot(hit.normal, halfDir), 0.0f), hit.shininess) * hit.specularStrength;
+                    result += (hit.albedo * diff + glm::vec3(spec)) * houseLampCol[h] * atten * 1.6f;
+                }
             }
         }
 

@@ -457,8 +457,8 @@ vec3 computeDirectLighting(vec3 hitP, vec3 norm, vec3 viewDir, HitInfo hit)
     vec3 result = vec3(0.0);
 
     // 1. Ambient Term with Contact Ambient Occlusion
-    vec3 dayAmb = vec3(0.35, 0.38, 0.42);
-    vec3 nightAmb = vec3(0.06, 0.08, 0.14);
+    vec3 dayAmb = vec3(0.48, 0.45, 0.42);
+    vec3 nightAmb = vec3(0.16, 0.15, 0.18);
     float contactAO = clamp(hitP.y * 1.6 + 0.40, 0.40, 1.0);
     vec3 ambient = mix(dayAmb, nightAmb, uNightFactor) * hit.albedo * contactAO;
     result += ambient;
@@ -520,6 +520,37 @@ vec3 computeDirectLighting(vec3 hitP, vec3 norm, vec3 viewDir, HitInfo hit)
                 float atten = 1.0 / (1.0 + 0.25 * distS + 0.10 * distS * distS);
                 float diff = max(dot(norm, lDir), 0.0);
                 result += hit.albedo * diff * stallCols[i] * atten * 1.2;
+            }
+        }
+    }
+
+    // 4B. Interior House Lamps (Ground Floor & Second Floor rooms)
+    vec3 houseLampPos[4] = vec3[4](
+        vec3(-10.8, 2.2, 17.1),
+        vec3(-11.0, 5.8, 17.0),
+        vec3(10.8, 2.2, 14.9),
+        vec3(11.0, 5.8, 15.0)
+    );
+    vec3 houseLampCol[4] = vec3[4](
+        vec3(1.4, 1.15, 0.75),
+        vec3(1.3, 1.05, 0.70),
+        vec3(1.4, 1.15, 0.75),
+        vec3(1.3, 1.05, 0.70)
+    );
+    for (int h = 0; h < 4; ++h)
+    {
+        vec3 toLamp = houseLampPos[h] - shadowOrig;
+        float distL = length(toLamp);
+        if (distL < 16.0)
+        {
+            vec3 lDir = toLamp / distL;
+            if (!traceShadow(shadowOrig, lDir, distL))
+            {
+                float atten = 1.0 / (1.0 + 0.14 * distL + 0.035 * distL * distL);
+                float diff = max(dot(norm, lDir), 0.0);
+                vec3 halfDir = normalize(lDir + viewDir);
+                float spec = pow(max(dot(norm, halfDir), 0.0), hit.shininess) * hit.specularStrength;
+                result += (hit.albedo * diff + vec3(spec)) * houseLampCol[h] * atten * 1.6;
             }
         }
     }
