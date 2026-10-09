@@ -81,8 +81,8 @@ float calculateShadow(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
     // Transform to [0, 1] range
     projCoords = projCoords * 0.5 + 0.5;
 
-    // If fragment is outside light frustum far plane, no shadow
-    if (projCoords.z > 1.0)
+    // If fragment is outside light frustum bounds, no shadow
+    if (projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0 || projCoords.z > 1.0)
         return 0.0;
 
     // Adaptive slope-scale depth bias to eliminate shadow acne
@@ -90,7 +90,7 @@ float calculateShadow(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
 
     // 16-sample Percentage-Closer Filtering (PCF) with smooth disc
     float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    const vec2 texelSize = vec2(1.0 / 2048.0);
     for(int x = -1; x <= 2; ++x)
     {
         for(int y = -1; y <= 2; ++y)
@@ -109,15 +109,19 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffColor, flo
     vec3 lightDir = normalize(-light.direction);
     // Diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
-    // Blinn-Phong Specular shading
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), max(material.shininess, 1.0));
 
     // Outer light penetration & indoor ambient bounce through windows/doors
     vec3 indoorBounce = mix(vec3(0.48, 0.45, 0.40), vec3(0.18, 0.16, 0.14), dayNightFactor) * diffColor;
     vec3 ambient = max(light.ambient * diffColor, indoorBounce);
     vec3 diffuse = (1.0 - shadow) * light.diffuse * diff * diffColor;
-    vec3 specular = (1.0 - shadow) * light.specular * (spec * material.specularStrength);
+    vec3 specular = vec3(0.0);
+
+    if (shadingMode == 0 && diff > 0.0 && material.specularStrength > 0.0 && shadow < 1.0)
+    {
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(normal, halfwayDir), 0.0), max(material.shininess, 1.0));
+        specular = (1.0 - shadow) * light.specular * (spec * material.specularStrength);
+    }
 
     if (shadingMode == 1)
         return ambient + diffuse;
@@ -128,19 +132,30 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffColor, flo
 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffColor)
 {
-    vec3 lightDir = normalize(light.position - fragPos);
-    // Diffuse shading
+    vec3 toLight = light.position - fragPos;
+    float distSq = dot(toLight, toLight);
+    // Early cutoff if beyond light's effective reach (dist > ~26m)
+    if (distSq > 700.0)
+        return vec3(0.0);
+
+    float distance = sqrt(distSq);
+    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * distSq);
+    if (attenuation < 0.005)
+        return vec3(0.0);
+
+    vec3 lightDir = toLight / distance;
     float diff = max(dot(normal, lightDir), 0.0);
-    // Blinn-Phong Specular shading
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), max(material.shininess, 1.0));
-    // Attenuation
-    float distance = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     vec3 ambient = light.ambient * diffColor * attenuation;
     vec3 diffuse = light.diffuse * diff * diffColor * attenuation;
-    vec3 specular = light.specular * (spec * material.specularStrength) * attenuation;
+    vec3 specular = vec3(0.0);
+
+    if (shadingMode == 0 && diff > 0.0 && material.specularStrength > 0.0)
+    {
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(normal, halfwayDir), 0.0), max(material.shininess, 1.0));
+        specular = light.specular * (spec * material.specularStrength) * attenuation;
+    }
 
     if (shadingMode == 1)
         return ambient + diffuse;
@@ -151,7 +166,14 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, v
 
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffColor)
 {
-    vec3 lightDir = normalize(light.position - fragPos);
+    vec3 toLight = light.position - fragPos;
+    float distSq = dot(toLight, toLight);
+    if (distSq > 900.0)
+        return vec3(0.0);
+
+    float distance = sqrt(distSq);
+    vec3 lightDir = toLight / distance;
+
     // Spot cone intensity
     float theta = dot(lightDir, normalize(-light.direction));
     float epsilon = light.cutOff - light.outerCutOff;
@@ -160,18 +182,19 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec
     if (spotIntensity <= 0.0)
         return vec3(0.0);
 
-    // Diffuse shading
+    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * distSq);
     float diff = max(dot(normal, lightDir), 0.0);
-    // Blinn-Phong Specular shading
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), max(material.shininess, 1.0));
-    // Attenuation
-    float distance = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     vec3 ambient = light.ambient * diffColor * attenuation;
     vec3 diffuse = light.diffuse * diff * diffColor * attenuation * spotIntensity;
-    vec3 specular = light.specular * (spec * material.specularStrength) * attenuation * spotIntensity;
+    vec3 specular = vec3(0.0);
+
+    if (shadingMode == 0 && diff > 0.0 && material.specularStrength > 0.0)
+    {
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(normal, halfwayDir), 0.0), max(material.shininess, 1.0));
+        specular = light.specular * (spec * material.specularStrength) * attenuation * spotIntensity;
+    }
 
     if (shadingMode == 1)
         return ambient + diffuse;

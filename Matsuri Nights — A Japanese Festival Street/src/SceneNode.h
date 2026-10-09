@@ -8,12 +8,72 @@
 #include <string>
 #include <memory>
 
+struct RenderContext
+{
+    GLint locModel = -1;
+    GLint locNormalMatrix = -1;
+    GLint locColor = -1;
+    GLint locIsWindow = -1;
+    GLint locIsSky = -1;
+    GLint locIsEmissive = -1;
+    GLint locEmissiveColor = -1;
+    GLint locShininess = -1;
+    GLint locSpecularStrength = -1;
+    GLint locUseTexture = -1;
+    GLint locDiffuseTexture = -1;
+    GLint locTextureTiling = -1;
+
+    mutable float lastShininess = -999.0f;
+    mutable float lastSpecularStrength = -999.0f;
+    mutable int lastUseTexture = -1;
+    mutable const Texture* lastTexture = nullptr;
+    mutable float lastTextureTiling = -999.0f;
+
+    void init(const Shader& shader)
+    {
+        locModel = shader.getUniformLocation("model");
+        locNormalMatrix = shader.getUniformLocation("normalMatrix");
+        locColor = shader.getUniformLocation("objectColor");
+        locIsWindow = shader.getUniformLocation("isWindow");
+        locIsSky = shader.getUniformLocation("isSky");
+        locIsEmissive = shader.getUniformLocation("isEmissive");
+        locEmissiveColor = shader.getUniformLocation("emissiveColor");
+        locShininess = shader.getUniformLocation("material.shininess");
+        locSpecularStrength = shader.getUniformLocation("material.specularStrength");
+        locUseTexture = shader.getUniformLocation("useTexture");
+        locDiffuseTexture = shader.getUniformLocation("diffuseTexture");
+        locTextureTiling = shader.getUniformLocation("textureTiling");
+
+        lastShininess = -999.0f;
+        lastSpecularStrength = -999.0f;
+        lastUseTexture = -1;
+        lastTexture = nullptr;
+        lastTextureTiling = -999.0f;
+    }
+};
+
+struct DepthRenderContext
+{
+    GLint locModel = -1;
+
+    void init(const Shader& depthShader)
+    {
+        locModel = depthShader.getUniformLocation("model");
+    }
+};
+
 class SceneNode : public std::enable_shared_from_this<SceneNode>
 {
 public:
     std::string name;
     Transform transform;
     glm::mat4 worldMatrix{ 1.0f };
+    glm::mat3 normalMatrix{ 1.0f };
+
+    glm::mat4 lastParentMatrix{ 0.0f };
+    bool isStatic = false;
+    bool castShadow = true;
+    bool matrixDirty = true;
 
     SceneNode* parent = nullptr;
     std::vector<std::shared_ptr<SceneNode>> children;
@@ -60,44 +120,101 @@ public:
         }
     }
 
-    void updateWorldMatrix(const glm::mat4& parentMatrix = glm::mat4(1.0f))
+    void setStaticRecursive(bool stat)
     {
-        worldMatrix = parentMatrix * transform.getLocalMatrix();
+        isStatic = stat;
         for (auto& child : children)
         {
-            child->updateWorldMatrix(worldMatrix);
+            child->setStaticRecursive(stat);
         }
     }
 
-    void draw(const Shader& shader) const
+    void setCastShadowRecursive(bool cast)
+    {
+        castShadow = cast;
+        for (auto& child : children)
+        {
+            child->setCastShadowRecursive(cast);
+        }
+    }
+
+    void updateWorldMatrix(const glm::mat4& parentMatrix = glm::mat4(1.0f))
+    {
+        bool localChanged = transform.checkDirty();
+        bool parentChanged = (parentMatrix != lastParentMatrix);
+
+        if (localChanged || parentChanged || matrixDirty)
+        {
+            worldMatrix = parentMatrix * transform.getLocalMatrix();
+            normalMatrix = glm::transpose(glm::inverse(glm::mat3(worldMatrix)));
+            lastParentMatrix = parentMatrix;
+            matrixDirty = false;
+
+            for (auto& child : children)
+            {
+                child->updateWorldMatrix(worldMatrix);
+            }
+        }
+        else
+        {
+            // Node and parent did not change. If node is marked static, no child can have changed.
+            if (!isStatic)
+            {
+                for (auto& child : children)
+                {
+                    child->updateWorldMatrix(worldMatrix);
+                }
+            }
+        }
+    }
+
+    void draw(const Shader& shader, const RenderContext& ctx) const
     {
         if (!visible)
             return;
 
         if (mesh)
         {
-            shader.setMat4("model", worldMatrix);
-            shader.setVec4("objectColor", color);
-            shader.setBool("isWindow", isWindow);
-            shader.setBool("isSky", isSky);
-            shader.setBool("isEmissive", isEmissive);
-            shader.setVec3("emissiveColor", emissiveColor);
+            Shader::setMat4(ctx.locModel, worldMatrix);
+            if (ctx.locNormalMatrix >= 0)
+                Shader::setMat3(ctx.locNormalMatrix, normalMatrix);
+            Shader::setVec4(ctx.locColor, color);
+            Shader::setBool(ctx.locIsWindow, isWindow);
+            Shader::setBool(ctx.locIsSky, isSky);
+            Shader::setBool(ctx.locIsEmissive, isEmissive);
+            if (isEmissive)
+                Shader::setVec3(ctx.locEmissiveColor, emissiveColor);
 
-            // Phase 2: Material parameters
-            shader.setFloat("material.shininess", shininess);
-            shader.setFloat("material.specularStrength", specularStrength);
-
-            // Phase 3: Texture parameters
-            if (texture && texture->id != 0)
+            if (shininess != ctx.lastShininess)
             {
-                shader.setBool("useTexture", true);
-                texture->bind(0);
-                shader.setInt("diffuseTexture", 0);
-                shader.setFloat("textureTiling", textureTiling);
+                Shader::setFloat(ctx.locShininess, shininess);
+                ctx.lastShininess = shininess;
             }
-            else
+            if (specularStrength != ctx.lastSpecularStrength)
             {
-                shader.setBool("useTexture", false);
+                Shader::setFloat(ctx.locSpecularStrength, specularStrength);
+                ctx.lastSpecularStrength = specularStrength;
+            }
+
+            bool hasTex = (texture && texture->id != 0);
+            if ((int)hasTex != ctx.lastUseTexture)
+            {
+                Shader::setBool(ctx.locUseTexture, hasTex);
+                ctx.lastUseTexture = (int)hasTex;
+            }
+            if (hasTex)
+            {
+                if (texture != ctx.lastTexture)
+                {
+                    texture->bind(0);
+                    Shader::setInt(ctx.locDiffuseTexture, 0);
+                    ctx.lastTexture = texture;
+                }
+                if (textureTiling != ctx.lastTextureTiling)
+                {
+                    Shader::setFloat(ctx.locTextureTiling, textureTiling);
+                    ctx.lastTextureTiling = textureTiling;
+                }
             }
 
             mesh->Draw();
@@ -105,25 +222,39 @@ public:
 
         for (const auto& child : children)
         {
-            child->draw(shader);
+            child->draw(shader, ctx);
+        }
+    }
+
+    void draw(const Shader& shader) const
+    {
+        RenderContext ctx;
+        ctx.init(shader);
+        draw(shader, ctx);
+    }
+
+    void drawDepth(const Shader& depthShader, const DepthRenderContext& ctx) const
+    {
+        if (!visible || isSky || isEmissive || !castShadow)
+            return;
+
+        if (mesh)
+        {
+            Shader::setMat4(ctx.locModel, worldMatrix);
+            mesh->Draw();
+        }
+
+        for (const auto& child : children)
+        {
+            child->drawDepth(depthShader, ctx);
         }
     }
 
     void drawDepth(const Shader& depthShader) const
     {
-        if (!visible || isSky || isEmissive)
-            return;
-
-        if (mesh)
-        {
-            depthShader.setMat4("model", worldMatrix);
-            mesh->Draw();
-        }
-
-        for (const auto& child : children)
-        {
-            child->drawDepth(depthShader);
-        }
+        DepthRenderContext ctx;
+        ctx.init(depthShader);
+        drawDepth(depthShader, ctx);
     }
 
     glm::vec3 getWorldPosition() const

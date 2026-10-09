@@ -1203,6 +1203,90 @@ public:
         std::cout << "========================================================\n" << std::endl;
     }
 
+    struct LightUniformLocations
+    {
+        bool initialized = false;
+        GLint view = -1;
+        GLint projection = -1;
+        GLint viewPos = -1;
+        GLint dayNightFactor = -1;
+        GLint totalTime = -1;
+        GLint shadingMode = -1;
+        GLint enableTextures = -1;
+        GLint enableShadows = -1;
+        GLint lightSpaceMatrix = -1;
+        GLint shadowMap = -1;
+
+        GLint dirLightDir = -1;
+        GLint dirLightAmb = -1;
+        GLint dirLightDiff = -1;
+        GLint dirLightSpec = -1;
+
+        GLint numActivePointLights = -1;
+        struct PointLightLocs {
+            GLint pos = -1, amb = -1, diff = -1, spec = -1;
+            GLint constant = -1, linear = -1, quadratic = -1;
+        };
+        std::vector<PointLightLocs> pointLights;
+
+        GLint spotActive = -1, spotPos = -1, spotDir = -1, spotAmb = -1, spotDiff = -1, spotSpec = -1;
+        GLint spotCutOff = -1, spotOuterCutOff = -1, spotConstant = -1, spotLinear = -1, spotQuadratic = -1;
+
+        void init(const Shader& shader, size_t numLights)
+        {
+            view = shader.getUniformLocation("view");
+            projection = shader.getUniformLocation("projection");
+            viewPos = shader.getUniformLocation("viewPos");
+            dayNightFactor = shader.getUniformLocation("dayNightFactor");
+            totalTime = shader.getUniformLocation("totalTime");
+            shadingMode = shader.getUniformLocation("shadingMode");
+            enableTextures = shader.getUniformLocation("enableTextures");
+            enableShadows = shader.getUniformLocation("enableShadows");
+            lightSpaceMatrix = shader.getUniformLocation("lightSpaceMatrix");
+            shadowMap = shader.getUniformLocation("shadowMap");
+
+            dirLightDir = shader.getUniformLocation("dirLight.direction");
+            dirLightAmb = shader.getUniformLocation("dirLight.ambient");
+            dirLightDiff = shader.getUniformLocation("dirLight.diffuse");
+            dirLightSpec = shader.getUniformLocation("dirLight.specular");
+
+            numActivePointLights = shader.getUniformLocation("numActivePointLights");
+            pointLights.resize(numLights);
+            for (size_t i = 0; i < numLights; ++i)
+            {
+                std::string prefix = "pointLights[" + std::to_string(i) + "].";
+                pointLights[i].pos = shader.getUniformLocation(prefix + "position");
+                pointLights[i].amb = shader.getUniformLocation(prefix + "ambient");
+                pointLights[i].diff = shader.getUniformLocation(prefix + "diffuse");
+                pointLights[i].spec = shader.getUniformLocation(prefix + "specular");
+                pointLights[i].constant = shader.getUniformLocation(prefix + "constant");
+                pointLights[i].linear = shader.getUniformLocation(prefix + "linear");
+                pointLights[i].quadratic = shader.getUniformLocation(prefix + "quadratic");
+            }
+
+            spotActive = shader.getUniformLocation("spotLightActive");
+            spotPos = shader.getUniformLocation("spotLight.position");
+            spotDir = shader.getUniformLocation("spotLight.direction");
+            spotAmb = shader.getUniformLocation("spotLight.ambient");
+            spotDiff = shader.getUniformLocation("spotLight.diffuse");
+            spotSpec = shader.getUniformLocation("spotLight.specular");
+            spotCutOff = shader.getUniformLocation("spotLight.cutOff");
+            spotOuterCutOff = shader.getUniformLocation("spotLight.outerCutOff");
+            spotConstant = shader.getUniformLocation("spotLight.constant");
+            spotLinear = shader.getUniformLocation("spotLight.linear");
+            spotQuadratic = shader.getUniformLocation("spotLight.quadratic");
+
+            initialized = true;
+        }
+    };
+
+    LightUniformLocations lightUniforms;
+    RenderContext sceneRenderContext;
+    DepthRenderContext shadowDepthContext;
+    bool sceneContextsInitialized = false;
+    GLint shadowLightSpaceLoc = -1;
+    bool shadowDepthContextInitialized = false;
+
     void renderShadowDepth()
     {
         if (!enableShadows || !shadowDepthShader || depthMapFBO == 0) return;
@@ -1217,7 +1301,14 @@ public:
         lightSpaceMatrix = lightProjection * lightView;
 
         shadowDepthShader->use();
-        shadowDepthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        if (!shadowDepthContextInitialized)
+        {
+            shadowLightSpaceLoc = shadowDepthShader->getUniformLocation("lightSpaceMatrix");
+            shadowDepthContext.init(*shadowDepthShader);
+            shadowDepthContextInitialized = true;
+        }
+
+        Shader::setMat4(shadowLightSpaceLoc, lightSpaceMatrix);
 
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -1225,10 +1316,11 @@ public:
 
         // Front-face culling eliminates self-shadow acne on architectural hulls
         glCullFace(GL_FRONT);
-        rootNode->drawDepth(*shadowDepthShader);
+        rootNode->drawDepth(*shadowDepthShader, shadowDepthContext);
         glCullFace(GL_BACK);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        Mesh::ResetBoundVAO();
     }
 
     void render(const Shader& shader, const Camera& camera, float aspectRatio, int screenWidth = 1280, int screenHeight = 720)
@@ -1241,6 +1333,13 @@ public:
 
         shader.use();
 
+        if (!sceneContextsInitialized)
+        {
+            lightUniforms.init(shader, pointLights.size());
+            sceneRenderContext.init(shader);
+            sceneContextsInitialized = true;
+        }
+
         // Keep sky dome centered at camera position (true infinite distance)
         if (skyDome && skyDome->root)
         {
@@ -1251,58 +1350,67 @@ public:
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = camera.GetProjectionMatrix(aspectRatio);
 
-        shader.setMat4("view", view);
-        shader.setMat4("projection", projection);
-        shader.setVec3("viewPos", camera.Position);
-        shader.setFloat("dayNightFactor", dayNightFactor);
-        shader.setFloat("totalTime", totalTime);
+        Shader::setMat4(lightUniforms.view, view);
+        Shader::setMat4(lightUniforms.projection, projection);
+        Shader::setVec3(lightUniforms.viewPos, camera.Position);
+        Shader::setFloat(lightUniforms.dayNightFactor, dayNightFactor);
+        Shader::setFloat(lightUniforms.totalTime, totalTime);
 
         // Phase 2: Shading mode & Lights
-        shader.setInt("shadingMode", shadingMode);
-        shader.setBool("enableTextures", enableTextures);
+        Shader::setInt(lightUniforms.shadingMode, shadingMode);
+        Shader::setBool(lightUniforms.enableTextures, enableTextures);
 
         // Realistic Shadows: Bind Depth Map to Texture Unit 1
-        shader.setBool("enableShadows", enableShadows);
-        shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        Shader::setBool(lightUniforms.enableShadows, enableShadows);
+        Shader::setMat4(lightUniforms.lightSpaceMatrix, lightSpaceMatrix);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, depthMap);
-        shader.setInt("shadowMap", 1);
+        Shader::setInt(lightUniforms.shadowMap, 1);
 
         // Directional Light
-        shader.setVec3("dirLight.direction", dirLight.direction);
-        shader.setVec3("dirLight.ambient", dirLight.ambient);
-        shader.setVec3("dirLight.diffuse", dirLight.diffuse);
-        shader.setVec3("dirLight.specular", dirLight.specular);
+        Shader::setVec3(lightUniforms.dirLightDir, dirLight.direction);
+        Shader::setVec3(lightUniforms.dirLightAmb, dirLight.ambient);
+        Shader::setVec3(lightUniforms.dirLightDiff, dirLight.diffuse);
+        Shader::setVec3(lightUniforms.dirLightSpec, dirLight.specular);
 
         // Point Lights
-        shader.setInt("numActivePointLights", (int)pointLights.size());
+        Shader::setInt(lightUniforms.numActivePointLights, (int)pointLights.size());
         for (size_t i = 0; i < pointLights.size(); ++i)
         {
-            std::string prefix = "pointLights[" + std::to_string(i) + "].";
-            shader.setVec3(prefix + "position", pointLights[i].position);
-            shader.setVec3(prefix + "ambient", pointLights[i].ambient);
-            shader.setVec3(prefix + "diffuse", pointLights[i].diffuse);
-            shader.setVec3(prefix + "specular", pointLights[i].specular);
-            shader.setFloat(prefix + "constant", pointLights[i].constant);
-            shader.setFloat(prefix + "linear", pointLights[i].linear);
-            shader.setFloat(prefix + "quadratic", pointLights[i].quadratic);
+            const auto& locs = lightUniforms.pointLights[i];
+            Shader::setVec3(locs.pos, pointLights[i].position);
+            Shader::setVec3(locs.amb, pointLights[i].ambient);
+            Shader::setVec3(locs.diff, pointLights[i].diffuse);
+            Shader::setVec3(locs.spec, pointLights[i].specular);
+            Shader::setFloat(locs.constant, pointLights[i].constant);
+            Shader::setFloat(locs.linear, pointLights[i].linear);
+            Shader::setFloat(locs.quadratic, pointLights[i].quadratic);
         }
 
         // Spotlight
-        shader.setBool("spotLightActive", spotLight.active);
-        shader.setVec3("spotLight.position", spotLight.position);
-        shader.setVec3("spotLight.direction", spotLight.direction);
-        shader.setVec3("spotLight.ambient", spotLight.ambient);
-        shader.setVec3("spotLight.diffuse", spotLight.diffuse);
-        shader.setVec3("spotLight.specular", spotLight.specular);
-        shader.setFloat("spotLight.cutOff", spotLight.cutOff);
-        shader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
-        shader.setFloat("spotLight.constant", spotLight.constant);
-        shader.setFloat("spotLight.linear", spotLight.linear);
-        shader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        Shader::setBool(lightUniforms.spotActive, spotLight.active);
+        Shader::setVec3(lightUniforms.spotPos, spotLight.position);
+        Shader::setVec3(lightUniforms.spotDir, spotLight.direction);
+        Shader::setVec3(lightUniforms.spotAmb, spotLight.ambient);
+        Shader::setVec3(lightUniforms.spotDiff, spotLight.diffuse);
+        Shader::setVec3(lightUniforms.spotSpec, spotLight.specular);
+        Shader::setFloat(lightUniforms.spotCutOff, spotLight.cutOff);
+        Shader::setFloat(lightUniforms.spotOuterCutOff, spotLight.outerCutOff);
+        Shader::setFloat(lightUniforms.spotConstant, spotLight.constant);
+        Shader::setFloat(lightUniforms.spotLinear, spotLight.linear);
+        Shader::setFloat(lightUniforms.spotQuadratic, spotLight.quadratic);
+
+        // Reset dynamic draw state cache
+        sceneRenderContext.lastShininess = -999.0f;
+        sceneRenderContext.lastSpecularStrength = -999.0f;
+        sceneRenderContext.lastUseTexture = -1;
+        sceneRenderContext.lastTexture = nullptr;
+        sceneRenderContext.lastTextureTiling = -999.0f;
 
         // Traverse scene graph and issue draw calls
-        rootNode->draw(shader);
+        rootNode->draw(shader, sceneRenderContext);
+
+        Mesh::ResetBoundVAO();
     }
 
     void initRayTracing()

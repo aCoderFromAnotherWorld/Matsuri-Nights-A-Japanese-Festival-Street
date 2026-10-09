@@ -61,15 +61,27 @@ public:
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
 
         glBindVertexArray(0);
+        s_CurrentBoundVAO = 0;
+    }
+
+    inline static unsigned int s_CurrentBoundVAO = 0;
+
+    static void ResetBoundVAO()
+    {
+        glBindVertexArray(0);
+        s_CurrentBoundVAO = 0;
     }
 
     void Draw() const
     {
         if (VAO != 0 && !indices.empty())
         {
-            glBindVertexArray(VAO);
+            if (s_CurrentBoundVAO != VAO)
+            {
+                glBindVertexArray(VAO);
+                s_CurrentBoundVAO = VAO;
+            }
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
-            glBindVertexArray(0);
         }
     }
 };

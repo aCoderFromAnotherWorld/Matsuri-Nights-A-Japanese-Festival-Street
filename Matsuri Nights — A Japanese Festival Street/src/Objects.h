@@ -2020,6 +2020,50 @@ public:
         gableBack->transform.scale = glm::vec3(4.0f, 1.1f, 0.15f);
         gableBack->color = timber;
         root->addChild(gableBack);
+
+        // Performance Optimization: Mark static building elements and cull interior nodes from outdoor shadow map
+        for (auto& child : root->children)
+        {
+            child->setStaticRecursive(true);
+
+            const std::string& n = child->name;
+            if (n.find("Andon") != std::string::npos ||
+                n.find("Pendant") != std::string::npos ||
+                n.find("Ikebana") != std::string::npos ||
+                n.find("Tea") != std::string::npos ||
+                n.find("Zabuton") != std::string::npos ||
+                n.find("Kyusu") != std::string::npos ||
+                n.find("Yunomi") != std::string::npos ||
+                n.find("Scroll") != std::string::npos ||
+                n.find("Tokonoma") != std::string::npos ||
+                n.find("Stair") != std::string::npos ||
+                n.find("Drawer") != std::string::npos ||
+                n.find("Stringer") != std::string::npos ||
+                n.find("LandingRail") != std::string::npos ||
+                n.find("Baluster") != std::string::npos ||
+                n.find("Tatami") != std::string::npos ||
+                n.find("Border") != std::string::npos ||
+                n.find("Futon") != std::string::npos ||
+                n.find("Nightstand") != std::string::npos ||
+                n.find("StudyDesk") != std::string::npos ||
+                n.find("Brush") != std::string::npos ||
+                n.find("Inkstone") != std::string::npos ||
+                n.find("PaperRoll") != std::string::npos)
+            {
+                child->setCastShadowRecursive(false);
+            }
+        }
+
+        // Keep sliding door and windows dynamic for smooth interaction
+        if (slidingDoorGroup)
+        {
+            slidingDoorGroup->isStatic = false;
+        }
+        for (auto& sash : slidingWindowSashes)
+        {
+            if (sash.node)
+                sash.node->isStatic = false;
+        }
     }
 
     void toggleDoor()
@@ -2141,6 +2185,8 @@ public:
         kasagi->transform.position = glm::vec3(0.0f, 10.65f, 0.0f);
         kasagi->color = black;
         root->addChild(kasagi);
+
+        root->setStaticRecursive(true);
     }
 };
 
@@ -2375,6 +2421,15 @@ public:
             petal->transform.position = fp.basePos;
             root->addChild(petal);
             petals.push_back(fp);
+        }
+
+        // Performance Optimization: Mark static tree parts (trunk, boughs, canopy, leaves) as static
+        for (auto& child : root->children)
+        {
+            if (child->name.find("Petal_") == std::string::npos)
+            {
+                child->setStaticRecursive(true);
+            }
         }
     }
 

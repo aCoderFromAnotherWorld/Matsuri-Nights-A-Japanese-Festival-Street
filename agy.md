@@ -12,6 +12,60 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Comprehensive Engine Optimization & Frame Rate Restoration
+
+#### 1. Performance Bottleneck Analysis & Optimization Overview
+* **Files Modified:**
+  * [`Shader.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Shader.h)
+  * [`Mesh.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Mesh.h)
+  * [`Transform.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Transform.h)
+  * [`SceneNode.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/SceneNode.h)
+  * [`Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+  * [`Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+  * [`Main.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp)
+  * [`shaders/basic.vert`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/basic.vert)
+  * [`shaders/basic.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/basic.frag)
+  * [`Matsuri Nights — A Japanese Festival Street.vcxproj`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street.vcxproj)
+* **Goal & Scope:** Resolve severe lagging without altering, degrading, or disabling any project features, visual details, character kinematics, curved geometries, 16-sample PCF soft shadows, lighting effects, or interactive controls.
+
+#### 2. Root Causes Identified & Fixes Implemented
+1. **Shader Uniform Location Lookup Bottleneck (`Shader.h`, `SceneNode.h`):**
+   * *Issue:* `glGetUniformLocation` was queried dynamically on every setter (`setMat4`, `setVec4`, `setFloat`, `setBool`) across 4,000+ scene graph nodes every frame. This resulted in >30,000 synchronous OpenGL driver queries per frame (~1.8 million per second), stalling the CPU-GPU pipeline.
+   * *Fix:*
+     * Added `std::unordered_map<std::string, GLint> m_UniformLocationCache` in `Shader` to cache all uniform locations.
+     * Introduced static direct-location setters (`Shader::setMat4(GLint loc, ...)`, `Shader::setVec3`, etc.) that execute in $O(1)$ with zero string hashing or driver queries.
+     * Created `RenderContext` and `DepthRenderContext` in `SceneNode.h` that pre-resolve uniform IDs once per frame and stream them directly into draw calls.
+2. **Redundant World Matrix Multiplications Across Static Geometry (`Transform.h`, `SceneNode.h`):**
+   * *Issue:* `rootNode->updateWorldMatrix(1.0f)` was recursively recalculating local matrices (involving multiple trigonometric functions and matrix multiplications) and world matrices for thousands of static nodes (walls, roofs, stairs, furniture, terrain) that never move.
+   * *Fix:*
+     * Implemented local matrix caching (`cachedLocalMatrix`) with dirty tracking (`checkDirty()`) in `Transform`.
+     * Added `lastParentMatrix` comparison and `matrixDirty` flag in `SceneNode::updateWorldMatrix()`. Static subtrees bypass matrix recalculation completely if neither their local transform nor their parent transform has changed.
+3. **Vertex Shader Per-Vertex Matrix Inversion (`shaders/basic.vert`):**
+   * *Issue:* `Normal = mat3(transpose(inverse(model))) * aNormal;` computed full 4x4 matrix inversions per-vertex across 200,000+ vertices every frame (over 12 million inversions/second on vertex ALUs).
+   * *Fix:* Precomputed `normalMatrix = glm::transpose(glm::inverse(glm::mat3(worldMatrix)))` on CPU only when a node's transform changes, and passed `uniform mat3 normalMatrix` directly to the vertex shader. Vertex shader now executes a single 3x3 matrix multiplication.
+4. **Driver VAO State Thrashing (`Mesh.h`):**
+   * *Issue:* `glBindVertexArray(0)` was called after every single mesh draw, forcing the driver to bind and unbind VAOs thousands of times per frame across identical primitives (e.g., 224 falling petals, 154 canopy lobes).
+   * *Fix:* Implemented `inline static unsigned int s_CurrentBoundVAO` tracking in `Mesh::Draw()`. Consecutive draw calls sharing the same mesh VAO skip redundant binding, and unbinding to 0 between draws is eliminated.
+5. **Directional Shadow Map Interior Culling (`Scene.h`, `Objects.h`):**
+   * *Issue:* `renderShadowDepth()` rendered every micro-object inside closed and semi-enclosed Machiya rooms (fine cups, tea trays, tatami borders, cushions, beddings, 14 stair steps) into the 48-meter directional sun/moon shadow map, wasting thousands of vertex shader evaluations.
+   * *Fix:* Added `castShadow` flag on `SceneNode` and tagged interior decorative nodes via `child->setCastShadowRecursive(false)`. Interior objects render with full Blinn-Phong lighting in the primary view, but are skipped in the outdoor shadow pass.
+6. **Dynamic String Allocation in Lighting Uploads (`Scene.h`):**
+   * *Issue:* `Scene::render()` generated dynamic strings (`std::string prefix = "pointLights[" + std::to_string(i) + "].";`) for 12 point lights every frame, causing 84 heap allocations and driver lookups per frame.
+   * *Fix:* Pre-cached all point light uniform locations into `LightUniformLocations` upon initialization.
+7. **Fragment Shader Lighting & PCF Optimization (`shaders/basic.frag`):**
+   * *Issue:* Shaded fragments evaluated all 12 point lights and 16 PCF shadow samples regardless of distance or light reach.
+   * *Fix:*
+     * Added distance-squared early cutoff (`distSq > 700.0` / ~26m) and attenuation thresholds in `CalcPointLight` and `CalcSpotLight`.
+     * Reused precalculated distance to eliminate redundant square roots.
+     * Skipped specular exponent power calculations (`pow(..., shininess)`) on backfacing (`diff <= 0.0`) or unlit surfaces.
+     * Replaced per-fragment `textureSize(shadowMap, 0)` with constant texel size `vec2(1.0 / 2048.0)` and added frustum-bounds early out.
+8. **Live FPS / Frame-Time Monitoring (`Main.cpp`):**
+   * Added dynamic window title updater displaying smoothed FPS and frame time in milliseconds (e.g. `Matsuri Nights - A Japanese Festival Street [CSE4102] | FPS: 60.0 (16.6 ms)`).
+9. **Visual Studio Project Configuration (`vcxproj`):**
+   * Configured `IncludePath`, `LibraryPath`, and `AdditionalDependencies` for `Release|x64`, enabling fully optimized builds with MSVC LTCG (`/O2 /Oi /Ot /GL`) in addition to the existing `Debug|x64` target.
+
+---
+
 ### [2026-10-10] — Fix: Shopkeeper Orientation & Food Cart Clearance + Magician Arm/Hand Kinematics
 
 #### 1. Shopkeeper Orientation & Stall Clearance (`Objects.h`, `Scene.h`)

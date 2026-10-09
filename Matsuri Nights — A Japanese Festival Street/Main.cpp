@@ -111,12 +111,32 @@ int main()
 
     scene.printCurrentInspection();
 
+    // FPS Counter timing
+    int frameCount = 0;
+    float fpsTimer = 0.0f;
+
     // 6. Main Render Loop
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
+        // Live FPS & frame-time display in window title
+        frameCount++;
+        fpsTimer += deltaTime;
+        if (fpsTimer >= 0.5f)
+        {
+            float fps = static_cast<float>(frameCount) / fpsTimer;
+            float ms = (fpsTimer / static_cast<float>(frameCount)) * 1000.0f;
+            char titleBuf[128];
+            snprintf(titleBuf, sizeof(titleBuf),
+                     "Matsuri Nights - A Japanese Festival Street [CSE4102] | FPS: %.1f (%.2f ms)",
+                     fps, ms);
+            glfwSetWindowTitle(window, titleBuf);
+            frameCount = 0;
+            fpsTimer = 0.0f;
+        }
 
         // Process continuous movement keys
         processContinuousInput(window, scene);
