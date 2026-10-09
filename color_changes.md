@@ -19,16 +19,37 @@ Every visual mesh in the project belongs to a `SceneNode` in the hierarchical sc
   * *Example:* Pure Red $(255, 0, 0) \longrightarrow$ `glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)`
   * *Example:* Forest Green $(34, 139, 34) \longrightarrow$ `glm::vec4(34/255.0f, 139/255.0f, 34/255.0f, 1.0f)`
 
-### B. Shading Pipeline & Lighting
-* Base colors are uploaded to the GPU as `uniform vec4 objectColor;` in `shaders/basic.frag` (and embedded in `src/Shader.h`).
-* The fragment shader computes directional sunlight/moonlight diffuse shading and ambient lighting to give 3D depth to every primitive:
-  $$\text{Lighting} = \text{Ambient} + \max(\mathbf{N} \cdot \mathbf{L}, 0.0) \times \text{LightIntensity}$$
-  $$\text{FinalColor} = \text{objectColor.rgb} \times \text{Lighting}$$
+### B. Shading Pipeline & Blinn-Phong Illumination Model (Phase 2)
+* The fragment shader (`shaders/basic.frag`) implements the **Blinn-Phong Reflection Model** evaluating Ambient, Lambertian Diffuse, and Specular terms using the halfway vector $\mathbf{H}$:
+  $$\mathbf{H} = \frac{\mathbf{L} + \mathbf{V}}{\|\mathbf{L} + \mathbf{V}\|}$$
+  $$\mathbf{I}_{\text{specular}} = \mathbf{L}_{\text{specular}} \times k_s \times (\max(\mathbf{N} \cdot \mathbf{H}, 0))^{\alpha}$$
+  where $\alpha$ is the material shininess exponent (`shininess`) and $k_s$ is the specular reflectivity coefficient (`specularStrength`).
+* **Active Scene Light Sources:**
+  1. **Directional Light (Sun / Moon):** Sweeps across the sky; sunlight is warm golden-white `(1.0, 0.95, 0.8)` during day; moon is cold silvery indigo `(0.15, 0.20, 0.35)` at night.
+  2. **6 Dynamic Point Lights:**
+     * **Point Light 0 (Magic Orb):** Cyan-blue arcane glow `(0.2, 0.6, 1.0)` orbiting the magician.
+     * **Point Light 1 (Takoyaki Stall Lantern):** Warm amber glow `(1.0, 0.6, 0.2)` illuminating food stall counters.
+     * **Point Light 2 (Kakigori Stall Lantern):** Rose-magenta glow `(1.0, 0.4, 0.6)` on shaved ice syrups.
+     * **Point Light 3 & 4 (Swinging Overhead Lanterns):** Warm vermilion lanterns `(1.0, 0.45, 0.15)` following rope physics.
+     * **Point Light 5 (Sky Fireworks Flash):** Dynamic bursts detonating in brilliant sky colors with quadratic distance falloff.
+  3. **Stage Spotlight:**
+     * Conical spotlight mounted above the stage housing tracking the magician.
+     * Inner cutoff angle $\cos(15^\circ)$ and outer cutoff angle $\cos(20^\circ)$ for smooth penumbra falloff.
+* **Shading Mode Switcher (<kbd>P</kbd>):**
+  * `0`: Full Blinn-Phong (Ambient + Diffuse + Specular).
+  * `1`: Diffuse Only (Ambient + Lambert Diffuse, specular disabled).
+  * `2`: Flat Ambient Only (Uniform base illumination).
 
-### C. Special Material Modes
+### C. Texture Mapping Pipeline (Phase 3)
+* Textures are generated procedurally as valid 24-bit uncompressed `.bmp` files on disk in `assets/textures/` via `src/TextureGenerator.h` and loaded into OpenGL using `stb_image.h` (`src/Texture.h`).
+* Texture sampling is modulated directly with the object's base color:
+  $$\text{Effective Diffuse} = \text{baseColor} \times \text{textureColor}(\mathbf{uv} \cdot \text{tiling})$$
+* **Texture Toggle (<kbd>X</kbd>):** Can disable texture sampling dynamically to compare shaded untextured polygons against textured surfaces.
+
+### D. Special Material Modes
 1. **Emissive Objects (`isEmissive = true`):**
    * Used for the **Chochin Lanterns**, **Magic Orb**, **Spotlight Lens**, and **Fireworks**.
-   * Bypasses shadow/diffuse calculation and radiates self-illuminated light that intensifies at night:
+   * Radiates self-illuminated light that intensifies at night:
      ```cpp
      node->isEmissive = true;
      node->emissiveColor = glm::vec3(R, G, B);
@@ -214,7 +235,41 @@ vec3 nightSky = mix(vec3(0.02, 0.03, 0.08), vec3(0.06, 0.08, 0.18), heightRatio)
 
 ---
 
-## 4. How to Compile & Verify Your Color Changes
+## 4. How to Adjust Material Specularity & Textures in Code
+
+All material properties and texture assignments are set per-node in `src/Scene.h` (inside `applyTexturesAndMaterials()`):
+
+### A. Adjusting Specular Highlight Intensity & Shininess
+In `src/Scene.h` or on any `SceneNode*`:
+```cpp
+// Set specular highlight reflectivity (0.0 = completely matte, 1.0 = highly glossy):
+node->specularStrength = 0.5f;
+
+// Set shininess exponent alpha (higher = tighter, sharper specular reflection pinpoint):
+// e.g. 8.0 = soft cloth/wood, 32.0 = smooth plastic, 64.0 = polished ceramic/lacquer, 128.0 = shiny metal/gold
+node->shininess = 64.0f;
+```
+
+### B. Changing or Adding Textures to Any Node
+Textures are generated in `assets/textures/` and stored in `textures` map:
+```cpp
+// Assign an existing texture to a node with custom UV tiling:
+node->texture = textures["wood_timber"].get();
+node->textureTiling = glm::vec2(2.0f, 4.0f); // Tiles 2x horizontally, 4x vertically
+
+// Available generated textures:
+// - textures["wood_timber"]    : Natural grain cedar wood
+// - textures["roof_tiles"]     : Scalloped Japanese ceramic roof shingles
+// - textures["stone_pavement"] : Mortared stone flagstones
+// - textures["tatami_cloth"]   : Woven festival awning & banner cloth
+// - textures["gold_leaf"]      : Shimmering gold leaf foil
+// - textures["sakura_bark"]    : Rough cherry tree bark
+// - textures["lantern_paper"]  : Translucent washi paper with bamboo rings
+```
+
+---
+
+## 5. How to Compile & Verify Your Color Changes
 
 After modifying any color values in `src/Objects.h` or shaders:
 
@@ -225,9 +280,9 @@ After modifying any color values in `src/Objects.h` or shaders:
 2. **Using Developer PowerShell:**
    Run the MSBuild command from the workspace folder:
    ```powershell
-   & "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\amd64\MSBuild.exe" "Matsuri Nights — A Japanese Festival Street\Matsuri Nights — A Japanese Festival Street.vcxproj" /p:Configuration=Debug /p:Platform=x64
+   & "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" "Matsuri Nights — A Japanese Festival Street\Matsuri Nights — A Japanese Festival Street.vcxproj" /p:Configuration=Debug /p:Platform=x64
    ```
    Then launch:
    ```powershell
-   & "Matsuri Nights — A Japanese Festival Street\x64\Debug\Matsuri Nights — A Japanese Festival Street.exe"
+   & "Matsuri Nights — A Japanese Festival Street\x64\Debug\Matsuri Nights - A Japanese Festival Street.exe"
    ```

@@ -4,6 +4,10 @@
 #include "Objects.h"
 #include "Shader.h"
 #include "Camera.h"
+#include "Light.h"
+#include "Texture.h"
+#include "TextureGenerator.h"
+
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -41,6 +45,22 @@ public:
     std::unique_ptr<FireworkSystem> fireworks;
     std::unique_ptr<SkyDome> skyDome;
 
+    // Phase 2: Lighting & Illumination
+    DirLight dirLight;
+    std::vector<PointLight> pointLights;
+    SpotLight spotLight;
+    int shadingMode = 0; // 0 = Blinn-Phong, 1 = Diffuse Only (Lambert), 2 = Ambient Only (Flat)
+
+    // Phase 3: Texturing
+    bool enableTextures = true;
+    Texture texWood;
+    Texture texRoof;
+    Texture texStone;
+    Texture texLantern;
+    Texture texTatami;
+    Texture texGold;
+    Texture texBark;
+
     // Day / Night state machine
     float dayNightFactor = 0.0f; // 0.0 = day, 1.0 = night
     bool targetNight = false;
@@ -58,8 +78,25 @@ public:
     {
         meshes.init();
         rootNode = std::make_shared<SceneNode>("World_Root");
+
+        loadTextures();
         buildScene();
+        applyTexturesAndMaterials();
+        initLighting();
         setupInspectables();
+    }
+
+    void loadTextures()
+    {
+        TextureGenerator::ensureTextureAssetsExist("assets/textures");
+
+        texWood.loadFromFile("assets/textures/wood_timber.bmp");
+        texRoof.loadFromFile("assets/textures/roof_tiles.bmp");
+        texStone.loadFromFile("assets/textures/stone_pavement.bmp");
+        texLantern.loadFromFile("assets/textures/lantern_paper.bmp");
+        texTatami.loadFromFile("assets/textures/tatami_cloth.bmp");
+        texGold.loadFromFile("assets/textures/gold_leaf.bmp");
+        texBark.loadFromFile("assets/textures/sakura_bark.bmp");
     }
 
     void buildScene()
@@ -70,13 +107,9 @@ public:
 
         // 2. Machiya Buildings (x4: 2 on Left side, 2 on Right side)
         // Street runs along Z (-35 to +35)
-        // Building 1 (Left near): rotY = 0.0f faces road (+X)
         buildings.push_back(std::make_unique<MachiyaBuilding>(meshes, "Machiya_L1", glm::vec3(-10.5f, 0.0f, 16.0f), 0.0f));
-        // Building 2 (Left far): rotY = 0.0f faces road (+X)
         buildings.push_back(std::make_unique<MachiyaBuilding>(meshes, "Machiya_L2", glm::vec3(-10.5f, 0.0f, -6.0f), 0.0f));
-        // Building 3 (Right near): rotY = 180.0f faces road (-X)
         buildings.push_back(std::make_unique<MachiyaBuilding>(meshes, "Machiya_R1", glm::vec3(10.5f, 0.0f, 16.0f), 180.0f));
-        // Building 4 (Right far): rotY = 180.0f faces road (-X)
         buildings.push_back(std::make_unique<MachiyaBuilding>(meshes, "Machiya_R2", glm::vec3(10.5f, 0.0f, -6.0f), 180.0f));
 
         for (auto& b : buildings)
@@ -154,16 +187,415 @@ public:
         rootNode->addChild(skyDome->root);
     }
 
+    void applyTexturesAndMaterials()
+    {
+        // 1. Ground & Street pavement
+        if (ground && ground->root)
+        {
+            ground->root->texture = &texStone;
+            ground->root->textureTiling = 14.0f;
+            ground->root->shininess = 16.0f;
+            ground->root->specularStrength = 0.20f;
+        }
+
+        // 2. Machiya Townhouse Buildings
+        for (auto& b : buildings)
+        {
+            if (!b || !b->root) continue;
+            auto assignBuilding = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
+                if (!node) return;
+                if (node->name.find("Roof") != std::string::npos)
+                {
+                    node->texture = &texRoof;
+                    node->textureTiling = 5.0f;
+                    node->shininess = 32.0f;
+                    node->specularStrength = 0.45f;
+                }
+                else if (node->name.find("Window") != std::string::npos)
+                {
+                    node->shininess = 8.0f;
+                    node->specularStrength = 0.10f;
+                }
+                else
+                {
+                    node->texture = &texWood;
+                    node->textureTiling = 2.5f;
+                    node->shininess = 16.0f;
+                    node->specularStrength = 0.25f;
+                }
+                for (auto& ch : node->children)
+                    self(self, ch);
+            };
+            assignBuilding(assignBuilding, b->root);
+        }
+
+        // 3. Torii Gate
+        if (toriiGate && toriiGate->root)
+        {
+            auto assignTorii = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
+                if (!node) return;
+                if (node->name.find("Gakuzuka") != std::string::npos)
+                {
+                    node->texture = &texGold;
+                    node->textureTiling = 1.0f;
+                    node->shininess = 48.0f;
+                    node->specularStrength = 0.85f;
+                }
+                else
+                {
+                    node->texture = &texWood;
+                    node->textureTiling = 3.0f;
+                    node->shininess = 28.0f;
+                    node->specularStrength = 0.35f;
+                }
+                for (auto& ch : node->children)
+                    self(self, ch);
+            };
+            assignTorii(assignTorii, toriiGate->root);
+        }
+
+        // 4. Sakura Blossom Tree
+        if (sakuraTree && sakuraTree->root)
+        {
+            auto assignTree = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
+                if (!node) return;
+                if (node->name.find("Trunk") != std::string::npos || node->name.find("Branch") != std::string::npos)
+                {
+                    node->texture = &texBark;
+                    node->textureTiling = 2.0f;
+                    node->shininess = 12.0f;
+                    node->specularStrength = 0.15f;
+                }
+                for (auto& ch : node->children)
+                    self(self, ch);
+            };
+            assignTree(assignTree, sakuraTree->root);
+        }
+
+        // 5. Street Lantern Spans
+        for (auto& span : lanternSpans)
+        {
+            if (!span || !span->root) continue;
+            auto assignSpan = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
+                if (!node) return;
+                if (node->name.find("Shaft") != std::string::npos || node->name.find("Peg") != std::string::npos)
+                {
+                    node->texture = &texWood;
+                    node->textureTiling = 3.0f;
+                    node->shininess = 20.0f;
+                    node->specularStrength = 0.25f;
+                }
+                else if (node->name.find("Base") != std::string::npos)
+                {
+                    node->texture = &texStone;
+                    node->textureTiling = 2.0f;
+                    node->shininess = 16.0f;
+                    node->specularStrength = 0.20f;
+                }
+                else if (node->name.find("Paper") != std::string::npos)
+                {
+                    node->texture = &texLantern;
+                    node->textureTiling = 1.0f;
+                    node->shininess = 16.0f;
+                    node->specularStrength = 0.30f;
+                }
+                for (auto& ch : node->children)
+                    self(self, ch);
+            };
+            assignSpan(assignSpan, span->root);
+        }
+
+        // 6. Takoyaki Stall
+        if (takoyakiStall && takoyakiStall->root)
+        {
+            auto assignTako = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
+                if (!node) return;
+                if (node->name.find("Awning") != std::string::npos || node->name.find("Banner") != std::string::npos)
+                {
+                    node->texture = &texTatami;
+                    node->textureTiling = 3.0f;
+                    node->shininess = 12.0f;
+                    node->specularStrength = 0.20f;
+                }
+                else if (node->name.find("Grill") != std::string::npos)
+                {
+                    node->shininess = 64.0f;
+                    node->specularStrength = 0.90f;
+                }
+                else if (node->name.find("Paper") != std::string::npos)
+                {
+                    node->texture = &texLantern;
+                    node->textureTiling = 1.0f;
+                }
+                else
+                {
+                    node->texture = &texWood;
+                    node->textureTiling = 2.0f;
+                    node->shininess = 20.0f;
+                    node->specularStrength = 0.25f;
+                }
+                for (auto& ch : node->children)
+                    self(self, ch);
+            };
+            assignTako(assignTako, takoyakiStall->root);
+        }
+
+        // 7. Kakigori Stall
+        if (kakigoriStall && kakigoriStall->root)
+        {
+            auto assignKaki = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
+                if (!node) return;
+                if (node->name.find("Flag") != std::string::npos || node->name.find("Noren") != std::string::npos)
+                {
+                    node->texture = &texTatami;
+                    node->textureTiling = 3.0f;
+                    node->shininess = 12.0f;
+                    node->specularStrength = 0.20f;
+                }
+                else if (node->name.find("Wheel") != std::string::npos)
+                {
+                    node->shininess = 48.0f;
+                    node->specularStrength = 0.75f;
+                }
+                else if (node->name.find("Paper") != std::string::npos)
+                {
+                    node->texture = &texLantern;
+                    node->textureTiling = 1.0f;
+                }
+                else
+                {
+                    node->texture = &texWood;
+                    node->textureTiling = 2.0f;
+                    node->shininess = 20.0f;
+                    node->specularStrength = 0.25f;
+                }
+                for (auto& ch : node->children)
+                    self(self, ch);
+            };
+            assignKaki(assignKaki, kakigoriStall->root);
+        }
+
+        // 8. Magic Show Stage & Tricks
+        if (magicStage && magicStage->root)
+        {
+            auto assignStage = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
+                if (!node) return;
+                if (node->name.find("Carpet") != std::string::npos)
+                {
+                    node->texture = &texTatami;
+                    node->textureTiling = 4.0f;
+                    node->shininess = 10.0f;
+                    node->specularStrength = 0.15f;
+                }
+                else if (node->name.find("Byobu") != std::string::npos)
+                {
+                    node->texture = &texGold;
+                    node->textureTiling = 2.0f;
+                    node->shininess = 48.0f;
+                    node->specularStrength = 0.85f;
+                }
+                else
+                {
+                    node->texture = &texWood;
+                    node->textureTiling = 3.0f;
+                    node->shininess = 20.0f;
+                    node->specularStrength = 0.30f;
+                }
+                for (auto& ch : node->children)
+                    self(self, ch);
+            };
+            assignStage(assignStage, magicStage->root);
+        }
+
+        if (vanishingBox && vanishingBox->root)
+        {
+            if (vanishingBox->boxNode)
+            {
+                vanishingBox->boxNode->texture = &texGold;
+                vanishingBox->boxNode->textureTiling = 1.0f;
+                vanishingBox->boxNode->shininess = 48.0f;
+                vanishingBox->boxNode->specularStrength = 0.85f;
+            }
+            if (vanishingBox->clothNode)
+            {
+                vanishingBox->clothNode->texture = &texTatami;
+                vanishingBox->clothNode->textureTiling = 2.0f;
+                vanishingBox->clothNode->shininess = 16.0f;
+                vanishingBox->clothNode->specularStrength = 0.30f;
+            }
+        }
+
+        // 9. Audience benches
+        if (audience && audience->root)
+        {
+            auto assignAud = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
+                if (!node) return;
+                if (node->name.find("BenchPlank") != std::string::npos || node->name.find("BenchLeg") != std::string::npos)
+                {
+                    node->texture = &texWood;
+                    node->textureTiling = 2.0f;
+                }
+                else if (node->name.find("Mousen") != std::string::npos)
+                {
+                    node->texture = &texTatami;
+                    node->textureTiling = 3.0f;
+                }
+                for (auto& ch : node->children)
+                    self(self, ch);
+            };
+            assignAud(assignAud, audience->root);
+        }
+    }
+
+    void initLighting()
+    {
+        pointLights.resize(6);
+
+        // Point Light 0: Magic Orb (Cyan/mystical blue moving light)
+        pointLights[0].ambient = glm::vec3(0.05f, 0.10f, 0.15f);
+        pointLights[0].diffuse = glm::vec3(0.35f, 0.85f, 1.0f);
+        pointLights[0].specular = glm::vec3(0.5f, 0.9f, 1.0f);
+        pointLights[0].constant = 1.0f;
+        pointLights[0].linear = 0.14f;
+        pointLights[0].quadratic = 0.07f;
+
+        // Point Light 1: Takoyaki Stall (Warm golden-amber light under front eaves)
+        pointLights[1].position = glm::vec3(-5.2f, 2.85f, 6.0f);
+        pointLights[1].ambient = glm::vec3(0.08f, 0.04f, 0.02f);
+        pointLights[1].diffuse = glm::vec3(1.0f, 0.60f, 0.22f);
+        pointLights[1].specular = glm::vec3(1.0f, 0.70f, 0.30f);
+        pointLights[1].constant = 1.0f;
+        pointLights[1].linear = 0.10f;
+        pointLights[1].quadratic = 0.045f;
+
+        // Point Light 2: Kakigori Stall (Festive cyan light under front eaves)
+        pointLights[2].position = glm::vec3(5.2f, 2.85f, 6.0f);
+        pointLights[2].ambient = glm::vec3(0.03f, 0.07f, 0.10f);
+        pointLights[2].diffuse = glm::vec3(0.35f, 0.90f, 1.0f);
+        pointLights[2].specular = glm::vec3(0.5f, 0.95f, 1.0f);
+        pointLights[2].constant = 1.0f;
+        pointLights[2].linear = 0.10f;
+        pointLights[2].quadratic = 0.045f;
+
+        // Point Light 3: Street Overhead Lantern Span 1 (near entrance, Z = 11.0)
+        pointLights[3].ambient = glm::vec3(0.06f, 0.03f, 0.01f);
+        pointLights[3].diffuse = glm::vec3(1.0f, 0.55f, 0.20f);
+        pointLights[3].specular = glm::vec3(1.0f, 0.65f, 0.25f);
+        pointLights[3].constant = 1.0f;
+        pointLights[3].linear = 0.09f;
+        pointLights[3].quadratic = 0.032f;
+
+        // Point Light 4: Street Overhead Lantern Span 3 (near stage/mid, Z = -9.0)
+        pointLights[4].ambient = glm::vec3(0.06f, 0.03f, 0.01f);
+        pointLights[4].diffuse = glm::vec3(1.0f, 0.55f, 0.20f);
+        pointLights[4].specular = glm::vec3(1.0f, 0.65f, 0.25f);
+        pointLights[4].constant = 1.0f;
+        pointLights[4].linear = 0.09f;
+        pointLights[4].quadratic = 0.032f;
+
+        // Point Light 5: Fireworks Sky Flash Light
+        pointLights[5].ambient = glm::vec3(0.0f);
+        pointLights[5].diffuse = glm::vec3(0.0f);
+        pointLights[5].specular = glm::vec3(0.0f);
+        pointLights[5].constant = 1.0f;
+        pointLights[5].linear = 0.04f;
+        pointLights[5].quadratic = 0.009f;
+
+        // Spotlight: Stage tracking spotlight
+        spotLight.ambient = glm::vec3(0.05f, 0.05f, 0.04f);
+        spotLight.diffuse = glm::vec3(1.5f, 1.35f, 1.1f);
+        spotLight.specular = glm::vec3(1.2f, 1.1f, 0.9f);
+        spotLight.cutOff = std::cos(glm::radians(15.0f));
+        spotLight.outerCutOff = std::cos(glm::radians(23.0f));
+        spotLight.constant = 1.0f;
+        spotLight.linear = 0.06f;
+        spotLight.quadratic = 0.014f;
+        spotLight.active = true;
+    }
+
+    void updateLighting(float dt)
+    {
+        // 1. Directional Sun/Moonlight
+        glm::vec3 sunDir = glm::normalize(glm::vec3(0.40f, -0.85f, -0.50f));
+        glm::vec3 moonDir = glm::normalize(glm::vec3(-0.35f, -0.75f, 0.40f));
+        dirLight.direction = glm::normalize(glm::mix(sunDir, moonDir, dayNightFactor));
+
+        dirLight.ambient = glm::mix(glm::vec3(0.38f, 0.36f, 0.32f), glm::vec3(0.07f, 0.09f, 0.16f), dayNightFactor);
+        dirLight.diffuse = glm::mix(glm::vec3(0.85f, 0.82f, 0.76f), glm::vec3(0.20f, 0.25f, 0.38f), dayNightFactor);
+        dirLight.specular = glm::mix(glm::vec3(0.60f, 0.60f, 0.55f), glm::vec3(0.30f, 0.35f, 0.45f), dayNightFactor);
+
+        // 2. Point Light 0: Magic Orb (tracks orbiting reference frame in real-time)
+        if (magician && magician->orbNode)
+        {
+            pointLights[0].position = magician->orbNode->getWorldPosition();
+            float orbIntensity = glm::mix(0.4f, 1.25f, dayNightFactor);
+            pointLights[0].diffuse = glm::vec3(0.35f, 0.85f, 1.0f) * orbIntensity;
+            pointLights[0].specular = glm::vec3(0.5f, 0.9f, 1.0f) * orbIntensity;
+        }
+
+        // 3. Point Lights 1 & 2: Stalls
+        float stallNightBoost = glm::mix(0.25f, 1.15f, dayNightFactor);
+        pointLights[1].diffuse = glm::vec3(1.0f, 0.60f, 0.22f) * stallNightBoost;
+        pointLights[1].specular = glm::vec3(1.0f, 0.70f, 0.30f) * stallNightBoost;
+
+        pointLights[2].diffuse = glm::vec3(0.35f, 0.90f, 1.0f) * stallNightBoost;
+        pointLights[2].specular = glm::vec3(0.5f, 0.95f, 1.0f) * stallNightBoost;
+
+        // 4. Point Lights 3 & 4: Street Lanterns (track swinging lantern bodies!)
+        float lanternNightBoost = glm::mix(0.20f, 1.20f, dayNightFactor);
+        if (lanternSpans.size() > 1 && !lanternSpans[1]->lanterns.empty())
+        {
+            pointLights[3].position = lanternSpans[1]->lanterns[0]->lanternBody->getWorldPosition();
+            pointLights[3].diffuse = glm::vec3(1.0f, 0.55f, 0.20f) * lanternNightBoost;
+            pointLights[3].specular = glm::vec3(1.0f, 0.65f, 0.25f) * lanternNightBoost;
+        }
+        if (lanternSpans.size() > 3 && !lanternSpans[3]->lanterns.empty())
+        {
+            pointLights[4].position = lanternSpans[3]->lanterns[0]->lanternBody->getWorldPosition();
+            pointLights[4].diffuse = glm::vec3(1.0f, 0.55f, 0.20f) * lanternNightBoost;
+            pointLights[4].specular = glm::vec3(1.0f, 0.65f, 0.25f) * lanternNightBoost;
+        }
+
+        // 5. Point Light 5: Fireworks Sky Flash
+        glm::vec3 burstPos, burstColor;
+        if (fireworks && fireworks->getActiveBurst(burstPos, burstColor))
+        {
+            pointLights[5].position = burstPos;
+            pointLights[5].diffuse = burstColor * 1.8f;
+            pointLights[5].specular = burstColor * 1.5f;
+            pointLights[5].active = true;
+        }
+        else
+        {
+            pointLights[5].diffuse = glm::vec3(0.0f);
+            pointLights[5].specular = glm::vec3(0.0f);
+            pointLights[5].active = false;
+        }
+
+        // 6. Spotlight: Tracks spotlight housing orientation in real-time
+        if (spotlightRig && spotlightRig->lampHousing)
+        {
+            spotLight.position = spotlightRig->lampHousing->getWorldPosition();
+            // Transform local forward vector (+Z) by the housing's world matrix
+            glm::vec4 forwardLocal(0.0f, 0.0f, 1.0f, 0.0f);
+            glm::vec3 worldDir = glm::normalize(glm::vec3(spotlightRig->lampHousing->worldMatrix * forwardLocal));
+            spotLight.direction = worldDir;
+
+            float spotBoost = glm::mix(0.35f, 1.4f, dayNightFactor);
+            spotLight.diffuse = glm::vec3(1.5f, 1.35f, 1.1f) * spotBoost;
+            spotLight.specular = glm::vec3(1.2f, 1.1f, 0.9f) * spotBoost;
+        }
+    }
+
     void setupInspectables()
     {
         inspectables.clear();
-        // Register key nodes that the user / teacher may want to live-transform
         inspectables.push_back({ "1. Lantern [Body] (Child of Swinging Rope Pivot)", lanterns[0]->lanternBody, "Demonstrates transform relative to another object's reference frame" });
-        inspectables.push_back({ "2. Lantern [Rope Pivot] (Parent Anchor Node)", lanterns[0]->ropePivot, "Parent node whose local rotation swings child lantern" });
-        inspectables.push_back({ "3. Magic Orb (Child of Magician's Hand Bone)", magician->orbNode, "Orb transformed relative to moving hand reference frame" });
+        inspectables.push_back({ "2. Lantern [Rope Pivot] (Parent Anchor Node)", lanterns[0]->ropePivot, "Parent node whose local rotation swings child lantern & point light" });
+        inspectables.push_back({ "3. Magic Orb (Child of Magician's Hand Bone)", magician->orbNode, "Orb transformed relative to moving hand reference frame with point light" });
         inspectables.push_back({ "4. Magician Figure (Root)", magician->root, "Articulated character rig standing on stage" });
         inspectables.push_back({ "5. Vanishing Box (Scale-to-zero demo)", vanishingBox->boxNode, "Box experiencing scale and translation swap" });
-        inspectables.push_back({ "6. Stage Spotlight Housing", spotlightRig->lampHousing, "Cone lamp housing rotating to track magician" });
+        inspectables.push_back({ "6. Stage Spotlight Housing", spotlightRig->lampHousing, "Cone lamp housing rotating to track magician & aim dynamic spotlight" });
         inspectables.push_back({ "7. Takoyaki Stall (Full Unit)", takoyakiStall->root, "Complex object with spinning/hopping takoyaki" });
         inspectables.push_back({ "8. Torii Gate (Grand Entrance)", toriiGate->root, "Static shrine gate anchor at street terminus" });
         inspectables.push_back({ "9. Sakura Blossom Tree", sakuraTree->root, "Tree with hierarchical branches and falling petals" });
@@ -243,6 +675,27 @@ public:
         std::cout << "[Scene] Manual Firework Launched!" << std::endl;
     }
 
+    void cycleShadingMode()
+    {
+        shadingMode = (shadingMode + 1) % 3;
+        std::cout << "\n========================================================" << std::endl;
+        if (shadingMode == 0)
+            std::cout << " [SHADING MODE] Blinn-Phong Illumination (Ambient + Diffuse + Specular)" << std::endl;
+        else if (shadingMode == 1)
+            std::cout << " [SHADING MODE] Diffuse Only (Lambertian - No Specular Highlights)" << std::endl;
+        else
+            std::cout << " [SHADING MODE] Ambient Only (Flat / Ambient Illumination)" << std::endl;
+        std::cout << "========================================================\n" << std::endl;
+    }
+
+    void toggleTextures()
+    {
+        enableTextures = !enableTextures;
+        std::cout << "\n========================================================" << std::endl;
+        std::cout << " [TEXTURES] Texturing " << (enableTextures ? "ENABLED (Diffuse Texture Maps Active)" : "DISABLED (Showing Clean Material Colors)") << std::endl;
+        std::cout << "========================================================\n" << std::endl;
+    }
+
     void update(float dt)
     {
         // Smooth day/night blend transition
@@ -282,6 +735,9 @@ public:
 
         // Recursively compute and propagate world matrices across the scene graph
         rootNode->updateWorldMatrix(glm::mat4(1.0f));
+
+        // Update all dynamic light sources (positions, directions, and day/night intensities)
+        updateLighting(dt);
     }
 
     void render(const Shader& shader, const Camera& camera, float aspectRatio)
@@ -294,7 +750,45 @@ public:
 
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
+        shader.setVec3("viewPos", camera.Position);
         shader.setFloat("dayNightFactor", dayNightFactor);
+
+        // Phase 2: Shading mode & Lights
+        shader.setInt("shadingMode", shadingMode);
+        shader.setBool("enableTextures", enableTextures);
+
+        // Directional Light
+        shader.setVec3("dirLight.direction", dirLight.direction);
+        shader.setVec3("dirLight.ambient", dirLight.ambient);
+        shader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        shader.setVec3("dirLight.specular", dirLight.specular);
+
+        // Point Lights
+        shader.setInt("numActivePointLights", (int)pointLights.size());
+        for (size_t i = 0; i < pointLights.size(); ++i)
+        {
+            std::string prefix = "pointLights[" + std::to_string(i) + "].";
+            shader.setVec3(prefix + "position", pointLights[i].position);
+            shader.setVec3(prefix + "ambient", pointLights[i].ambient);
+            shader.setVec3(prefix + "diffuse", pointLights[i].diffuse);
+            shader.setVec3(prefix + "specular", pointLights[i].specular);
+            shader.setFloat(prefix + "constant", pointLights[i].constant);
+            shader.setFloat(prefix + "linear", pointLights[i].linear);
+            shader.setFloat(prefix + "quadratic", pointLights[i].quadratic);
+        }
+
+        // Spotlight
+        shader.setBool("spotLightActive", spotLight.active);
+        shader.setVec3("spotLight.position", spotLight.position);
+        shader.setVec3("spotLight.direction", spotLight.direction);
+        shader.setVec3("spotLight.ambient", spotLight.ambient);
+        shader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        shader.setVec3("spotLight.specular", spotLight.specular);
+        shader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        shader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+        shader.setFloat("spotLight.constant", spotLight.constant);
+        shader.setFloat("spotLight.linear", spotLight.linear);
+        shader.setFloat("spotLight.quadratic", spotLight.quadratic);
 
         // Traverse scene graph and issue draw calls
         rootNode->draw(shader);

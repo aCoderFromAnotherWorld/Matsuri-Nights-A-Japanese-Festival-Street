@@ -21,6 +21,8 @@
 | **<kbd>Space</kbd>** | Pause / Resume all scene animations and motion |
 | **<kbd>N</kbd>** | Smooth Day $\longleftrightarrow$ Festival Night transition |
 | **<kbd>F</kbd>** | Manually launch a Firework rocket |
+| **<kbd>P</kbd>** | Cycle Shading Mode (Blinn-Phong $\rightarrow$ Diffuse Only $\rightarrow$ Ambient Only) |
+| **<kbd>X</kbd>** | Toggle Diffuse Textures ON / OFF |
 | **<kbd>T</kbd>** | Cycle selectable object for **Live Inspection & Transformation** |
 | **<kbd>I</kbd> / <kbd>K</kbd>** | Translate selected object along $\pm Y$ (Up / Down) |
 | **<kbd>J</kbd> / <kbd>L</kbd>** | Translate selected object along $\pm X$ (Left / Right) |
@@ -82,6 +84,15 @@ Press the number keys to quickly showcase key areas to the evaluator:
 * **Manual Firework Launch (<kbd>F</kbd>):**
   * Fires a single glowing shell rocket from ground level that arches upward and detonates into an expanding spherical burst of colorful particles falling under gravity.
   * *(Fireworks also launch automatically at periodic intervals when night mode is active).*
+* **Cycle Shading Mode (<kbd>P</kbd>):**
+  * Toggles between all 3 required shading configurations live in the fragment shader:
+    1. **Full Blinn-Phong Shading:** Ambient + Diffuse (Lambert) + Specular (Halfway vector $\mathbf{H} = \frac{\mathbf{L}+\mathbf{V}}{\|\mathbf{L}+\mathbf{V}\|}$) across Directional Light, 6 Point Lights, and Stage Spotlight.
+    2. **Diffuse Only:** Ambient + Diffuse terms only (specular highlights disabled to demonstrate Lambertian reflectance).
+    3. **Ambient Only:** Uniform ambient lighting only (flat shading baseline).
+* **Toggle Textures (<kbd>X</kbd>):**
+  * Globally toggles texture sampling on and off.
+  * When ON, procedural high-res textures (`wood_timber.bmp`, `roof_tiles.bmp`, `stone_pavement.bmp`, `tatami_cloth.bmp`, `gold_leaf.bmp`, `sakura_bark.bmp`, `lantern_paper.bmp`) are mapped across the scene with UV tiling and modulated by base color.
+  * When OFF, clean untextured base material colors are rendered for comparative evaluation.
 
 ---
 

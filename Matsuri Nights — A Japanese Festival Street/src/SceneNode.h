@@ -3,6 +3,7 @@
 #include "Transform.h"
 #include "Mesh.h"
 #include "Shader.h"
+#include "Texture.h"
 #include <vector>
 #include <string>
 #include <memory>
@@ -24,6 +25,14 @@ public:
     bool isEmissive = false;
     glm::vec3 emissiveColor{ 0.0f, 0.0f, 0.0f };
     bool visible = true;
+
+    // Phase 2: Material properties for Blinn-Phong Illumination
+    float shininess = 32.0f;
+    float specularStrength = 0.5f;
+
+    // Phase 3: Texture mapping
+    const Texture* texture = nullptr;
+    float textureTiling = 1.0f;
 
     SceneNode(const std::string& nodeName = "Node")
         : name(nodeName) {}
@@ -59,6 +68,23 @@ public:
             shader.setBool("isSky", isSky);
             shader.setBool("isEmissive", isEmissive);
             shader.setVec3("emissiveColor", emissiveColor);
+
+            // Phase 2: Material parameters
+            shader.setFloat("material.shininess", shininess);
+            shader.setFloat("material.specularStrength", specularStrength);
+
+            // Phase 3: Texture parameters
+            if (texture && texture->id != 0)
+            {
+                shader.setBool("useTexture", true);
+                texture->bind(0);
+                shader.setInt("diffuseTexture", 0);
+                shader.setFloat("textureTiling", textureTiling);
+            }
+            else
+            {
+                shader.setBool("useTexture", false);
+            }
 
             mesh->Draw();
         }

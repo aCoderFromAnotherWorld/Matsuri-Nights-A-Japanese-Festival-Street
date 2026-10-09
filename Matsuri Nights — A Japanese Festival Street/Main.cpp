@@ -1,6 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#undef STB_IMAGE_IMPLEMENTATION
+
 #include "src/Shader.h"
 #include "src/Camera.h"
 #include "src/Scene.h"
@@ -81,20 +85,22 @@ int main()
     // Print banner and controls in console
     std::cout << "\n========================================================================\n";
     std::cout << "  MATSURI NIGHTS - A JAPANESE FESTIVAL STREET\n";
-    std::cout << "  CSE4102 Computer Graphics Project | Phase 1: Kinematics & Structure\n";
+    std::cout << "  CSE4102 Computer Graphics Project | Full Master Build (Phases 1, 2, 3)\n";
     std::cout << "========================================================================\n";
     std::cout << "  [W/A/S/D]       : Move camera forward / left / backward / right\n";
     std::cout << "  [E / Q]         : Move camera Up / Down\n";
-    std::cout << "  [Mouse]         : Look around\n";
+    std::cout << "  [Mouse]         : Look around (FPS Pitch / Yaw)\n";
     std::cout << "  [C]             : Toggle mouse cursor capture\n";
     std::cout << "  [Space]         : Pause / Resume all scene animations\n";
     std::cout << "  [N]             : Smooth Day <-> Festival Night transition\n";
+    std::cout << "  [P]             : Cycle Shading Mode (Blinn-Phong -> Diffuse-Only -> Ambient/Flat)\n";
+    std::cout << "  [X]             : Toggle Texturing (Textures ON / OFF)\n";
     std::cout << "  [F]             : Launch Firework rocket\n";
     std::cout << "  [1 / 2 / 3]     : Preset camera viewpoints (Street, Magic Stage, Torii)\n";
     std::cout << "  [T]             : Cycle object for Live In-Class Inspection & Transform\n";
     std::cout << "  [I/K, J/L, U/O] : Translate selected object (+-Y, +-X, +-Z)\n";
-    std::cout << "  [Arrow Keys]    : Rotate selected object live\n";
-    std::cout << "  [ [ / ] ]       : Scale selected object live down / up\n";
+    std::cout << "  [Arrow Keys]    : Rotate selected object live (Pitch / Yaw)\n";
+    std::cout << "  [+ / -] or [[/]]: Scale selected object live (+-10%)\n";
     std::cout << "  [R]             : Reset camera position\n";
     std::cout << "========================================================================\n\n";
 
@@ -195,6 +201,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
     if (key == GLFW_KEY_T && g_Scene)
         g_Scene->cycleInspectable(1);
+
+    // Phase 2: Cycle Shading Mode (Blinn-Phong -> Diffuse Only -> Ambient Only)
+    if (key == GLFW_KEY_P && g_Scene)
+        g_Scene->cycleShadingMode();
+
+    // Phase 3: Toggle Textures (Textures ON / OFF)
+    if (key == GLFW_KEY_X && g_Scene)
+        g_Scene->toggleTextures();
 
     // Toggle mouse cursor capture
     if (key == GLFW_KEY_C)

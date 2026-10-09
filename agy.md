@@ -12,7 +12,65 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
-### [2026-09-25] — Phase 3: Anatomical Rigs, Stall Lighting, Sagging Catenary Ropes & Input Polish
+### [2026-10-09] — Completion of Course Phase 2 (Lighting & Illumination) & Phase 3 (Texturing & Material Pipeline)
+
+#### 1. Phase 2: Blinn-Phong Illumination & Multi-Light Engine
+* **Files Added / Modified:**
+  * Added [`Matsuri Nights — A Japanese Festival Street/src/Light.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Light.h)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/shaders/basic.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/shaders/basic.frag)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/src/SceneNode.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/SceneNode.h)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+  * Updated [`Matsuri Nights — A Japanese Festival Street/Main.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp)
+* **Mathematical Lighting Formulation:**
+  * Implemented the **Blinn-Phong reflection model** across all non-emissive scene geometry:
+    $$\mathbf{H} = \frac{\mathbf{L} + \mathbf{V}}{\|\mathbf{L} + \mathbf{V}\|}$$
+    $$\mathbf{I} = \mathbf{I}_{\text{ambient}} + \mathbf{I}_{\text{diffuse}} \cdot \max(\mathbf{N} \cdot \mathbf{L}, 0) + \mathbf{I}_{\text{specular}} \cdot k_s \cdot (\max(\mathbf{N} \cdot \mathbf{H}, 0))^{\alpha}$$
+  * Material properties integrated into `SceneNode`: `shininess` ($\alpha \in [8.0, 128.0]$) and `specularStrength` ($k_s \in [0.1, 0.85]$).
+* **Multiple Dynamic Light Sources:**
+  1. **Directional Light (Sun / Moon):** Sweeps through the celestial dome; golden daytime sun transitioning to cool silvery-blue moonlight.
+  2. **6 Dynamic Point Lights:**
+     * **Point Light 0:** Tracks the arcane Magic Orb ($X, Y, Z$) as it performs helical orbits around the magician's hand.
+     * **Point Light 1:** Takoyaki stall lantern (warm amber light illuminating counter & vendors).
+     * **Point Light 2:** Kakigori stall lantern (cool magenta-ice illumination).
+     * **Point Lights 3 & 4:** Overhead rope lanterns swinging dynamically with wind pendulum kinematics.
+     * **Point Light 5:** Sky fireworks flash tracking exploding shell particles with quadratic distance falloff ($1.0 / (1.0 + 0.04d + 0.0075d^2)$).
+  3. **Stage Spotlight:** Conical light source mounted on the stage spotlight housing that swivels and tilts to track the magician, featuring inner cutoff ($\cos 15^\circ$) and outer cutoff ($\cos 20^\circ$) smooth penumbra attenuation.
+* **Interactive Shading Mode Switcher (<kbd>P</kbd>):**
+  * Allows live cycling through three shading configurations:
+    * `Mode 0`: Full Blinn-Phong Shading (Ambient + Diffuse + Specular).
+    * `Mode 1`: Diffuse Only (Ambient + Lambertian Diffuse, specular disabled).
+    * `Mode 2`: Flat Ambient Only (Uniform ambient lighting baseline).
+
+#### 2. Phase 3: Texture Mapping & Procedural Image Generation Pipeline
+* **Files Added / Modified:**
+  * Added [`Matsuri Nights — A Japanese Festival Street/src/Texture.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Texture.h)
+  * Added [`Matsuri Nights — A Japanese Festival Street/src/TextureGenerator.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/TextureGenerator.h)
+  * Integrated single-header image loader `stb_image.h`.
+* **Procedural Texture Asset Generation:**
+  * Standalone binary BMP-24 file generator creates valid bitmap assets on disk in `assets/textures/`:
+    * `wood_timber.bmp` ($512 \times 512$): Japanese cedar wood with realistic ring grain and cellular fibers.
+    * `roof_tiles.bmp` ($512 \times 512$): Traditional scalloped ceramic Japanese roof tiles (*kawara*) with drop shadows.
+    * `stone_pavement.bmp` ($512 \times 512$): Chiseled cobblestone street pavers with mortared joints.
+    * `tatami_cloth.bmp` ($256 \times 256$): Woven textile threads with alternating warp and weft fiber pattern.
+    * `gold_leaf.bmp` ($256 \times 256$): Hammered gold foil with micro-faceted metallic sheen for the folding screen and vanishing box.
+    * `sakura_bark.bmp` ($512 \times 512$): Furrowed cherry tree bark with horizontal lenticels and organic fissures.
+    * `lantern_paper.bmp` ($256 \times 256$): Translucent red washi paper with horizontal bamboo ribbing rings.
+* **OpenGL Texture Engine:**
+  * Implemented `Texture` class managing OpenGL `GL_TEXTURE_2D` IDs, automatic mipmap generation (`glGenerateMipmap`), linear filtering (`GL_LINEAR_MIPMAP_LINEAR`), and `GL_REPEAT` wrapping.
+  * Extended `SceneNode` with `Texture* texture;` and `glm::vec2 textureTiling;`.
+  * Modulated texture colors with base object colors in `shaders/basic.frag`:
+    $$\mathbf{C}_{\text{diffuse}} = \mathbf{C}_{\text{base}} \times \mathbf{C}_{\text{tex}}(\mathbf{uv} \cdot \mathbf{tiling})$$
+* **Interactive Texture Toggle (<kbd>X</kbd>):**
+  * Single hotkey toggles textures ON and OFF globally for side-by-side visual comparison.
+
+#### 3. Compilation & Architecture Hardening
+* **Header Scope Guard:** Undefined `STB_IMAGE_IMPLEMENTATION` in `Main.cpp` immediately after inclusion to prevent duplicate function body generation when included indirectly through `Texture.h`.
+* **Zero-Warning Clean Build:** Verified with MSBuild on MSVC C++20 x64.
+* **Documentation Synchronization:** Fully updated [`controls.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/controls.md) and [`color_changes.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/color_changes.md) to document lighting, shading modes, materials, and textures.
+
+---
+
+### [2026-09-25] — Phase 1.5 Polish: Anatomical Rigs, Stall Lighting, Sagging Catenary Ropes & Input Polish
 
 #### 1. Walking Crowd: Added Hands & Realistic Locomotion
 * **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)

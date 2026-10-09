@@ -2255,6 +2255,20 @@ public:
         }
     }
 
+    bool getActiveBurst(glm::vec3& outPos, glm::vec3& outColor) const
+    {
+        for (const auto& r : rockets)
+        {
+            if (r.state == FireworkRocket::BURSTING && r.timer < 0.85f)
+            {
+                outPos = r.burstPos;
+                outColor = r.color;
+                return true;
+            }
+        }
+        return false;
+    }
+
     void update(float dt, bool isNight)
     {
         for (auto& r : rockets)
