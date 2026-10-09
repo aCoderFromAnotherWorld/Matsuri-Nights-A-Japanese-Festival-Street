@@ -2848,8 +2848,19 @@ public:
 };
 
 // -------------------------------------------------------------
-// 7. Kakigori (Shaved Ice) Stall with Rippling Cloth & Fluttering Flag
+// 7. Kakigori (Shaved Ice) Stall with Rippling Cloth, Machine & Animated Kakigori
 // -------------------------------------------------------------
+struct KakigoriServing
+{
+    std::shared_ptr<SceneNode> rootNode;
+    glm::vec3 spotPos1;
+    glm::vec3 spotPos2;
+    float hopTimer = 0.0f;
+    float hopDuration = 0.70f;
+    bool isHopping = false;
+    float spinSpeed = 50.0f;
+};
+
 class KakigoriStall
 {
 public:
@@ -2857,7 +2868,227 @@ public:
     std::shared_ptr<SceneNode> bannerCloth; // Noren cloth with ripple
     std::shared_ptr<SceneNode> noboriFlag;   // Vertical fluttering banner
     std::shared_ptr<SceneNode> shaverWheel;  // Ice shaver crank wheel
+    std::shared_ptr<SceneNode> shaverActiveIce; // Fresh shaved ice in shaver cup
     std::vector<std::shared_ptr<SceneNode>> stallLanterns;
+    std::vector<KakigoriServing> servings;
+
+    static std::shared_ptr<SceneNode> createKakigoriBowl(
+        SceneMeshes& meshes,
+        const std::string& name,
+        const glm::vec4& syrupColor,
+        const glm::vec4& spoonColor,
+        int garnishType,
+        float baseScale = 1.0f
+    )
+    {
+        auto bowlRoot = std::make_shared<SceneNode>(name);
+
+        // 1. Crystal footed glass cup
+        auto cupBase = std::make_shared<SceneNode>(name + "_CupBase");
+        cupBase->mesh = &meshes.cylinder;
+        cupBase->transform.position = glm::vec3(0.0f, 0.015f * baseScale, 0.0f);
+        cupBase->transform.scale = glm::vec3(0.24f * baseScale, 0.03f * baseScale, 0.24f * baseScale);
+        cupBase->color = glm::vec4(0.88f, 0.94f, 0.98f, 0.88f); // translucent ice-blue glass
+        cupBase->shininess = 64.0f;
+        cupBase->specularStrength = 0.85f;
+        bowlRoot->addChild(cupBase);
+
+        auto cupStem = std::make_shared<SceneNode>(name + "_CupStem");
+        cupStem->mesh = &meshes.cylinder;
+        cupStem->transform.position = glm::vec3(0.0f, 0.05f * baseScale, 0.0f);
+        cupStem->transform.scale = glm::vec3(0.09f * baseScale, 0.05f * baseScale, 0.09f * baseScale);
+        cupStem->color = glm::vec4(0.88f, 0.94f, 0.98f, 0.88f);
+        cupStem->shininess = 64.0f;
+        cupStem->specularStrength = 0.85f;
+        bowlRoot->addChild(cupStem);
+
+        auto cupFlared = std::make_shared<SceneNode>(name + "_CupFlared");
+        cupFlared->mesh = &meshes.cone;
+        cupFlared->transform.position = glm::vec3(0.0f, 0.14f * baseScale, 0.0f);
+        cupFlared->transform.rotation.x = 180.0f; // flared upward opening
+        cupFlared->transform.scale = glm::vec3(0.38f * baseScale, 0.16f * baseScale, 0.38f * baseScale);
+        cupFlared->color = glm::vec4(0.90f, 0.95f, 1.0f, 0.85f);
+        cupFlared->shininess = 64.0f;
+        cupFlared->specularStrength = 0.85f;
+        bowlRoot->addChild(cupFlared);
+
+        // 2. Pure crystalline shaved ice base dome
+        auto iceBase = std::make_shared<SceneNode>(name + "_IceBase");
+        iceBase->mesh = &meshes.sphere;
+        iceBase->transform.position = glm::vec3(0.0f, 0.22f * baseScale, 0.0f);
+        iceBase->transform.scale = glm::vec3(0.35f * baseScale, 0.22f * baseScale, 0.35f * baseScale);
+        iceBase->color = glm::vec4(0.97f, 0.98f, 1.0f, 1.0f);
+        iceBase->shininess = 72.0f;
+        iceBase->specularStrength = 0.80f;
+        bowlRoot->addChild(iceBase);
+
+        // 3. Towering fluffy shaved ice peak
+        auto icePeak = std::make_shared<SceneNode>(name + "_IcePeak");
+        icePeak->mesh = &meshes.sphere;
+        icePeak->transform.position = glm::vec3(0.0f, 0.29f * baseScale, 0.0f);
+        icePeak->transform.scale = glm::vec3(0.28f * baseScale, 0.24f * baseScale, 0.28f * baseScale);
+        icePeak->color = glm::vec4(0.96f, 0.98f, 1.0f, 1.0f);
+        icePeak->shininess = 72.0f;
+        icePeak->specularStrength = 0.80f;
+        bowlRoot->addChild(icePeak);
+
+        // 4. Glossy saturated fruit syrup coat
+        auto syrupGlaze = std::make_shared<SceneNode>(name + "_SyrupGlaze");
+        syrupGlaze->mesh = &meshes.sphere;
+        syrupGlaze->transform.position = glm::vec3(0.0f, 0.31f * baseScale, 0.0f);
+        syrupGlaze->transform.scale = glm::vec3(0.275f * baseScale, 0.21f * baseScale, 0.275f * baseScale);
+        syrupGlaze->color = syrupColor;
+        syrupGlaze->shininess = 80.0f;
+        syrupGlaze->specularStrength = 0.95f;
+        bowlRoot->addChild(syrupGlaze);
+
+        // Dripping syrup lobes cascading down the ice sides
+        for (int k = 0; k < 3; ++k)
+        {
+            float theta = (float)k * 2.0944f; // 120 degrees
+            auto drip = std::make_shared<SceneNode>(name + "_SyrupDrip_" + std::to_string(k));
+            drip->mesh = &meshes.sphere;
+            drip->transform.position = glm::vec3(std::cos(theta) * 0.13f * baseScale, 0.23f * baseScale, std::sin(theta) * 0.13f * baseScale);
+            drip->transform.scale = glm::vec3(0.08f * baseScale, 0.12f * baseScale, 0.08f * baseScale);
+            drip->color = syrupColor;
+            drip->shininess = 80.0f;
+            drip->specularStrength = 0.95f;
+            bowlRoot->addChild(drip);
+        }
+
+        // 5. Sweetened condensed milk drizzle ("Rennyu")
+        auto milk1 = std::make_shared<SceneNode>(name + "_MilkDrizzle1");
+        milk1->mesh = &meshes.cylinder;
+        milk1->transform.position = glm::vec3(0.01f * baseScale, 0.38f * baseScale, 0.0f);
+        milk1->transform.rotation.z = 75.0f;
+        milk1->transform.scale = glm::vec3(0.045f * baseScale, 0.20f * baseScale, 0.045f * baseScale);
+        milk1->color = glm::vec4(0.98f, 0.96f, 0.91f, 1.0f);
+        milk1->shininess = 50.0f;
+        milk1->specularStrength = 0.65f;
+        bowlRoot->addChild(milk1);
+
+        auto milk2 = std::make_shared<SceneNode>(name + "_MilkDrizzle2");
+        milk2->mesh = &meshes.cylinder;
+        milk2->transform.position = glm::vec3(-0.01f * baseScale, 0.37f * baseScale, 0.02f * baseScale);
+        milk2->transform.rotation.x = 70.0f;
+        milk2->transform.scale = glm::vec3(0.04f * baseScale, 0.18f * baseScale, 0.04f * baseScale);
+        milk2->color = glm::vec4(0.98f, 0.96f, 0.91f, 1.0f);
+        milk2->shininess = 50.0f;
+        milk2->specularStrength = 0.65f;
+        bowlRoot->addChild(milk2);
+
+        // 6. Signature topping / garnish
+        if (garnishType == 0) // Strawberry / Cherry with green stem
+        {
+            auto berry = std::make_shared<SceneNode>(name + "_BerryTopper");
+            berry->mesh = &meshes.sphere;
+            berry->transform.position = glm::vec3(0.0f, 0.42f * baseScale, 0.0f);
+            berry->transform.scale = glm::vec3(0.09f * baseScale, 0.10f * baseScale, 0.09f * baseScale);
+            berry->color = glm::vec4(0.92f, 0.08f, 0.15f, 1.0f);
+            berry->shininess = 80.0f;
+            berry->specularStrength = 0.90f;
+            bowlRoot->addChild(berry);
+
+            auto stem = std::make_shared<SceneNode>(name + "_BerryStem");
+            stem->mesh = &meshes.cylinder;
+            stem->transform.position = glm::vec3(0.0f, 0.47f * baseScale, 0.0f);
+            stem->transform.rotation.z = 25.0f;
+            stem->transform.scale = glm::vec3(0.015f * baseScale, 0.05f * baseScale, 0.015f * baseScale);
+            stem->color = glm::vec4(0.20f, 0.65f, 0.20f, 1.0f);
+            bowlRoot->addChild(stem);
+        }
+        else if (garnishType == 1) // Matcha: Sweet Adzuki red bean cluster (Ogura-an)
+        {
+            for (int b = 0; b < 3; ++b)
+            {
+                auto bean = std::make_shared<SceneNode>(name + "_AdzukiBean_" + std::to_string(b));
+                bean->mesh = &meshes.sphere;
+                float bx = (b == 0 ? 0.08f : (b == 1 ? 0.12f : 0.07f)) * baseScale;
+                float bz = (b == 0 ? 0.07f : (b == 1 ? 0.03f : 0.11f)) * baseScale;
+                bean->transform.position = glm::vec3(bx, 0.30f * baseScale, bz);
+                bean->transform.scale = glm::vec3(0.055f * baseScale, 0.045f * baseScale, 0.055f * baseScale);
+                bean->color = glm::vec4(0.32f, 0.10f, 0.12f, 1.0f);
+                bean->shininess = 60.0f;
+                bean->specularStrength = 0.70f;
+                bowlRoot->addChild(bean);
+            }
+        }
+        else if (garnishType == 2) // Blue Hawaii: Festive pink parasol umbrella
+        {
+            auto umbrellaStick = std::make_shared<SceneNode>(name + "_UmbrellaStick");
+            umbrellaStick->mesh = &meshes.cylinder;
+            umbrellaStick->transform.position = glm::vec3(-0.06f * baseScale, 0.38f * baseScale, 0.06f * baseScale);
+            umbrellaStick->transform.rotation.z = 30.0f;
+            umbrellaStick->transform.scale = glm::vec3(0.012f * baseScale, 0.20f * baseScale, 0.012f * baseScale);
+            umbrellaStick->color = glm::vec4(0.85f, 0.75f, 0.50f, 1.0f);
+            bowlRoot->addChild(umbrellaStick);
+
+            auto umbrellaCanopy = std::make_shared<SceneNode>(name + "_UmbrellaCanopy");
+            umbrellaCanopy->mesh = &meshes.cone;
+            umbrellaCanopy->transform.position = glm::vec3(-0.11f * baseScale, 0.46f * baseScale, 0.06f * baseScale);
+            umbrellaCanopy->transform.rotation.z = 30.0f;
+            umbrellaCanopy->transform.scale = glm::vec3(0.18f * baseScale, 0.06f * baseScale, 0.18f * baseScale);
+            umbrellaCanopy->color = glm::vec4(0.95f, 0.35f, 0.75f, 1.0f);
+            bowlRoot->addChild(umbrellaCanopy);
+        }
+        else if (garnishType == 3) // Mango / Lemon: Golden tropical fruit cube
+        {
+            auto mango = std::make_shared<SceneNode>(name + "_MangoCube");
+            mango->mesh = &meshes.cube;
+            mango->transform.position = glm::vec3(0.0f, 0.42f * baseScale, 0.0f);
+            mango->transform.rotation = glm::vec3(15.0f, 25.0f, 10.0f);
+            mango->transform.scale = glm::vec3(0.075f * baseScale);
+            mango->color = glm::vec4(1.0f, 0.68f, 0.05f, 1.0f);
+            mango->shininess = 64.0f;
+            mango->specularStrength = 0.80f;
+            bowlRoot->addChild(mango);
+        }
+        else if (garnishType == 4) // Kyoho Grape: Royal purple grape topper
+        {
+            auto grape = std::make_shared<SceneNode>(name + "_GrapeTopper");
+            grape->mesh = &meshes.sphere;
+            grape->transform.position = glm::vec3(0.0f, 0.42f * baseScale, 0.0f);
+            grape->transform.scale = glm::vec3(0.08f * baseScale, 0.09f * baseScale, 0.08f * baseScale);
+            grape->color = glm::vec4(0.55f, 0.12f, 0.65f, 1.0f);
+            grape->shininess = 72.0f;
+            grape->specularStrength = 0.85f;
+            bowlRoot->addChild(grape);
+        }
+        else // Melon: Honeydew melon ball topper
+        {
+            auto melon = std::make_shared<SceneNode>(name + "_MelonBall");
+            melon->mesh = &meshes.sphere;
+            melon->transform.position = glm::vec3(0.0f, 0.42f * baseScale, 0.0f);
+            melon->transform.scale = glm::vec3(0.08f * baseScale, 0.08f * baseScale, 0.08f * baseScale);
+            melon->color = glm::vec4(0.40f, 0.90f, 0.30f, 1.0f);
+            melon->shininess = 72.0f;
+            melon->specularStrength = 0.85f;
+            bowlRoot->addChild(melon);
+        }
+
+        // 7. Slender festival dessert spoon
+        auto spoonHandle = std::make_shared<SceneNode>(name + "_SpoonHandle");
+        spoonHandle->mesh = &meshes.cylinder;
+        spoonHandle->transform.position = glm::vec3(0.08f * baseScale, 0.33f * baseScale, -0.05f * baseScale);
+        spoonHandle->transform.rotation.z = -35.0f;
+        spoonHandle->transform.rotation.x = -20.0f;
+        spoonHandle->transform.scale = glm::vec3(0.016f * baseScale, 0.28f * baseScale, 0.016f * baseScale);
+        spoonHandle->color = spoonColor;
+        spoonHandle->shininess = 64.0f;
+        spoonHandle->specularStrength = 0.70f;
+        bowlRoot->addChild(spoonHandle);
+
+        auto spoonTip = std::make_shared<SceneNode>(name + "_SpoonTip");
+        spoonTip->mesh = &meshes.sphere;
+        spoonTip->transform.position = glm::vec3(0.0f, 0.14f * baseScale, 0.0f);
+        spoonTip->transform.scale = glm::vec3(0.035f * baseScale, 0.055f * baseScale, 0.02f * baseScale);
+        spoonTip->color = spoonColor;
+        spoonTip->shininess = 64.0f;
+        spoonTip->specularStrength = 0.70f;
+        spoonHandle->addChild(spoonTip);
+
+        return bowlRoot;
+    }
 
     KakigoriStall(SceneMeshes& meshes, const glm::vec3& pos, float rotY = 0.0f)
     {
@@ -2868,6 +3099,7 @@ public:
         glm::vec4 wood(0.40f, 0.26f, 0.16f, 1.0f);
         glm::vec4 cyan(0.20f, 0.65f, 0.88f, 1.0f);
         glm::vec4 white(0.94f, 0.94f, 0.96f, 1.0f);
+        glm::vec4 gold(0.92f, 0.80f, 0.28f, 1.0f);
 
         // Counter base table
         auto base = std::make_shared<SceneNode>("Kakigori_Base");
@@ -2910,37 +3142,205 @@ public:
         kanjiSign->color = glm::vec4(0.85f, 0.15f, 0.15f, 1.0f); // red ice symbol
         root->addChild(kanjiSign);
 
-        // Shaved ice machine replica on counter
+        // =========================================================
+        // Vintage Japanese Shaved Ice Machine ("The Box") on Counter
+        // Positioned on the right side of the stall (X = 0.85, Z = 0.0)
+        // =========================================================
+        glm::vec3 boxPos(0.85f, 1.20f, 0.0f);
+
+        // Machine cast iron stand legs
+        auto shaverStand = std::make_shared<SceneNode>("Shaver_Stand");
+        shaverStand->mesh = &meshes.cube;
+        shaverStand->transform.position = boxPos + glm::vec3(0.0f, 0.03f, 0.0f);
+        shaverStand->transform.scale = glm::vec3(0.52f, 0.06f, 0.52f);
+        shaverStand->color = glm::vec4(0.14f, 0.28f, 0.35f, 1.0f); // vintage dark teal iron
+        root->addChild(shaverStand);
+
+        // Machine cubic ice chamber housing ("The Box")
         auto shaverBody = std::make_shared<SceneNode>("Shaver_Body");
         shaverBody->mesh = &meshes.cube;
-        shaverBody->transform.position = glm::vec3(0.4f, 1.55f, 0.1f);
-        shaverBody->transform.scale = glm::vec3(0.55f, 0.65f, 0.55f);
-        shaverBody->color = cyan;
+        shaverBody->transform.position = boxPos + glm::vec3(0.0f, 0.38f, 0.0f);
+        shaverBody->transform.scale = glm::vec3(0.50f, 0.64f, 0.50f);
+        shaverBody->color = cyan; // retro swan blue
+        shaverBody->shininess = 48.0f;
+        shaverBody->specularStrength = 0.70f;
         root->addChild(shaverBody);
 
+        // Decorative vintage gold crest on front of shaver box
+        auto shaverCrest = std::make_shared<SceneNode>("Shaver_Crest");
+        shaverCrest->mesh = &meshes.cube;
+        shaverCrest->transform.position = boxPos + glm::vec3(0.0f, 0.45f, 0.26f);
+        shaverCrest->transform.scale = glm::vec3(0.24f, 0.14f, 0.03f);
+        shaverCrest->color = gold;
+        shaverCrest->shininess = 64.0f;
+        shaverCrest->specularStrength = 0.85f;
+        root->addChild(shaverCrest);
+
+        // Crystal pure ice block visible inside the shaving chamber
+        auto shaverIceBlock = std::make_shared<SceneNode>("Shaver_IceBlock");
+        shaverIceBlock->mesh = &meshes.cube;
+        shaverIceBlock->transform.position = boxPos + glm::vec3(0.0f, 0.26f, 0.08f);
+        shaverIceBlock->transform.scale = glm::vec3(0.28f, 0.26f, 0.28f);
+        shaverIceBlock->color = glm::vec4(0.85f, 0.94f, 1.0f, 0.88f);
+        shaverIceBlock->shininess = 96.0f;
+        shaverIceBlock->specularStrength = 0.95f;
+        root->addChild(shaverIceBlock);
+
+        // Top mechanical crank gear & spindle
+        auto shaverSpindle = std::make_shared<SceneNode>("Shaver_Spindle");
+        shaverSpindle->mesh = &meshes.cylinder;
+        shaverSpindle->transform.position = boxPos + glm::vec3(0.0f, 0.74f, 0.0f);
+        shaverSpindle->transform.scale = glm::vec3(0.06f, 0.16f, 0.06f);
+        shaverSpindle->color = gold;
+        root->addChild(shaverSpindle);
+
+        // Dispensing conical chute underneath ice chamber
+        auto shaverChute = std::make_shared<SceneNode>("Shaver_Chute");
+        shaverChute->mesh = &meshes.cone;
+        shaverChute->transform.position = boxPos + glm::vec3(0.0f, 0.12f, 0.08f);
+        shaverChute->transform.rotation.x = 180.0f;
+        shaverChute->transform.scale = glm::vec3(0.22f, 0.10f, 0.22f);
+        shaverChute->color = glm::vec4(0.85f, 0.85f, 0.88f, 1.0f); // polished steel
+        shaverChute->shininess = 80.0f;
+        shaverChute->specularStrength = 0.90f;
+        root->addChild(shaverChute);
+
+        // Spoked Flywheel mounted on side of machine
         shaverWheel = std::make_shared<SceneNode>("Shaver_Wheel");
         shaverWheel->mesh = &meshes.cylinder;
-        shaverWheel->transform.position = glm::vec3(0.70f, 1.72f, 0.1f);
+        shaverWheel->transform.position = boxPos + glm::vec3(0.28f, 0.48f, 0.0f);
         shaverWheel->transform.rotation.z = 90.0f;
-        shaverWheel->transform.scale = glm::vec3(0.32f, 0.07f, 0.32f);
-        shaverWheel->color = glm::vec4(0.85f, 0.20f, 0.20f, 1.0f);
+        shaverWheel->transform.scale = glm::vec3(0.36f, 0.06f, 0.36f);
+        shaverWheel->color = glm::vec4(0.88f, 0.18f, 0.18f, 1.0f); // vibrant red cast iron wheel
+        shaverWheel->shininess = 54.0f;
+        shaverWheel->specularStrength = 0.80f;
         root->addChild(shaverWheel);
 
-        // Shaved ice bowl with colored syrup
-        auto bowl = std::make_shared<SceneNode>("Ice_Bowl");
-        bowl->mesh = &meshes.cone;
-        bowl->transform.position = glm::vec3(0.4f, 1.35f, 0.1f);
-        bowl->transform.rotation.x = 180.0f;
-        bowl->transform.scale = glm::vec3(0.35f, 0.20f, 0.35f);
-        bowl->color = glm::vec4(0.9f, 0.95f, 1.0f, 1.0f);
-        root->addChild(bowl);
+        // Crank Handle Peg on flywheel
+        auto shaverHandle = std::make_shared<SceneNode>("Shaver_Handle");
+        shaverHandle->mesh = &meshes.cylinder;
+        shaverHandle->transform.position = glm::vec3(0.12f, 0.06f, 0.0f);
+        shaverHandle->transform.scale = glm::vec3(0.035f, 0.12f, 0.035f);
+        shaverHandle->color = glm::vec4(0.95f, 0.82f, 0.40f, 1.0f); // polished brass peg
+        shaverWheel->addChild(shaverHandle);
 
-        auto iceMound = std::make_shared<SceneNode>("Ice_Mound");
-        iceMound->mesh = &meshes.sphere;
-        iceMound->transform.position = glm::vec3(0.4f, 1.48f, 0.1f);
-        iceMound->transform.scale = glm::vec3(0.32f, 0.28f, 0.32f);
-        iceMound->color = glm::vec4(0.20f, 0.85f, 0.95f, 1.0f); // Blue Hawaii syrup!
-        root->addChild(iceMound);
+        // Active bowl receiving freshly shaved ice under the chute
+        auto activeBowl = std::make_shared<SceneNode>("Shaver_ActiveBowl");
+        activeBowl->mesh = &meshes.cone;
+        activeBowl->transform.position = boxPos + glm::vec3(0.0f, 0.03f, 0.08f);
+        activeBowl->transform.rotation.x = 180.0f;
+        activeBowl->transform.scale = glm::vec3(0.30f, 0.14f, 0.30f);
+        activeBowl->color = glm::vec4(0.88f, 0.94f, 0.98f, 0.85f);
+        root->addChild(activeBowl);
+
+        shaverActiveIce = std::make_shared<SceneNode>("Shaver_ActiveIce");
+        shaverActiveIce->mesh = &meshes.sphere;
+        shaverActiveIce->transform.position = boxPos + glm::vec3(0.0f, 0.10f, 0.08f);
+        shaverActiveIce->transform.scale = glm::vec3(0.28f, 0.22f, 0.28f);
+        shaverActiveIce->color = glm::vec4(0.97f, 0.98f, 1.0f, 1.0f);
+        shaverActiveIce->shininess = 72.0f;
+        shaverActiveIce->specularStrength = 0.85f;
+        root->addChild(shaverActiveIce);
+
+        // Syrup Condiment Rack with Pump Bottles beside the machine
+        auto rackBase = std::make_shared<SceneNode>("Syrup_RackBase");
+        rackBase->mesh = &meshes.cube;
+        rackBase->transform.position = boxPos + glm::vec3(0.0f, 0.02f, -0.32f);
+        rackBase->transform.scale = glm::vec3(0.48f, 0.04f, 0.16f);
+        rackBase->color = glm::vec4(0.28f, 0.16f, 0.10f, 1.0f);
+        root->addChild(rackBase);
+
+        glm::vec4 syrupColors[4] = {
+            glm::vec4(0.92f, 0.12f, 0.22f, 1.0f), // Strawberry
+            glm::vec4(0.35f, 0.88f, 0.25f, 1.0f), // Melon
+            glm::vec4(0.12f, 0.78f, 0.96f, 1.0f), // Blue Hawaii
+            glm::vec4(0.98f, 0.75f, 0.10f, 1.0f)  // Lemon
+        };
+        float botX[4] = { -0.18f, -0.06f, 0.06f, 0.18f };
+        for (int b = 0; b < 4; ++b)
+        {
+            auto bottle = std::make_shared<SceneNode>("Syrup_Bottle_" + std::to_string(b));
+            bottle->mesh = &meshes.cylinder;
+            bottle->transform.position = boxPos + glm::vec3(botX[b], 0.12f, -0.32f);
+            bottle->transform.scale = glm::vec3(0.07f, 0.18f, 0.07f);
+            bottle->color = syrupColors[b];
+            bottle->shininess = 64.0f;
+            bottle->specularStrength = 0.80f;
+            root->addChild(bottle);
+
+            auto pump = std::make_shared<SceneNode>("Syrup_Pump_" + std::to_string(b));
+            pump->mesh = &meshes.cylinder;
+            pump->transform.position = glm::vec3(0.0f, 0.12f, 0.0f);
+            pump->transform.scale = glm::vec3(0.025f, 0.08f, 0.025f);
+            pump->color = white;
+            bottle->addChild(pump);
+        }
+
+        // =========================================================
+        // Presentation Tray & 6 Animated Kakigori Servings on Counter
+        // Placed in front of the vendor and to the side of the box
+        // =========================================================
+        auto tray = std::make_shared<SceneNode>("Kakigori_Tray");
+        tray->mesh = &meshes.cube;
+        tray->transform.position = glm::vec3(-0.20f, 1.205f, 0.06f);
+        tray->transform.scale = glm::vec3(1.70f, 0.025f, 0.92f);
+        tray->color = glm::vec4(0.08f, 0.07f, 0.08f, 1.0f); // Japanese Urushi black lacquer
+        tray->shininess = 64.0f;
+        tray->specularStrength = 0.80f;
+        root->addChild(tray);
+
+        auto trayRim = std::make_shared<SceneNode>("Kakigori_TrayRim");
+        trayRim->mesh = &meshes.cube;
+        trayRim->transform.position = glm::vec3(-0.20f, 1.22f, 0.06f);
+        trayRim->transform.scale = glm::vec3(1.72f, 0.015f, 0.94f);
+        trayRim->color = glm::vec4(0.78f, 0.12f, 0.12f, 1.0f); // vermilion lacquer border
+        root->addChild(trayRim);
+
+        // 6 distinct festival Kakigori dessert flavors:
+        // (Strawberry Delux, Matcha Uji-Kintoki, Blue Hawaii, Mango Passion, Kyoho Grape, Melon Cream Float)
+        struct FlavorConfig
+        {
+            std::string name;
+            glm::vec4 syrupColor;
+            glm::vec4 spoonColor;
+            int garnishType;
+        };
+
+        FlavorConfig flavors[6] = {
+            { "Ichigo_Strawberry", glm::vec4(0.92f, 0.12f, 0.22f, 1.0f), glm::vec4(0.95f, 0.20f, 0.25f, 1.0f), 0 },
+            { "Matcha_Kintoki",    glm::vec4(0.18f, 0.62f, 0.22f, 1.0f), glm::vec4(0.35f, 0.55f, 0.25f, 1.0f), 1 },
+            { "Blue_Hawaii",       glm::vec4(0.12f, 0.78f, 0.96f, 1.0f), glm::vec4(0.20f, 0.70f, 0.95f, 1.0f), 2 },
+            { "Mango_Passion",     glm::vec4(0.98f, 0.75f, 0.10f, 1.0f), glm::vec4(0.95f, 0.80f, 0.15f, 1.0f), 3 },
+            { "Kyoho_Grape",       glm::vec4(0.62f, 0.15f, 0.78f, 1.0f), glm::vec4(0.70f, 0.25f, 0.85f, 1.0f), 4 },
+            { "Melon_Float",       glm::vec4(0.35f, 0.88f, 0.25f, 1.0f), glm::vec4(0.40f, 0.85f, 0.30f, 1.0f), 5 }
+        };
+
+        // Positions: 3 columns along X, 2 rows along Z (Row 0: prep line, Row 1: front counter serving)
+        float colX[3] = { -0.60f, -0.20f, 0.20f };
+        float rowZ[2] = { -0.16f,  0.28f };
+
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 2; ++j)
+            {
+                int idx = i * 2 + j;
+                const auto& flv = flavors[idx];
+
+                auto bowlNode = createKakigoriBowl(meshes, "Kakigori_" + flv.name, flv.syrupColor, flv.spoonColor, flv.garnishType, 0.85f);
+
+                KakigoriServing ks;
+                ks.rootNode = bowlNode;
+                // Spot 1 is home position, Spot 2 is swap position (front-to-back serving hop like Takoyaki)
+                ks.spotPos1 = glm::vec3(colX[i], 1.22f, rowZ[j]);
+                ks.spotPos2 = glm::vec3(colX[i], 1.22f, rowZ[1 - j]);
+                ks.rootNode->transform.position = ks.spotPos1;
+                ks.hopTimer = (float)idx * 0.55f; // staggered hop start times
+                ks.spinSpeed = 50.0f + (float)idx * 8.0f; // varied presentation spin
+
+                root->addChild(bowlNode);
+                servings.push_back(ks);
+            }
+        }
 
         // Fluttering Nobori Flag on a bamboo pole next to stall
         auto flagPole = std::make_shared<SceneNode>("Nobori_Pole");
@@ -3009,16 +3409,72 @@ public:
 
     void update(float time, float dt)
     {
-        // 1. Shaver wheel crank spin
-        shaverWheel->transform.rotation.x += 240.0f * dt;
+        // 1. Shaver wheel crank continuous spinning
+        if (shaverWheel)
+            shaverWheel->transform.rotation.x += 240.0f * dt;
 
-        // 2. Noren banner cloth ripples in the wind
+        // 2. Active shaver cup ice mound pulse & rotation under chute
+        if (shaverActiveIce)
+        {
+            shaverActiveIce->transform.rotation.y += 90.0f * dt;
+            float s = 0.28f + std::sin(time * 3.5f) * 0.02f;
+            shaverActiveIce->transform.scale = glm::vec3(s, s * 0.85f, s);
+        }
+
+        // 3. Dynamic Kakigori servings presentation rotation and hopping animations
+        for (size_t i = 0; i < servings.size(); ++i)
+        {
+            auto& ks = servings[i];
+
+            // Continuous rotational spin to display colors and toppings
+            ks.rootNode->transform.rotation.y += ks.spinSpeed * dt;
+
+            // Hopping state machine (like Takoyaki flips)
+            ks.hopTimer += dt;
+            if (!ks.isHopping && ks.hopTimer > 3.2f)
+            {
+                ks.isHopping = true;
+                ks.hopTimer = 0.0f;
+            }
+
+            if (ks.isHopping)
+            {
+                float t = ks.hopTimer / ks.hopDuration;
+                if (t >= 1.0f)
+                {
+                    ks.isHopping = false;
+                    ks.hopTimer = 0.0f;
+                    // Swap spot1 and spot2 so next hop travels back smoothly
+                    std::swap(ks.spotPos1, ks.spotPos2);
+                    ks.rootNode->transform.position = ks.spotPos1;
+                    ks.rootNode->transform.rotation.z = 0.0f;
+                }
+                else
+                {
+                    // Parabolic hopping arc: translation along Z and parabolic height Y
+                    glm::vec3 curPos = glm::mix(ks.spotPos1, ks.spotPos2, t);
+                    curPos.y += 4.0f * 0.32f * t * (1.0f - t); // Parabolic hop formula
+                    ks.rootNode->transform.position = curPos;
+                    ks.rootNode->transform.rotation.y += 360.0f * dt; // joyful mid-air spin
+                    ks.rootNode->transform.rotation.z = std::sin(t * (float)M_PI) * 12.0f; // playful tilt
+                }
+            }
+            else
+            {
+                // Subtle breathing floating bob while sitting on tray
+                float bob = std::sin(time * 2.8f + (float)i * 1.05f) * 0.012f;
+                ks.rootNode->transform.position = ks.spotPos1 + glm::vec3(0.0f, bob, 0.0f);
+                ks.rootNode->transform.rotation.z = 0.0f;
+            }
+        }
+
+        // 4. Noren banner cloth ripples in the wind
         bannerCloth->transform.rotation.x = std::sin(time * 3.5f) * 6.0f;
 
-        // 3. Nobori flag flutters about its vertical pole
+        // 5. Nobori flag flutters about its vertical pole
         noboriFlag->transform.rotation.y = std::sin(time * 4.5f) * 15.0f;
 
-        // 4. Gentle wind sway on front stall lanterns
+        // 6. Gentle wind sway on front stall lanterns
         for (size_t i = 0; i < stallLanterns.size(); ++i)
         {
             stallLanterns[i]->transform.rotation.z = std::sin(time * 2.8f + (float)i * 1.5f) * 6.0f;

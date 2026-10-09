@@ -12,6 +12,38 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Feature: Kakigori Stall Desserts & Dynamic Hopping / Presentation Animation
+
+#### 1. Kakigori Dessert Servings & Stall Counter Layout (`Objects.h`, `Scene.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Goal & Scope:** Place authentic, colorful Japanese shaved ice dessert servings (Kakigori) on the stall counter directly in front of the vendor and beside "the box" (the vintage ice shaving machine), complete with dynamic multi-joint animations matching the style of the Takoyaki stall.
+* **Component Details & Architecture:**
+  * **Vintage Japanese Ice Shaver Machine ("The Box"):**
+    * Positioned on the right side of the stall counter at $(X = 0.85\text{m}, Y = 1.20\text{m}, Z = 0.0\text{m})$.
+    * Modeled with vintage cast iron stand legs, retro swan-cyan ice chamber housing (`Shaver_Body`), polished gold nameplate crest (`Shaver_Crest`), crystalline translucent ice block (`Shaver_IceBlock`) inside the shaving chamber, vertical mechanical spindle and crown gear (`Shaver_Spindle`), conical dispensing chute (`Shaver_Chute`), red spoked cast iron flywheel (`Shaver_Wheel`), and orbiting brass crank handle peg (`Shaver_Handle`).
+    * Active shaved ice bowl under the chute receiving freshly shaved snow-white ice flakes (`Shaver_ActiveIce`).
+    * 4-bottle syrup pump dispenser condiment rack beside the machine featuring Strawberry crimson, Melon green, Blue Hawaii cyan, and Lemon golden syrups with pump nozzles.
+  * **Presentation Lacquer Tray & Kakigori Servings:**
+    * Elegant Japanese black lacquer tray (`Urushi` tray, $1.70\text{m} \times 0.92\text{m}$) with vermilion rim placed on the counter in front of the vendor ($X \in [-0.75\text{m}, 0.35\text{m}]$) and beside the shaver machine.
+    * 6 distinct, beautifully detailed Kakigori dessert servings arranged across 3 columns and 2 rows (preparation line and front customer serving line):
+      1. **Ichigo (Strawberry Delux):** Crystalline footed glass cup, fluffy shaved ice dome, rich ruby strawberry glaze, sweetened condensed milk (`Rennyu`) drizzle, fresh cherry/strawberry topper with green stem, and red dessert spoon.
+      2. **Matcha (Uji-Kintoki):** Flared dessert cup, towering ice mound, deep matcha syrup, sweetened adzuki red bean cluster (`Ogura-an`) on the side, milk drizzle, and matcha spoon.
+      3. **Blue Hawaii:** Flared crystal cup, electric cyan-blue syrup, fluffy white snow crest, festive mini pink parasol umbrella pick, and cyan spoon.
+      4. **Mango Passion / Golden Lemon:** Footed glass, golden mango glaze, sweet cream drizzle, tropical mango cube garnish, and golden spoon.
+      5. **Kyoho Grape:** Fluted dessert cup, royal amethyst purple syrup, sweet milk swirl, juicy grape garnish, and purple spoon.
+      6. **Melon Cream Float:** Festive glass cup, vivid honeydew melon syrup, rich milk swirl, melon ball topper, and green spoon.
+* **Dynamic Animations (`KakigoriStall::update`):**
+  * **Flywheel & Crank Handle:** Continuous high-speed spin: $\theta_{\text{wheel}} += 240^\circ \times \Delta t$ with handle peg orbiting the wheel axis.
+  * **Active Shaver Bowl Pulse:** Fresh shaved ice mound under the chute rotates ($\theta_y += 90^\circ \times \Delta t$) and gently pulses with rhythmic breathing.
+  * **Continuous Presentation Spin:** Each of the 6 Kakigori servings smoothly rotates around its vertical axis ($\theta_y += \omega_{\text{spin}} \times \Delta t$) to display its layered colors, milk drizzle, spoon, and toppings from all angles.
+  * **Staggered Parabolic Hopping Arc:** In the style of the Takoyaki flipping animation, each Kakigori bowl periodically takes flight in a graceful parabolic arc ($y(t) = y_0 + 4 \cdot h_{\max} \cdot t(1-t)$) between the rear preparation spot and the front customer serving counter, executing a playful mid-air spin ($\theta_y += 360^\circ \times \Delta t$) and celebratory tilt ($\theta_z = \sin(\pi t) \times 12^\circ$), then landing softly on the counter with positions smoothly swapping for the return hop.
+  * **Breathing Rest Bob:** Between hops, bowls gently bob on the lacquer tray with sinusoidal floating offset ($\sin(2.8t + \phi) \times 0.012\text{m}$).
+* **Material & Texture Protection (`Scene.h`):**
+  * Updated `assignKaki` traversal in `Scene.h` to exempt `Ice`, `Bowl`, `Cup`, `Syrup`, `Milk`, `Spoon`, `Garnish`, `Topping`, `Bottle`, `Pump`, `Umbrella`, `Berry`, `Bean`, `Mango`, `Grape`, `Melon`, `Shaver`, and `Tray` from `texWood` assignment, ensuring pristine Blinn-Phong specular and material colors.
+  * Added `Kakigori Stall (Full Unit)` to the interactive inspectables list.
+
+---
+
 ### [2026-10-10] — Fix: Magician Natural Downward Elbow Flexion & Arm Kinematics
 
 #### 1. Downward Elbow Biomechanics & Forward/Upward Forearm Flexion (`Objects.h`)

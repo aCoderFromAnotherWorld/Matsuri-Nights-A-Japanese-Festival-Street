@@ -500,8 +500,9 @@ public:
                     node->shininess = 12.0f;
                     node->specularStrength = 0.20f;
                 }
-                else if (node->name.find("Wheel") != std::string::npos)
+                else if (node->name.find("Wheel") != std::string::npos || node->name.find("Handle") != std::string::npos)
                 {
+                    node->texture = nullptr;
                     node->shininess = 48.0f;
                     node->specularStrength = 0.75f;
                 }
@@ -509,6 +510,30 @@ public:
                 {
                     node->texture = &texLantern;
                     node->textureTiling = 1.0f;
+                }
+                else if (node->name.find("Ice") != std::string::npos ||
+                         node->name.find("Bowl") != std::string::npos ||
+                         node->name.find("Cup") != std::string::npos ||
+                         node->name.find("Syrup") != std::string::npos ||
+                         node->name.find("Milk") != std::string::npos ||
+                         node->name.find("Spoon") != std::string::npos ||
+                         node->name.find("Garnish") != std::string::npos ||
+                         node->name.find("Topping") != std::string::npos ||
+                         node->name.find("Bottle") != std::string::npos ||
+                         node->name.find("Pump") != std::string::npos ||
+                         node->name.find("Umbrella") != std::string::npos ||
+                         node->name.find("Berry") != std::string::npos ||
+                         node->name.find("Bean") != std::string::npos ||
+                         node->name.find("Mango") != std::string::npos ||
+                         node->name.find("Grape") != std::string::npos ||
+                         node->name.find("Melon") != std::string::npos ||
+                         node->name.find("Stem") != std::string::npos ||
+                         node->name.find("Shaver") != std::string::npos ||
+                         node->name.find("Tray") != std::string::npos ||
+                         node->name.find("Urushi") != std::string::npos ||
+                         node->name.find("Kakigori") != std::string::npos)
+                {
+                    node->texture = nullptr;
                 }
                 else
                 {
@@ -808,9 +833,10 @@ public:
         inspectables.push_back({ "5. Vanishing Box (Scale-to-zero demo)", vanishingBox->boxNode, "Box experiencing scale and translation swap" });
         inspectables.push_back({ "6. Stage Spotlight Housing", spotlightRig->lampHousing, "Cone lamp housing rotating to track magician & aim dynamic spotlight" });
         inspectables.push_back({ "7. Takoyaki Stall (Full Unit)", takoyakiStall->root, "Complex object with spinning/hopping takoyaki" });
-        inspectables.push_back({ "8. Torii Gate (Grand Entrance)", toriiGate->root, "Static shrine gate anchor at street terminus" });
-        inspectables.push_back({ "9. Sakura Blossom Tree", sakuraTree->root, "Tree with hierarchical branches and falling petals" });
-        inspectables.push_back({ "10. Crowd Walker #1", crowd->walkers[0].root, "Figure walking down street with leg cycle" });
+        inspectables.push_back({ "8. Kakigori Stall (Full Unit)", kakigoriStall->root, "Festive stall with spinning/hopping Kakigori dessert bowls & shaved ice machine" });
+        inspectables.push_back({ "9. Torii Gate (Grand Entrance)", toriiGate->root, "Static shrine gate anchor at street terminus" });
+        inspectables.push_back({ "10. Sakura Blossom Tree", sakuraTree->root, "Tree with hierarchical branches and falling petals" });
+        inspectables.push_back({ "11. Crowd Walker #1", crowd->walkers[0].root, "Figure walking down street with leg cycle" });
     }
 
     void cycleInspectable(int dir = 1)
