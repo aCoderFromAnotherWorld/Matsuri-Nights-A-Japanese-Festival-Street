@@ -176,20 +176,20 @@ public:
             float blossomTone;
         };
         std::vector<TreePlacement> treeConfigs = {
-            // 1. Grand Shrine Sakura Tree (West side plaza curb)
-            { glm::vec3(-5.8f, 0.0f, -22.0f), 1.15f,  15.0f,  0.0f,  0.00f },
-            // 2. Festival Stage / Plaza Sakura Tree (East side plaza curb)
-            { glm::vec3( 6.8f, 0.0f, -26.5f), 1.05f, 135.0f, -1.5f,  0.25f },
-            // 3. Left Courtyard Garden Gap (between Machiya L1 & L2)
-            { glm::vec3(-10.8f, 0.0f,  5.0f), 0.95f,  75.0f,  1.2f, -0.20f },
-            // 4. Right Courtyard Garden Gap (between Machiya R1 & R2)
-            { glm::vec3( 10.8f, 0.0f,  5.0f), 0.95f, 210.0f, -1.0f,  0.30f },
-            // 5. South Entrance Avenue West (framing street entrance)
-            { glm::vec3(-5.6f, 0.0f,  28.0f), 0.90f,  40.0f,  1.2f, -0.15f },
-            // 6. South Entrance Avenue East (framing street entrance)
-            { glm::vec3( 5.6f, 0.0f,  27.0f), 0.92f, 190.0f, -1.2f,  0.15f },
-            // 7. North Torii Sacred Grove Sakura Tree
-            { glm::vec3(-5.8f, 0.0f, -31.5f), 0.85f, 290.0f,  0.5f, -0.10f }
+            // 1. Grand Shrine Sakura Tree (West side plaza lawn, outside road)
+            { glm::vec3(-10.2f, 0.0f, -22.0f), 1.15f,  15.0f,  0.0f,  0.00f },
+            // 2. Festival Stage / Plaza Sakura Tree (East side plaza lawn, outside road)
+            { glm::vec3( 10.2f, 0.0f, -26.5f), 1.05f, 135.0f, -1.5f,  0.25f },
+            // 3. Left Courtyard Garden Gap (between Machiya L1 & L2, outside road)
+            { glm::vec3(-10.8f, 0.0f,   5.0f), 0.95f,  75.0f,  1.2f, -0.20f },
+            // 4. Right Courtyard Garden Gap (between Machiya R1 & R2, outside road)
+            { glm::vec3( 10.8f, 0.0f,   5.0f), 0.95f, 210.0f, -1.0f,  0.30f },
+            // 5. South Entrance Avenue West (framing street entrance lawn, outside road)
+            { glm::vec3(-10.0f, 0.0f,  28.0f), 0.90f,  40.0f,  1.2f, -0.15f },
+            // 6. South Entrance Avenue East (framing street entrance lawn, outside road)
+            { glm::vec3( 10.0f, 0.0f,  27.0f), 0.92f, 190.0f, -1.2f,  0.15f },
+            // 7. North Torii Sacred Grove Sakura Tree (West of Torii gate lawn, outside road)
+            { glm::vec3(-10.2f, 0.0f, -33.5f), 0.85f, 290.0f,  0.5f, -0.10f }
         };
 
         for (const auto& tc : treeConfigs)

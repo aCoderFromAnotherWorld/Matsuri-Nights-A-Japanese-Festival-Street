@@ -12,6 +12,25 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Cherry Tree Road Clearance & Off-Road Placement (Plaza Verges & Entrance Lawns)
+
+#### 1. Road Boundary Separation & Sakura Tree Relocation (`Scene.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu\OneDrive\Desktop\practice\Graphics\Matsuri-Nights-A-Japanese-Festival-Street\Matsuri Nights — A Japanese Festival Street\src\Scene.h)
+* **Problem Addressed:**
+  * The street stone pavement spans $X \in [-7.0\text{m}, +7.0\text{m}]$ with cobblestone borders at $X \in [-7.45\text{m}, -6.95\text{m}]$ and $X \in [+6.95\text{m}, +7.45\text{m}]$.
+  * Previously, the 3 cherry trees near the Torii Gate ($X = -5.8\text{m}, +6.8\text{m}, -5.8\text{m}$) and the 2 cherry trees framing the south street entrance ($X = -5.6\text{m}, +5.6\text{m}$) were located within $|X| < 7.0\text{m}$, placing their trunks, roots, and falling blossom beds directly onto the paved stone roadway.
+* **Solution & Updated Coordinates:**
+  * Relocated all 5 trees outward onto the surrounding earth and grass terrain ($|X| \ge 10.0\text{m}$), providing $>2.55\text{m}$ clearance beyond the cobblestone borders and ensuring complete separation of roots, trunks, and pedestrians:
+    1. **Grand Shrine Sakura Tree (Tree #1):** Moved from $(-5.8\text{m}, 0.0\text{m}, -22.0\text{m})$ to $(-10.2\text{m}, 0.0\text{m}, -22.0\text{m})$ (West plaza lawn, completely off the roadway).
+    2. **Festival Stage Plaza Sakura Tree (Tree #2):** Moved from $(+6.8\text{m}, 0.0\text{m}, -26.5\text{m})$ to $(+10.2\text{m}, 0.0\text{m}, -26.5\text{m})$ (East plaza lawn, clear of roadway and magic stage).
+    3. **Left Courtyard Garden Gap (Tree #3):** Retained at $(-10.8\text{m}, 0.0\text{m}, 5.0\text{m})$ (already located in the courtyard between Machiya L1 & L2).
+    4. **Right Courtyard Garden Gap (Tree #4):** Retained at $(+10.8\text{m}, 0.0\text{m}, 5.0\text{m})$ (already located in the courtyard between Machiya R1 & R2).
+    5. **South Entrance Avenue West (Tree #5):** Moved from $(-5.6\text{m}, 0.0\text{m}, 28.0\text{m})$ to $(-10.0\text{m}, 0.0\text{m}, 28.0\text{m})$ (West entrance lawn outside roadway).
+    6. **South Entrance Avenue East (Tree #6):** Moved from $(+5.6\text{m}, 0.0\text{m}, 27.0\text{m})$ to $(+10.0\text{m}, 0.0\text{m}, 27.0\text{m})$ (East entrance lawn outside roadway).
+    7. **North Torii Sacred Grove Sakura Tree (Tree #7):** Moved from $(-5.8\text{m}, 0.0\text{m}, -31.5\text{m})$ to $(-10.2\text{m}, 0.0\text{m}, -33.5\text{m})$ (West of Torii gate Kasagi lintel tip, framing the shrine approach on natural soil).
+
+---
+
 ### [2026-10-10] — Organic Curved Botanical Foliage (Leaves, Petals, Evergreen Pads), Sculpted Sakura Blossom Clouds, Multi-Tree Street Population & Articulated Biomechanical Human Rigs
 
 #### 1. Procedural Botanical Curve Generators (`Curves.h`, `Primitives.h`)

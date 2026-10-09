@@ -34,4 +34,4 @@ raytraced_snapshot.bmp
 *.snapshot.bmp
 
 # Generated local texture assets
-/assets/
+assets/
