@@ -12,6 +12,31 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Fix: Magician Hand Swap (Right Hand Wand/Orb Grasp & Left Hand Resting Pose)
+
+#### 1. Magician Hand Roles & Articulated Rig Swap (`Objects.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Goal & Scope:** Swap the magician's hands so the right hand grasps the magic wand and commands the floating orb, while the left hand rests gracefully along the left hip/side.
+* **Articulated Joint Hierarchy & Transformations:**
+  * **Right Arm (Spellcasting Limb holding Wand & commanding Orb):**
+    $$\text{root} \xrightarrow{\text{Shoulder}} \text{rightArm} \xrightarrow{\text{Elbow}} \text{rightForearm} \xrightarrow{\text{Wrist}} \text{rightHand} \xrightarrow{\text{Grasp}} \text{wand} \ \& \ \text{orbNode}$$
+    * Shoulder: Position $(+0.36\text{m}, 1.62\text{m}, 0.05\text{m})$, rotation $(-62.0^\circ, 18.0^\circ, -22.0^\circ)$, raised forward and abducted outward.
+    * Elbow: Position $(0.0\text{m}, -0.38\text{m}, 0.0\text{m})$, rotation $(42.0^\circ, 10.0^\circ, 0.0^\circ)$, bent forward/upward toward the audience and orb.
+    * Wrist (`rightHand`): Position $(0.0\text{m}, -0.36\text{m}, 0.0\text{m})$, rotation $(-15.0^\circ, 0.0^\circ, -20.0^\circ)$, serving as moving reference frame for wand and orb.
+    * Right Palm: Position $(0.01\text{m}, 0.035\text{m}, 0.065\text{m})$, rotation $(-65.0^\circ, 10.0^\circ, -15.0^\circ)$, wrist condyle flush with forearm wrist, fingers wrapping forward around wand.
+    * Wand: Position $(0.01\text{m}, 0.060\text{m}, 0.15\text{m})$, rotation $(-65.0^\circ, 10.0^\circ, -15.0^\circ)$, extending forward/upward through grasp directly toward orb.
+    * Orb & Tails: Transformed directly relative to `rightHand`'s moving reference frame in a 3D helical orbit, with Point Light 0 tracking the orb in world space.
+  * **Left Arm (Relaxed Companion Limb at left side / hip):**
+    * Shoulder: Position $(-0.36\text{m}, 1.62\text{m}, 0.05\text{m})$, rotation $(-15.0^\circ, 0.0^\circ, 22.0^\circ)$, hanging naturally at side.
+    * Elbow: Position $(0.0\text{m}, -0.38\text{m}, 0.0\text{m})$, rotation $(35.0^\circ, 0.0^\circ, 0.0^\circ)$, bent gently forward at $+35^\circ$.
+    * Left Hand: Position $(0.0\text{m}, -0.42\text{m}, 0.0\text{m})$, rotation $(10.0^\circ, 0.0^\circ, 180.0^\circ)$. Fingertips extend downward along the side of the yukata/robe, wrist connects flush without gaps, and palm rests comfortably along the hip.
+  * **Dynamic Kinematics (`Magician::update`):**
+    * Right arm spellcasting flourishes: $\pm 16^\circ$ shoulder sweep, $\pm 18^\circ$ elbow bend, $\pm 22^\circ$ wrist flicking.
+    * Left arm companion posture: subtle $\pm 4^\circ$ shoulder, $\pm 5^\circ$ elbow, $\pm 3^\circ$ wrist breathing sway.
+    * Head continues smooth $\pm 4^\circ$ horizontal scanning across the seated audience.
+
+---
+
 ### [2026-10-10] — Fix: Magician Wand in Left Hand, Right Hand Rest/Sway, Audience-Facing Alignment & Articulated Kinematics
 
 #### 1. Left-Hand Wand Grasp & Magic Orb Reference Frame (`Objects.h`)
