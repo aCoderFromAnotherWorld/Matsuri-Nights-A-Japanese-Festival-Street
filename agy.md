@@ -12,6 +12,42 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Fix: Shopkeeper Orientation & Food Cart Clearance + Magician Arm/Hand Kinematics
+
+#### 1. Shopkeeper Orientation & Stall Clearance (`Objects.h`, `Scene.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h)
+* **Problem Addressed:**
+  * Shopkeepers of both stalls (Takoyaki and Kakigori) were facing 180 degrees away from the front of the shop (facing backward into the rear wall instead of outward towards the counter and customers).
+  * Shopkeepers were positioned at $X = \pm 6.05\text{m}$, which intersected and stood inside the food cart table base ($X \in [\pm 4.25\text{m}, \pm 6.15\text{m}]$) and counter overhang ($X = \pm 6.30\text{m}$).
+  * Cooking pick arm rotation in `VendorFigure` was using positive X rotation, causing the arm to swing backwards behind the vendor's back instead of reaching forward over the counter.
+* **Fix & Solution:**
+  * **180° Orientation Flip:** Flipped yaw rotation for both vendors:
+    * `Vendor_Takoyaki`: Changed from $90.0^\circ$ to $-90.0^\circ$ so the vendor directly faces the front counter and customers.
+    * `Vendor_Kakigori`: Changed from $-90.0^\circ$ to $90.0^\circ$ so the vendor directly faces the front counter and customers.
+  * **Food Cart Clearance Translation:** Translated both vendors backwards from the stall:
+    * `Vendor_Takoyaki`: Moved from $X = -6.05\text{m}$ to $X = -6.65\text{m}$ ($0.35\text{m}$ behind counter back edge, platform tucked neatly under counter).
+    * `Vendor_Kakigori`: Moved from $X = +6.05\text{m}$ to $X = +6.65\text{m}$ ($0.35\text{m}$ behind counter back edge).
+  * **Forward Cooking Kinematics:** Updated `VendorFigure` arm resting pose (`hand->rotation.x = -30.0f`) and animated forward reaching motion:
+    $$\theta_{\text{shoulder}} = -28^\circ + \sin(4t) \times 14^\circ, \quad \theta_{\text{elbow}} = -25^\circ + \sin(4t + 0.5) \times 16^\circ$$
+    Reaching naturally forward over the counter and actively stirring the takoyaki grill plate / shaved ice bowl.
+
+#### 2. Magician Hand Movement & Articulated Spellcasting Rig (`Objects.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Problem Addressed:**
+  * The magician's hand movement was completely non-functional: `rightHand` was placed directly as a child of `root` at fixed coordinates $(0.9, 2.3, 0.5)$, disconnected from the arm hierarchy.
+  * `rightArm` and `rightForearm` were static local variables in the constructor, never articulated or updated in `Magician::update()`.
+* **Fix & Solution:**
+  * **Full Anatomical Hierarchy:** Added `rightArm`, `rightForearm`, `rightHand`, and `wand` member variables to `Magician`:
+    $$\text{root} \xrightarrow{\text{Shoulder}} \text{rightArm} \xrightarrow{\text{Elbow}} \text{rightForearm} \xrightarrow{\text{Wrist}} \text{rightHand} \xrightarrow{\text{Held}} \text{wand} \ \& \ \text{orbNode}$$
+  * **Dynamic Multi-Joint Kinematics:** Implemented dynamic spellcasting animations in `Magician::update(float time)`:
+    * Shoulder: $\theta_x = -62^\circ + \sin(2.4t) \times 16^\circ$, $\theta_y = 18^\circ + \cos(1.8t) \times 12^\circ$, $\theta_z = -22^\circ + \sin(1.6t) \times 8^\circ$.
+    * Elbow: $\theta_x = 42^\circ + \sin(2.6t + 0.5) \times 18^\circ$, $\theta_y = \cos(2.2t) \times 10^\circ$.
+    * Wrist Flourishes & Wand Flicking: $\theta_x = -15^\circ + \sin(3.4t) \times 22^\circ$, $\theta_y = \cos(2.8t) \times 16^\circ$, $\theta_z = -20^\circ + \sin(2.5t) \times 12^\circ$.
+    * Left Arm Breathing Motion: $\theta_x = -15^\circ + \sin(1.6t) \times 4^\circ$, $\theta_{\text{elbow}} = 35^\circ + \cos(1.6t) \times 5^\circ$.
+  * **Dynamic Magic Orb Reference Frame:** Magic orb and its 3 trailing comet particles dynamically execute 3D helical orbits centered on the articulated moving hand reference frame, driving the dynamic stage point light in real time.
+
+---
+
 ### [2026-10-10] — Cherry Tree Road Clearance & Off-Road Placement (Plaza Verges & Entrance Lawns)
 
 #### 1. Road Boundary Separation & Sakura Tree Relocation (`Scene.h`)

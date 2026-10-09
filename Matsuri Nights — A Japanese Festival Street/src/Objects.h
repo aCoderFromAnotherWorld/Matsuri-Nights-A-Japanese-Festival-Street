@@ -3104,7 +3104,7 @@ public:
         hand = std::make_shared<SceneNode>(name + "_Hand");
         hand->mesh = &meshes.humanHand;
         hand->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
-        hand->transform.rotation.x = 45.0f;
+        hand->transform.rotation.x = -30.0f;
         hand->color = skin;
         foreArm->addChild(hand);
 
@@ -3120,10 +3120,10 @@ public:
 
     void update(float time)
     {
-        // Stirring / cooking arm joint kinematics reaching over counter
-        upperArm->transform.rotation.x = 22.0f + std::sin(time * 4.0f) * 16.0f;
-        upperArm->transform.rotation.y = std::cos(time * 4.0f) * 14.0f;
-        foreArm->transform.rotation.x = 35.0f + std::sin(time * 4.0f + 0.5f) * 18.0f;
+        // Stirring / cooking arm joint kinematics reaching forward over counter
+        upperArm->transform.rotation.x = -28.0f + std::sin(time * 4.0f) * 14.0f;
+        upperArm->transform.rotation.y = -10.0f + std::cos(time * 4.0f) * 12.0f;
+        foreArm->transform.rotation.x = -25.0f + std::sin(time * 4.0f + 0.5f) * 16.0f;
     }
 };
 
@@ -3173,7 +3173,12 @@ class Magician
 {
 public:
     std::shared_ptr<SceneNode> root;
+    std::shared_ptr<SceneNode> rightArm;
+    std::shared_ptr<SceneNode> rightForearm;
     std::shared_ptr<SceneNode> rightHand;   // Moving reference frame
+    std::shared_ptr<SceneNode> wand;
+    std::shared_ptr<SceneNode> leftArm;
+    std::shared_ptr<SceneNode> leftForearm;
     std::shared_ptr<SceneNode> orbNode;     // Child node in helical orbit relative to hand!
     std::vector<std::shared_ptr<SceneNode>> trailOrbs;
 
@@ -3255,7 +3260,7 @@ public:
         root->addChild(hatCone);
 
         // Left Arm: Shoulder -> UpperArm -> Elbow -> Forearm -> Hand (bent gracefully at side / hip)
-        auto leftArm = std::make_shared<SceneNode>("Magician_LeftArm");
+        leftArm = std::make_shared<SceneNode>("Magician_LeftArm");
         leftArm->mesh = &meshes.limbUpperArm;
         leftArm->transform.position = glm::vec3(-0.36f, 1.62f, 0.05f);
         leftArm->transform.rotation.z = 22.0f;
@@ -3263,7 +3268,7 @@ public:
         leftArm->color = robe;
         root->addChild(leftArm);
 
-        auto leftForearm = std::make_shared<SceneNode>("Magician_LeftForearm");
+        leftForearm = std::make_shared<SceneNode>("Magician_LeftForearm");
         leftForearm->mesh = &meshes.limbForearm;
         leftForearm->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
         leftForearm->transform.rotation.x = 35.0f;
@@ -3277,38 +3282,40 @@ public:
         leftHand->color = skin;
         leftForearm->addChild(leftHand);
 
-        // Raised Right Arm commanding the magic orb
-        auto rightArm = std::make_shared<SceneNode>("Magician_RightArm");
+        // Raised Right Arm commanding the magic orb (Hierarchical Shoulder -> Elbow -> Wrist -> Hand -> Wand & Orb)
+        rightArm = std::make_shared<SceneNode>("Magician_RightArm");
         rightArm->mesh = &meshes.limbUpperArm;
         rightArm->transform.position = glm::vec3(0.36f, 1.62f, 0.05f);
-        rightArm->transform.rotation = glm::vec3(-45.0f, 20.0f, -25.0f);
+        rightArm->transform.rotation = glm::vec3(-62.0f, 18.0f, -22.0f);
         rightArm->color = robe;
         root->addChild(rightArm);
 
-        auto rightForearm = std::make_shared<SceneNode>("Magician_RightForearm");
+        rightForearm = std::make_shared<SceneNode>("Magician_RightForearm");
         rightForearm->mesh = &meshes.limbForearm;
         rightForearm->transform.position = glm::vec3(0.0f, -0.38f, 0.0f);
-        rightForearm->transform.rotation.x = 25.0f;
+        rightForearm->transform.rotation.x = 42.0f;
         rightForearm->color = skin;
         rightArm->addChild(rightForearm);
 
-        // Right Hand Node (serves as the moving reference frame for the orb!)
+        // Right Hand Node (child of forearm at wrist condyle! Serves as moving reference frame for wand and orb)
         rightHand = std::make_shared<SceneNode>("Magician_RightHand");
-        rightHand->transform.position = glm::vec3(0.9f, 2.3f, 0.5f);
-        root->addChild(rightHand);
+        rightHand->transform.position = glm::vec3(0.0f, -0.36f, 0.0f);
+        rightHand->transform.rotation = glm::vec3(-15.0f, 0.0f, -20.0f);
+        rightForearm->addChild(rightHand);
 
         // Hand palm contoured mesh
         auto palm = std::make_shared<SceneNode>("Magician_Palm");
         palm->mesh = &meshes.humanHand;
-        palm->transform.rotation.x = -30.0f;
+        palm->transform.position = glm::vec3(0.0f, -0.02f, 0.0f);
+        palm->transform.rotation.x = -15.0f;
         palm->color = skin;
         rightHand->addChild(palm);
 
-        // Magic Wand
-        auto wand = std::make_shared<SceneNode>("Magic_Wand");
+        // Magic Wand held firmly in hand
+        wand = std::make_shared<SceneNode>("Magic_Wand");
         wand->mesh = &meshes.cylinder;
-        wand->transform.position = glm::vec3(0.04f, 0.12f, 0.10f);
-        wand->transform.rotation.x = -50.0f;
+        wand->transform.position = glm::vec3(0.02f, 0.06f, 0.18f);
+        wand->transform.rotation.x = -65.0f;
         wand->transform.scale = glm::vec3(0.035f, 0.65f, 0.035f);
         wand->color = gold;
         rightHand->addChild(wand);
@@ -3340,16 +3347,29 @@ public:
 
     void update(float time)
     {
-        // Hand sways gently
-        rightHand->transform.position.y = 2.3f + std::sin(time * 2.0f) * 0.12f;
+        // 1. Dynamic spellcasting arm, elbow, wrist and hand motion
+        rightArm->transform.rotation.x = -62.0f + std::sin(time * 2.4f) * 16.0f;
+        rightArm->transform.rotation.y =  18.0f + std::cos(time * 1.8f) * 12.0f;
+        rightArm->transform.rotation.z = -22.0f + std::sin(time * 1.6f) *  8.0f;
 
-        // Magic Orb executes a helical 3D orbit around the hand's reference frame:
-        // offset = (radius * cos(t), height + sin(2t)*0.2, radius * sin(t))
-        float r = 0.8f;
+        rightForearm->transform.rotation.x = 42.0f + std::sin(time * 2.6f + 0.5f) * 18.0f;
+        rightForearm->transform.rotation.y = std::cos(time * 2.2f) * 10.0f;
+
+        // Dynamic wrist flourishes & wand flicking
+        rightHand->transform.rotation.x = -15.0f + std::sin(time * 3.4f) * 22.0f;
+        rightHand->transform.rotation.y = std::cos(time * 2.8f) * 16.0f;
+        rightHand->transform.rotation.z = -20.0f + std::sin(time * 2.5f) * 12.0f;
+
+        // Subtle left arm breathing sway
+        leftArm->transform.rotation.x = -15.0f + std::sin(time * 1.6f) * 4.0f;
+        leftForearm->transform.rotation.x = 35.0f + std::cos(time * 1.6f) * 5.0f;
+
+        // 2. Magic Orb executes a helical 3D orbit around the hand's moving reference frame:
+        float r = 0.55f;
         float speed = 3.2f;
         float orbX = r * std::cos(time * speed);
-        float orbZ = r * std::sin(time * speed);
-        float orbY = 0.45f + 0.35f * std::sin(time * speed * 2.0f);
+        float orbZ = 0.20f + r * std::sin(time * speed);
+        float orbY = 0.28f + 0.22f * std::sin(time * speed * 2.0f);
 
         orbNode->transform.position = glm::vec3(orbX, orbY, orbZ);
         orbNode->transform.rotation.y = time * 180.0f;
@@ -3357,10 +3377,10 @@ public:
         // Trailing particles follow with delayed phase
         for (size_t i = 0; i < trailOrbs.size(); ++i)
         {
-            float delay = (float)(i + 1) * 0.15f;
+            float delay = (float)(i + 1) * 0.14f;
             float tx = r * std::cos((time - delay) * speed);
-            float tz = r * std::sin((time - delay) * speed);
-            float ty = 0.45f + 0.35f * std::sin((time - delay) * speed * 2.0f);
+            float tz = 0.20f + r * std::sin((time - delay) * speed);
+            float ty = 0.28f + 0.22f * std::sin((time - delay) * speed * 2.0f);
             trailOrbs[i]->transform.position = glm::vec3(tx, ty, tz);
         }
     }

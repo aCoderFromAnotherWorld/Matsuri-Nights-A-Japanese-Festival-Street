@@ -221,12 +221,12 @@ public:
         kakigoriStall = std::make_unique<KakigoriStall>(meshes, glm::vec3(5.2f, 0.0f, 6.0f), -90.0f);
         rootNode->addChild(kakigoriStall->root);
 
-        // 8. Vendor Figures (one inside each stall, standing tall on platform behind counter)
-        auto vendorTako = std::make_unique<VendorFigure>(meshes, "Vendor_Takoyaki", glm::vec3(-6.05f, 0.0f, 6.0f), 90.0f, glm::vec4(0.18f, 0.35f, 0.75f, 1.0f));
+        // 8. Vendor Figures (one inside each stall, standing tall on platform behind counter facing shop front)
+        auto vendorTako = std::make_unique<VendorFigure>(meshes, "Vendor_Takoyaki", glm::vec3(-6.65f, 0.0f, 6.0f), -90.0f, glm::vec4(0.18f, 0.35f, 0.75f, 1.0f));
         rootNode->addChild(vendorTako->root);
         vendors.push_back(std::move(vendorTako));
 
-        auto vendorKaki = std::make_unique<VendorFigure>(meshes, "Vendor_Kakigori", glm::vec3(6.05f, 0.0f, 6.0f), -90.0f, glm::vec4(0.85f, 0.25f, 0.22f, 1.0f));
+        auto vendorKaki = std::make_unique<VendorFigure>(meshes, "Vendor_Kakigori", glm::vec3(6.65f, 0.0f, 6.0f), 90.0f, glm::vec4(0.85f, 0.25f, 0.22f, 1.0f));
         rootNode->addChild(vendorKaki->root);
         vendors.push_back(std::move(vendorKaki));
 
