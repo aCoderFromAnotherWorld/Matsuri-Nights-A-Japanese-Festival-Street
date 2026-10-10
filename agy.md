@@ -34,24 +34,17 @@ This document tracks all features, additions, bug fixes, transformations, and ar
   6. `fig_catenary_bezier.pdf` / `.png`: Mathematical curves comparing hyperbolic catenary hanging sag against cubic Bézier roof curvature.
 
 #### 3. Formal Academic Project Report (`report/main.tex` & Modular Sections)
-* **Files Added:** `report/main.tex`, `report/sections/01_introduction.tex` through `14_conclusion.tex`, `report/analysis/project_inventory.md`, `report/README_COMPILE.txt`
-* **Format & Standards:** Formatted in accordance with KUET Department of Computer Science & Engineering (CSE4102) academic guidelines (A4 paper, Times New Roman typography via `mathptmx`, 1-inch margins, LaTeX chapter hierarchy, mathematical code citations `File.h/cpp: functionName()`).
-* **Content Structure (50 Pages, 14 Chapters):**
-  * **Chapter 1: Introduction & Project Scope:** Academic requirements fulfillment, 3D transformations, multi-body kinematics, day/night cycles.
-  * **Chapter 2: Architecture & Rendering Pipeline:** Double-buffered frame lifecycle, OpenGL state machines, shader uniform bindings.
-  * **Chapter 3: Mathematical Foundations:** TRS matrix algebra, Gram-Schmidt orthonormalization, halfway vector $\mathbf{H}$, catenary calculus, Bishop parallel transport.
-  * **Chapter 4: Geometry Engine & Primitive Generation:** Cube, Cylinder, Cone, UV Sphere, Plane, swept tubes, Bézier curvature.
-  * **Chapter 5: Hierarchical Scene Graph & Kinematics:** Recursive tree traversal, world matrix accumulation, relative reference frames.
-  * **Chapter 6: Illumination & Shading Pipeline:** Directional sun/moon, 14 dynamic point lights, stage spotlight, indoor skylight bounce, live shading modes.
-  * **Chapter 7: Realistic Soft Shadow Mapping:** Two-pass FBO depth generation, normal-scaled slope bias, 16-sample PCF filter.
-  * **Chapter 8: Procedural Texture Synthesis & Materials:** 7 procedural BMP textures, UV mapping, material parameters.
-  * **Chapter 9: Animation Catalogue & Dynamic Systems:** Takoyaki flip projectile physics, Kakigori shaved ice kinematics, lantern pendulums, sakura blossom drift, firework rocket explosions, magic show state machine.
-  * **Chapter 10: Dual Ray Tracing Architectures:** Full-screen GPU Whitted ray tracer (`shaders/raytrace.frag`), multi-threaded CPU snapshot engine (`RayTracer.h`).
-  * **Chapter 11: UI, HUD & Interaction:** Embedded $256\times 256$ Consolas Bold atlas, 2D orthographic batched text renderer, context action dispatcher.
-  * **Chapter 12: Automated Verification & Testing:** 312 unit test suite breakdown across all 5 verification categories.
-  * **Chapter 13: Controls Reference & Documentation Audit:** Authoritative keybinding catalog and reconciliation table of legacy documentation against source code.
-  * **Chapter 14: Conclusion & Future Enhancements:** Academic summary, PBR Cook-Torrance roadmap, volumetric fog, and bibliography.
-* **Compilation Status:** Built cleanly with MiKTeX `pdflatex` (0 errors, 50 pages, 13.7 MB output at `report/main.pdf`).
+* **Files Added/Updated:** `report/main.tex`, `report/sections/01_introduction.tex` through `14_conclusion.tex`, `report/analysis/project_inventory.md`, `report/README_COMPILE.txt`
+* **Format & Standards:** Formatted in accordance with KUET Department of Computer Science & Engineering (CSE4102) academic guidelines (A4 paper, Times New Roman typography via `mathptmx`, 0.85-inch margins, 10pt compact academic density, mathematical code citations `File.h/cpp: functionName()`).
+* **Cover Page Redesign:** Center-aligned vertical layout placing **Submitted To** (Lecturers Md Tajmilur Rahman & Md. Mubtashim Abrar Nihal) on top and **Submitted By** (MD. Abu Hasanat Soykot, Roll 2107100, Group B2) on the bottom with balanced vertical spacing.
+* **Content Optimization & Page Reduction:**
+  * Consolidated document from 50 pages down to **40 pages total (34 core content pages)** matching the dense 25–35 page target.
+  * Replaced individual `[H]` figures with responsive `[htbp]` multi-image grids (e.g. 2x2 grids for performance/stall animations and crowd/building views).
+  * Compacted table paddings, directory tree listings, and equation line heights.
+  * Consolidated List of Figures and List of Tables onto a shared front-matter page.
+* **Gemini 3.8 Flash Acknowledgments:**
+  * Added formal academic Acknowledgments in Chapter 14 explicitly crediting **Gemini 3.8 Flash** for assisting across architectural design, 3D math derivations, shader programming, kinematic physics, unit testing, and technical documentation.
+* **Compilation Status:** Built cleanly with MiKTeX `pdflatex` (0 errors, 40 pages, 13.7 MB output at `report/main.pdf`).
 
 ---
 

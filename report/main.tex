@@ -1,10 +1,10 @@
-\documentclass[11pt,a4paper]{report}
+\documentclass[10pt,a4paper]{report}
 
 % =========================================================================
 % Academic Packages and Styling
 % =========================================================================
 \usepackage[utf8]{inputenc}
-\usepackage[margin=1in]{geometry}
+\usepackage[top=0.85in, bottom=0.85in, left=0.85in, right=0.85in]{geometry}
 \usepackage{mathptmx} % Times New Roman typography for text and mathematics
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
@@ -51,7 +51,9 @@
     breaklines=true,
     breakatwhitespace=true,
     tabsize=4,
-    showstringspaces=false
+    showstringspaces=false,
+    aboveskip=4pt,
+    belowskip=4pt
 }
 
 % Page numbering and Header/Footer configuration
@@ -63,19 +65,35 @@
 \renewcommand{\headrulewidth}{0.5pt}
 \renewcommand{\footrulewidth}{0.0pt}
 
-% Section title formatting
-\titleformat{\chapter}[display]
-  {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{18pt}{\Huge}
-\titlespacing*{\chapter}{0pt}{10pt}{25pt}
+% Section and Chapter title formatting (compact academic layout)
+\titleformat{\chapter}[hang]
+  {\normalfont\LARGE\bfseries}{\thechapter.\ }{0.4em}{\LARGE}
+\titlespacing*{\chapter}{0pt}{0pt}{10pt}
+\titlespacing*{\section}{0pt}{8pt plus 2pt minus 2pt}{3pt plus 1pt minus 1pt}
+\titlespacing*{\subsection}{0pt}{6pt plus 2pt minus 2pt}{2pt plus 1pt minus 1pt}
+
+% Compact float & display spacing
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{3pt}
+\setlength{\belowcaptionskip}{3pt}
+\setlength{\abovedisplayskip}{4pt plus 1pt minus 1pt}
+\setlength{\belowdisplayskip}{4pt plus 1pt minus 1pt}
+
+\renewcommand{\topfraction}{0.88}
+\renewcommand{\bottomfraction}{0.88}
+\renewcommand{\textfraction}{0.12}
+\renewcommand{\floatpagefraction}{0.75}
 
 % Figure macro with fallback placeholder
 \newcommand{\shot}[3]{%
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \IfFileExists{figures/#1}{%
-      \includegraphics[width=0.88\textwidth]{figures/#1}%
+      \includegraphics[width=0.68\textwidth]{figures/#1}%
     }{%
-      \fbox{\parbox[c][0.35\textwidth][c]{0.88\textwidth}{\centering \textbf{Figure Placeholder: #1}\\\textit{#2}}}%
+      \fbox{\parbox[c][0.22\textwidth][c]{0.68\textwidth}{\centering \textbf{Figure Placeholder: #1}\\\textit{#2}}}%
     }%
     \caption{#2}
     \label{#3}
@@ -86,48 +104,40 @@
 % Document Body
 % =========================================================================
 \begin{document}
+\raggedbottom
 
 % -------------------------------------------------------------------------
-% Cover Page
+% Cover Page (Centered, Submitted To [Up] and Submitted By [Bottom])
 % -------------------------------------------------------------------------
 \begin{titlepage}
     \centering
-    \vspace*{0.5cm}
+    \vspace*{0.3cm}
 
-    {\LARGE \textbf{KHULNA UNIVERSITY OF ENGINEERING \& TECHNOLOGY}}\\[0.3cm]
-    {\large Department of Computer Science and Engineering}\\[1.5cm]
+    {\LARGE \textbf{KHULNA UNIVERSITY OF ENGINEERING \& TECHNOLOGY}}\\[0.25cm]
+    {\large Department of Computer Science and Engineering}\\[1.0cm]
 
-    \rule{\linewidth}{1.2pt}\\[0.4cm]
+    \rule{\linewidth}{1.2pt}\\[0.35cm]
     {\huge \textbf{MATSURI NIGHTS}}\\[0.2cm]
     {\Large \textbf{A Japanese Festival Street in Modern OpenGL}}\\[0.2cm]
-    \rule{\linewidth}{1.2pt}\\[1.2cm]
+    \rule{\linewidth}{1.2pt}\\[0.8cm]
 
-    {\large \textbf{Course Code:} CSE4102}\\[0.2cm]
-    {\large \textbf{Course Title:} Computer Graphics and Image Processing Laboratory}\\[2.0cm]
+    {\large \textbf{Course Code:} CSE4102}\\[0.15cm]
+    {\large \textbf{Course Title:} Computer Graphics and Image Processing Laboratory}\\[1.2cm]
 
-    \begin{minipage}{0.48\textwidth}
-        \flushleft
-        \textbf{Submitted By:}\\[0.2cm]
-        \textbf{MD. Abu Hasanat Soykot}\\
-        Roll No: \textbf{2107100}\\
-        Group: \textbf{B2}\\
-        Year: 4th, Term: 1st\\
-        Dept. of Computer Science and Engineering\\
-        Khulna University of Engineering \& Technology
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.48\textwidth}
-        \flushright
-        \textbf{Submitted To:}\\[0.2cm]
-        \textbf{1. Md Tajmilur Rahman}\\
-        Lecturer\\
-        Dept. of Computer Science and Engineering\\
-        KUET\\[0.3cm]
-        \textbf{2. Md. Mubtashim Abrar Nihal}\\
-        Lecturer\\
-        Dept. of Computer Science and Engineering\\
-        KUET
-    \end{minipage}
+    {\large \textbf{Submitted To:}}\\[0.25cm]
+    {\textbf{\large Md Tajmilur Rahman}}\\
+    Lecturer, Department of Computer Science and Engineering\\
+    Khulna University of Engineering \& Technology (KUET)\\[0.35cm]
+    {\textbf{\large Md. Mubtashim Abrar Nihal}}\\
+    Lecturer, Department of Computer Science and Engineering\\
+    Khulna University of Engineering \& Technology (KUET)\\[1.3cm]
+
+    {\large \textbf{Submitted By:}}\\[0.25cm]
+    {\textbf{\Large MD. Abu Hasanat Soykot}}\\[0.15cm]
+    Roll No: \textbf{2107100} \qquad Group: \textbf{B2}\\[0.1cm]
+    Year: 4th \qquad Term: 1st\\[0.1cm]
+    Department of Computer Science and Engineering\\
+    Khulna University of Engineering \& Technology (KUET)\\[1.0cm]
 
     \vfill
     {\large \textbf{Date of Submission:} October 10, 2026}
@@ -155,9 +165,13 @@ The application serves as a comprehensive demonstration of foundational and adva
 
 \tableofcontents
 \newpage
+
+\begingroup
+\let\clearpage\relax
 \listoffigures
-\newpage
+\vspace{0.8cm}
 \listoftables
+\endgroup
 \newpage
 
 % -------------------------------------------------------------------------

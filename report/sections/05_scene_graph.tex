@@ -4,9 +4,9 @@
 \section{Scene Graph Architectural Overview}
 A flat collection of isolated 3D meshes cannot model complex architectural compositions, moving limbs, or physical assemblies where components are anchored to moving parents. To solve this, \textit{Matsuri Nights} implements an object-oriented hierarchical \textbf{Scene Graph} rooted at \texttt{SceneNode} (\texttt{src/SceneNode.h}).
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
-\includegraphics[width=0.95\textwidth]{figures/fig_scene_graph_tree.pdf}
+\includegraphics[width=0.82\textwidth]{figures/fig_scene_graph_tree.pdf}
 \caption{Hierarchical Scene Graph Tree illustrating the inheritance of spatial reference frames from \texttt{World\_Root} to sub-assemblies.}
 \label{fig:scene_graph_tree}
 \end{figure}

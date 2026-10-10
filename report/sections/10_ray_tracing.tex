@@ -49,10 +49,10 @@ For each hit point $\mathbf{p}_{\text{hit}}$:
     The ray origin is offset by $+0.003 \mathbf{N}$ to prevent self-intersection. Specular mirror reflections are vividly visible on the metallic gold vanishing box ($R = 0.85$), the magic orb ($R = 0.90$), and the polished stage floor ($R = 0.40$).
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \IfFileExists{figures/ss_17_gpu_raytracing.png}{%
-  \includegraphics[width=0.88\textwidth]{figures/ss_17_gpu_raytracing.png}%
+  \includegraphics[width=0.68\textwidth]{figures/ss_17_gpu_raytracing.png}%
 }{\fbox{ss\_17}}
 \caption{Real-time GPU Whitted ray tracer active in viewport, showing per-pixel analytical primary rays, hard shadows, and recursive mirror reflections.}
 \label{fig:gpu_raytracing}
@@ -77,9 +77,10 @@ The rendered image is saved to \texttt{raytraced\_snapshot.bmp} via \texttt{Text
 \section{Performance Comparison}
 Table~\ref{tab:rendering_performance} compares the execution characteristics of the three rendering pipelines supported in \textit{Matsuri Nights}.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
-\small
+\footnotesize
+\renewcommand{\arraystretch}{0.92}
 \begin{tabularx}{\textwidth}{p{3.8cm} p{2.2cm} p{3.2cm} p{5.5cm}}
 \toprule
 \textbf{Pipeline Architecture} & \textbf{Frame Rate} & \textbf{Shadow Fidelity} & \textbf{Reflection Capability} \\

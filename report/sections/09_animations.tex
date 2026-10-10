@@ -39,7 +39,14 @@ y_{\text{local}}(t) &= y_0 + A_{\text{levitate}} \cdot \sin(2\omega_{\text{orb}}
 where $R_{\text{orbit}} = 0.45\,\text{m}$, $\omega_{\text{orb}} = 2.4\,\text{rad/s}$, and $A_{\text{levitate}} = 0.12\,\text{m}$.
 Point Light 0 tracks the orb's world position, illuminating the magician's face, stage backdrop, and audience spectators with pulsing cyan radiance.
 
-\begin{figure}[H]
+\section{System 3: Takoyaki Projectile Hops and Kakigori Shaver Wheel}
+\subsection{Takoyaki Food Stall Kinematics}
+Each of the six individual octopus balls on the hot cast-iron griddle executes continuous jumping motion. Using Equation~\ref{eq:takoyaki_projectile}, vertical displacement follows a parabolic trajectory ($h_{\text{max}} = 0.18\,\text{m}$, $T = 0.95\,\text{s}$) while rotating continuously about the $Y$-axis ($360^\circ/\text{s}$).
+
+\subsection{Kakigori Shaved Ice Machine Kinematics}
+The vintage shaved ice machine features an iron flywheel crank rotating at $\omega_{\text{flywheel}} = 3.6\,\text{rad/s}$, geared to an internal ice block blade. On the counter, six colorful shaved ice bowls rotate synchronously.
+
+\begin{figure}[htbp]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
   \centering
@@ -56,20 +63,7 @@ Point Light 0 tracks the orb's world position, illuminating the magician's face,
   }{\fbox{ss\_05}}
   \caption{Vanishing Box Illusion Trick}
   \label{fig:vanishing_box}
-\end{subfigure}
-\caption{Theatrical Magic Show animations and hierarchical reference frames.}
-\label{fig:magic_show_figures}
-\end{figure}
-
-\section{System 3: Takoyaki Projectile Hops and Kakigori Shaver Wheel}
-\subsection{Takoyaki Food Stall Kinematics}
-Each of the six individual octopus balls on the hot cast-iron griddle executes continuous jumping motion. Using Equation~\ref{eq:takoyaki_projectile}, vertical displacement follows a parabolic trajectory ($h_{\text{max}} = 0.18\,\text{m}$, $T = 0.95\,\text{s}$) while rotating continuously about the $Y$-axis ($360^\circ/\text{s}$).
-
-\subsection{Kakigori Shaved Ice Machine Kinematics}
-The vintage shaved ice machine features an iron flywheel crank rotating at $\omega_{\text{flywheel}} = 3.6\,\text{rad/s}$, geared to an internal ice block blade. On the counter, six colorful shaved ice bowls rotate synchronously.
-
-\begin{figure}[H]
-\centering
+\end{subfigure}\\[4pt]
 \begin{subfigure}[b]{0.48\textwidth}
   \centering
   \IfFileExists{figures/ss_06_takoyaki_stall.png}{%
@@ -86,8 +80,8 @@ The vintage shaved ice machine features an iron flywheel crank rotating at $\ome
   \caption{Kakigori Shaved Ice Dessert Stall}
   \label{fig:kakigori_stall}
 \end{subfigure}
-\caption{Festival food stall animations and complex moving assemblies.}
-\label{fig:stalls_figures}
+\caption{Theatrical magic show and culinary food stall animated assemblies.}
+\label{fig:performances_and_stalls}
 \end{figure}
 
 \section{System 4: Vanishing Box 5-Phase Illusion Sequence}
@@ -116,7 +110,15 @@ The pedestrian crowd figures walking down the street possess a 10-bone hierarchi
     \item \textbf{Torso Bobbing:} Vertical bobbing simulates the gait cycle: $y = y_0 + 0.04 \cdot |\sin(\omega t)|$.
 \end{itemize}
 
-\begin{figure}[H]
+\section{System 6: Interactive Sliding Shoji Doors and Windows}
+\subsection{Proximity Detection and Smoothstep Sliding}
+When the camera approaches within 5.0 meters of any Machiya building entrance, pressing \textbf{H} toggles the front Shoji entrance door, while pressing \textbf{G} toggles the sliding windows. The sliding progress $\tau \in [0, 1]$ transitions smoothly across $T = 0.65\,\text{s}$ using cubic Hermite interpolation:
+\begin{equation}
+\operatorname{smoothstep}(\tau) = 3\tau^2 - 2\tau^3, \quad x(t) = x_{\text{closed}} + \Delta x_{\text{max}} \cdot \operatorname{smoothstep}(\tau)
+\end{equation}
+where max doorway travel $\Delta x_{\text{max}} = 1.45\,\text{m}$ and window travel is $0.90\,\text{m}$.
+
+\begin{figure}[htbp]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
   \centering
@@ -133,21 +135,7 @@ The pedestrian crowd figures walking down the street possess a 10-bone hierarchi
   }{\fbox{ss\_20}}
   \caption{Apex Fireworks Sky Burst Particle Flash}
   \label{fig:fireworks_burst}
-\end{subfigure}
-\caption{Dynamic crowd pedestrians and sky particle fireworks.}
-\label{fig:crowd_fireworks_figures}
-\end{figure}
-
-\section{System 6: Interactive Sliding Shoji Doors and Windows}
-\subsection{Proximity Detection and Smoothstep Sliding}
-When the camera approaches within 5.0 meters of any Machiya building entrance, pressing \textbf{H} toggles the front Shoji entrance door, while pressing \textbf{G} toggles the sliding windows. The sliding progress $\tau \in [0, 1]$ transitions smoothly across $T = 0.65\,\text{s}$ using cubic Hermite interpolation:
-\begin{equation}
-\operatorname{smoothstep}(\tau) = 3\tau^2 - 2\tau^3, \quad x(t) = x_{\text{closed}} + \Delta x_{\text{max}} \cdot \operatorname{smoothstep}(\tau)
-\end{equation}
-where max doorway travel $\Delta x_{\text{max}} = 1.45\,\text{m}$ and window travel is $0.90\,\text{m}$.
-
-\begin{figure}[H]
-\centering
+\end{subfigure}\\[4pt]
 \begin{subfigure}[b]{0.48\textwidth}
   \centering
   \IfFileExists{figures/ss_08_machiya_exterior.png}{%
@@ -164,8 +152,8 @@ where max doorway travel $\Delta x_{\text{max}} = 1.45\,\text{m}$ and window tra
   \caption{Interior View through Open Shoji Door}
   \label{fig:machiya_int}
 \end{subfigure}
-\caption{Traditional Machiya townhouses and interactive sliding Shoji doors.}
-\label{fig:machiya_figures}
+\caption{Dynamic crowd pedestrians, sky fireworks, and interactive Machiya townhouses.}
+\label{fig:town_crowd_fireworks}
 \end{figure}
 
 \subsection{Continuous Collision Detection and Doorway Portals}
@@ -185,7 +173,7 @@ Pressing the \textbf{B} key toggles between \textbf{Walk Mode} (solid walls and 
     \item \textbf{Fireworks Particle Rockets (\texttt{src/Objects.h: lines 4917--5110}):} Pressing \textbf{F} launches an upward rocket with velocity $v_y = 28\,\text{m/s}$. Upon reaching apex altitude ($y \approx 45\,\text{m}$), the rocket explodes into a spherical cloud of expanding colored spark particles affected by air drag and gravity. Point Light 5 flashes at the burst center, casting dramatic transient illumination across the town.
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
   \centering

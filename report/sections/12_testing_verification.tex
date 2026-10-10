@@ -7,9 +7,10 @@ Graphics applications are notoriously difficult to test reliably. Visual inspect
 \section{The 312-Test Automated Test Harness}
 When invoked with \texttt{--test}, the application initializes a hidden OpenGL context (\texttt{glfwWindowHint(GLFW\_VISIBLE, GLFW\_FALSE)}) and executes \texttt{runAutomatedTestSuite()} (\texttt{Main.cpp: lines 510--960}). The test suite verifies 312 discrete unit assertions partitioned across five specialized domains:
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
-\small
+\footnotesize
+\renewcommand{\arraystretch}{0.92}
 \begin{tabularx}{\textwidth}{p{4.2cm} p{2.2cm} p{8.0cm}}
 \toprule
 \textbf{Test Domain} & \textbf{Test Count} & \textbf{Verified Architectural Behaviors} \\

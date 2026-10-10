@@ -1449,7 +1449,7 @@ The completed codebase significantly exceeds the scope outlined in the initial `
 7. **15 Controllable Inspectables & Dual Selection Engine (<kbd>T</kbd> / <kbd>Shift+T</kbd>):** Context-sensitive view-cone auto-selection combined with 6-DOF manual transformation controls.
 8. **Automated Verification Harness (`Main.cpp --test`):** Comprehensive automated test harness asserting 312 unit and integration conditions with 100% success.
 9. **Rich Curved Geometry Generators (`Curves.h`):** Bézier tubes, Catmull-Rom splines, Bishop frames, and curved architectural *sori* beams.
-10. **Academic LaTeX Report & Automated Capture (`--capture-report`):** 50-page formal laboratory report (`report/main.pdf`) with 6 vector PDF diagrams and 20 automated high-resolution viewport screenshots captured across all key visual states.
+10. **Academic LaTeX Report & Automated Capture (`--capture-report`):** Concise 40-page (34-page core) formal laboratory report (`report/main.pdf`) with 6 vector PDF diagrams, 20 automated high-resolution viewport screenshots, and Gemini 3.8 Flash development acknowledgments.
 
 ### 14.2 Plan Divergences & Code Harmonization
 - **Light Toggle Keybinding:** Originally proposed as <kbd>L</kbd>. Remapped to <kbd>0</kbd> and <kbd>Numpad 0</kbd> in code to avoid conflicting with the $+X$ manual translation key (<kbd>J</kbd>/<kbd>L</kbd>).

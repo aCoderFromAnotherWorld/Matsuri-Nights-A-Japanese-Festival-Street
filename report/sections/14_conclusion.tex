@@ -17,9 +17,17 @@ While \textit{Matsuri Nights} delivers exceptional visual fidelity and real-time
     \item \textbf{Physically-Based Rendering (PBR):} Migrating from Blinn-Phong empirical reflectance to the microfacet Cook-Torrance BRDF with the GGX normal distribution function, metallic-roughness parameterization, and Image-Based Lighting (IBL) via cubemaps.
     \item \textbf{Normal and Parallax Occlusion Mapping:} Utilizing tangent space normal maps and height fields to simulate 3D relief displacement across stone cobblestones and ceramic roof tiles without increasing polygonal geometric complexity.
     \item \textbf{Volumetric Fog and Light Shafts (God Rays):} Ray-marching participating media through the 2048$\times$2048 shadow depth map to render atmospheric haze and volumetric light shafts emanating from lanterns.
-    \item \textbf{GPU Skeletal Skinning:} Implementing dual-quaternion or linear-blend vertex skinning on the vertex shader to drive smoothly deforming character meshes rather than rigid hierarchical limb segments.
 \end{itemize}
 
+\section*{Acknowledgments}
+\addcontentsline{toc}{section}{Acknowledgments}
+The author gratefully acknowledges the vital assistance of \textbf{Gemini 3.8 Flash} for helping to build, engineer, and document the \textit{Matsuri Nights} project. Gemini 3.8 Flash contributed extensively across architectural design, mathematical derivations, modern OpenGL shader programming, kinematic animation physics, automated test suite construction, and comprehensive technical documentation.
+
+\begingroup
+\renewcommand{\chapter}[2]{%
+  \section*{#2}%
+  \addcontentsline{toc}{section}{#2}%
+}
 \begin{thebibliography}{99}
 \bibitem{learnopengl} Joey de Vries, \textit{LearnOpenGL: Learn Modern OpenGL Graphics Programming in a Step-by-Step Fashion}, Kendall \& Wulf, 2020.
 \bibitem{rtr4} Tomas Akenine-M{\"o}ller, Eric Haines, Naty Hoffman, Angelo Pesce, Michal Iwanicki, and S{\'e}bastien Hillaire, \textit{Real-Time Rendering}, 4th Edition, CRC Press, 2018.
@@ -29,3 +37,4 @@ While \textit{Matsuri Nights} delivers exceptional visual fidelity and real-time
 \bibitem{bishop} Richard L. Bishop, ``There is More Than One Way to Frame a Curve,'' \textit{The American Mathematical Monthly}, vol. 82, no. 3, pp. 246--251, 1975.
 \bibitem{opengl33} Khronos Group, \textit{The OpenGL Graphics System: A Specification (Version 3.3 Core Profile)}, March 2010.
 \end{thebibliography}
+\endgroup

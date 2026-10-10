@@ -4,9 +4,10 @@
 \section{Core Libraries and Dependency Stack}
 To ensure deterministic execution, high computational performance, and strict platform compliance, \textit{Matsuri Nights} avoids heavy third-party graphics engines (such as Unity or Unreal) and is developed strictly at the systems graphics level. Table~\ref{tab:dependencies} summarizes the software libraries utilized across the codebase.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
-\small
+\footnotesize
+\renewcommand{\arraystretch}{0.92}
 \begin{tabularx}{\textwidth}{p{3.2cm} p{2.2cm} p{5.5cm} p{3.5cm}}
 \toprule
 \textbf{Library / Tool} & \textbf{Exact Version} & \textbf{Role in Engine Architecture} & \textbf{Linkage Type} \\
@@ -35,7 +36,7 @@ To ensure deterministic execution, high computational performance, and strict pl
 \section{Project Directory Structure}
 The repository separates first-party source logic, shaders, UI components, static assets, and third-party libraries into clean structural tiers:
 
-\begin{lstlisting}[basicstyle=\ttfamily\scriptsize, frame=single, backgroundcolor=\color{gray!10}]
+\begin{lstlisting}[basicstyle=\ttfamily\tiny, frame=single, backgroundcolor=\color{gray!10}, aboveskip=2pt, belowskip=2pt]
 Matsuri-Nights-A-Japanese-Festival-Street/
 |-- assets/
 |   |-- textures/                  # Synthesized 24-bit BMP texture assets (256x256)

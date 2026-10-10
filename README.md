@@ -18,12 +18,12 @@
 * **Interactive Doorways & Collision Engine:** Sliding Shoji lattice doors (<kbd>H</kbd>) and windows (<kbd>G</kbd>) with dynamic AABB collision masking (<kbd>B</kbd>).
 * **In-Window Minimalist HUD:** Sleek, semi-transparent 2D orthographic overlay (<kbd>F1</kbd>) powered by an embedded $256 \times 256$ Consolas Bold texture atlas and context-sensitive interaction engine.
 * **Automated Verification Harness:** 312 / 312 unit and integration tests passing (`--test`).
-* **Academic LaTeX Report:** 50-page formal laboratory project report (`report/main.pdf`) with 6 vector diagrams and 20 automated high-resolution figure captures.
+* **Academic LaTeX Report:** Concise 40-page (34-page core) academic laboratory report (`report/main.pdf`) with 6 vector diagrams, 20 figure captures, and Gemini 3.8 Flash acknowledgments.
 
 ---
 
 ## Documentation Index
-* **[`report/main.pdf`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/report/main.pdf):** Authoritative 50-page academic laboratory report formatted in LaTeX (A4, Times New Roman, MiKTeX `pdflatex`) submitted for CSE4102.
+* **[`report/main.pdf`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/report/main.pdf):** Authoritative 40-page (34-page core) academic laboratory report formatted in LaTeX (A4, Times New Roman, MiKTeX `pdflatex`) submitted for CSE4102.
 * **[`Details.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Details.md):** Exhaustive technical specification covering every system, math formula, shader layout, lighting source, and asset hierarchy.
 * **[`Plan.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Plan.md):** Master milestone ledger with all Phase 1, Phase 2, and Phase 3 goals verified and completed.
 * **[`agy.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/agy.md):** Complete chronological engineering and development log tracking every feature, bug fix, and optimization.

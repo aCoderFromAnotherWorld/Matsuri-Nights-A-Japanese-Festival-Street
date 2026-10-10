@@ -4,9 +4,10 @@
 \section{The 16-Light Dynamic Optical Architecture}
 The illumination pipeline in \textit{Matsuri Nights} models the complex nocturnal atmosphere of an illuminated festival street. Shaders operate in forward rendering with \textbf{16 active dynamic light sources}: 1 Directional Light (Sun/Moon), 14 Point Lights, and 1 Theatrical Spotlight. Table~\ref{tab:lights_catalog} provides the complete technical specification of every light source.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \scriptsize
+\renewcommand{\arraystretch}{0.90}
 \begin{tabularx}{\textwidth}{p{1.4cm} p{1.6cm} p{2.8cm} p{2.3cm} p{2.3cm} p{3.2cm}}
 \toprule
 \textbf{Light ID} & \textbf{Type} & \textbf{Physical Entity} & \textbf{Diffuse Color} & \textbf{Specular Color} & \textbf{Attenuation / Coupling} \\
@@ -56,7 +57,7 @@ To demonstrate how individual optical components contribute to the final image, 
     \item \textbf{Mode 2: Ambient-Only ($I = I_a$):} Both diffuse scattering and specular reflection are removed, illustrating the unoccluded baseline indirect illumination.
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \begin{subfigure}[b]{0.32\textwidth}
   \centering
@@ -89,9 +90,9 @@ To demonstrate how individual optical components contribute to the final image, 
 \section{Day / Night Sky Dome and Atmospheric Transition}
 Pressing the \textbf{N} key smoothly drives the state variable \texttt{dayNightFactor} between $0.0$ (Daylight) and $1.0$ (Festival Night). Figure~\ref{fig:day_night_curves_diagram} plots the modulation of celestial and artificial light intensities across this transition.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
-\includegraphics[width=0.62\textwidth]{figures/fig_day_night_curves.pdf}
+\includegraphics[width=0.52\textwidth]{figures/fig_day_night_curves.pdf}
 \caption{Continuous light modulation curves across the Day/Night state transition.}
 \label{fig:day_night_curves_diagram}
 \end{figure}
@@ -107,7 +108,7 @@ The celestial sphere (\texttt{isSky == true}) evaluates view direction $\mathbf{
     \end{equation}
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
   \centering
