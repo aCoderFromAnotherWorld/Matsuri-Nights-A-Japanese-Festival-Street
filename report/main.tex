@@ -1,0 +1,183 @@
+\documentclass[11pt,a4paper]{report}
+
+% =========================================================================
+% Academic Packages and Styling
+% =========================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{mathptmx} % Times New Roman typography for text and mathematics
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs,array,tabularx,multirow}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption,subcaption}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage[hidelinks,pdftex,bookmarks=true,bookmarksnumbered=true]{hyperref}
+
+% Configure Listings code style
+\lstdefinelanguage{GLSL}{
+    keywords={attribute, const, uniform, varying, break, continue, do, for, while,
+              if, else, in, out, inout, float, int, void, bool, true, false,
+              discard, return, mat2, mat3, mat4, vec2, vec3, vec4, ivec2, ivec3, ivec4,
+              bvec2, bvec3, bvec4, sampler2D, samplerCube, struct, layout},
+    morekeywords=[2]{radians, degrees, sin, cos, tan, asin, acos, atan, pow,
+                     exp, log, exp2, log2, sqrt, inversesqrt, abs, sign, floor,
+                     ceil, fract, mod, min, max, clamp, mix, step, smoothstep,
+                     length, distance, dot, cross, normalize, faceforward, reflect,
+                     refract, matrixCompMult, lessThan, lessThanEqual, greaterThan,
+                     greaterThanEqual, equal, notEqual, any, all, not, texture,
+                     texture2D, textureProj, textureLod},
+    sensitive=true,
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+    morestring=[d]'
+}
+
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{gray!8},
+    frame=single,
+    rulecolor=\color{gray!30},
+    keywordstyle=\color{blue!80!black}\bfseries,
+    commentstyle=\color{green!50!black}\itshape,
+    stringstyle=\color{red!70!black},
+    numbers=none,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showstringspaces=false
+}
+
+% Page numbering and Header/Footer configuration
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\nouppercase{\leftmark}}
+\fancyhead[R]{\small CSE4102: Matsuri Nights}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.0pt}
+
+% Section title formatting
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{18pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{10pt}{25pt}
+
+% Figure macro with fallback placeholder
+\newcommand{\shot}[3]{%
+  \begin{figure}[H]
+    \centering
+    \IfFileExists{figures/#1}{%
+      \includegraphics[width=0.88\textwidth]{figures/#1}%
+    }{%
+      \fbox{\parbox[c][0.35\textwidth][c]{0.88\textwidth}{\centering \textbf{Figure Placeholder: #1}\\\textit{#2}}}%
+    }%
+    \caption{#2}
+    \label{#3}
+  \end{figure}
+}
+
+% =========================================================================
+% Document Body
+% =========================================================================
+\begin{document}
+
+% -------------------------------------------------------------------------
+% Cover Page
+% -------------------------------------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+
+    {\LARGE \textbf{KHULNA UNIVERSITY OF ENGINEERING \& TECHNOLOGY}}\\[0.3cm]
+    {\large Department of Computer Science and Engineering}\\[1.5cm]
+
+    \rule{\linewidth}{1.2pt}\\[0.4cm]
+    {\huge \textbf{MATSURI NIGHTS}}\\[0.2cm]
+    {\Large \textbf{A Japanese Festival Street in Modern OpenGL}}\\[0.2cm]
+    \rule{\linewidth}{1.2pt}\\[1.2cm]
+
+    {\large \textbf{Course Code:} CSE4102}\\[0.2cm]
+    {\large \textbf{Course Title:} Computer Graphics and Image Processing Laboratory}\\[2.0cm]
+
+    \begin{minipage}{0.48\textwidth}
+        \flushleft
+        \textbf{Submitted By:}\\[0.2cm]
+        \textbf{MD. Abu Hasanat Soykot}\\
+        Roll No: \textbf{2107100}\\
+        Group: \textbf{B2}\\
+        Year: 4th, Term: 1st\\
+        Dept. of Computer Science and Engineering\\
+        Khulna University of Engineering \& Technology
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \flushright
+        \textbf{Submitted To:}\\[0.2cm]
+        \textbf{1. Md Tajmilur Rahman}\\
+        Lecturer\\
+        Dept. of Computer Science and Engineering\\
+        KUET\\[0.3cm]
+        \textbf{2. Md. Mubtashim Abrar Nihal}\\
+        Lecturer\\
+        Dept. of Computer Science and Engineering\\
+        KUET
+    \end{minipage}
+
+    \vfill
+    {\large \textbf{Date of Submission:} October 10, 2026}
+\end{titlepage}
+
+% -------------------------------------------------------------------------
+% Front Matter
+% -------------------------------------------------------------------------
+\pagenumbering{roman}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+This report presents \textbf{``Matsuri Nights --- A Japanese Festival Street''}, an interactive real-time 3D computer graphics system developed from first principles using ISO C++20 and Modern OpenGL (Core Profile 3.3). Developed to fulfill the laboratory requirements of CSE4102 at Khulna University of Engineering \& Technology (KUET), the project renders an atmospheric, culturally authentic Japanese summer festival street (\textit{Matsuri}) featuring traditional two-story townhouses (\textit{Machiya}), a sacred \textit{Torii} shrine gate, animated food stalls (\textit{Yatai}), weeping cherry blossom trees (\textit{Sakura}), an articulated stage magician, and pedestrian crowds.
+
+The application serves as a comprehensive demonstration of foundational and advanced graphics engineering:
+\begin{itemize}
+    \item \textbf{Hierarchical 3D Transformations:} Affine TRS matrix compounding along a multi-level scene graph tree with dirty-flag caching.
+    \item \textbf{Motion in Moving Reference Frames:} Mathematical kinematic linkages wherein child nodes (swinging lanterns, orbiting magical orbs, pedestrian limbs) evaluate motion relative to moving parent coordinate systems.
+    \item \textbf{Optical Illumination:} A forward Blinn-Phong shading pipeline coordinating 16 active dynamic light sources (sun/moon directional light, 14 point lights, and 1 tracking spotlight) with smooth distance attenuation, spotlight cutoff cones, dynamic celestial sky domes, and runtime shading mode switching.
+    \item \textbf{Shadow Mapping:} A 2048$\times$2048 directional light depth pass featuring front-face culling, slope-scaled depth bias, and 16-sample Percentage-Closer Filtering (PCF) soft penumbra convolution.
+    \item \textbf{Dual Ray Tracing Extensions:} An interactive real-time GPU Whitted ray tracer operating on a full-screen quad supporting recursive mirror reflections, alongside an asynchronous multi-threaded CPU snapshot ray tracer.
+    \item \textbf{Contextual Interaction and Automated Testing:} Continuous collision detection with doorway portals, an embedded bitmap font HUD overlay, and an automated verification suite containing 312 unit assertions passing with 100\% success.
+\end{itemize}
+\newpage
+
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+\newpage
+
+% -------------------------------------------------------------------------
+% Main Chapters
+% -------------------------------------------------------------------------
+\pagenumbering{arabic}
+
+\input{sections/01_introduction}
+\input{sections/02_tech_stack}
+\input{sections/03_mathematics}
+\input{sections/04_geometry}
+\input{sections/05_scene_graph}
+\input{sections/06_lighting_shading}
+\input{sections/07_shadows}
+\input{sections/08_texturing}
+\input{sections/09_animations}
+\input{sections/10_ray_tracing}
+\input{sections/11_hud_interaction}
+\input{sections/12_testing_verification}
+\input{sections/13_controls_discrepancies}
+\input{sections/14_conclusion}
+
+\end{document}

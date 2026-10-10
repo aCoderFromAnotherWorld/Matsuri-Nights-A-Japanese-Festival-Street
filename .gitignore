@@ -35,3 +35,13 @@ raytraced_snapshot.bmp
 
 # Generated local texture assets
 assets/
+
+# LaTeX auxiliary build files
+*.aux
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz

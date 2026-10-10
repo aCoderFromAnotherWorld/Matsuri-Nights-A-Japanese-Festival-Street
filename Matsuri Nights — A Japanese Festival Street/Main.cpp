@@ -1,9 +1,14 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #undef STB_IMAGE_IMPLEMENTATION
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+#undef STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "src/Shader.h"
 #include "src/Camera.h"
@@ -17,6 +22,8 @@
 #include <vector>
 #include <cmath>
 #include <iomanip>
+#include <functional>
+#include <filesystem>
 
 // Window dimensions
 const unsigned int SCR_WIDTH = 1280;
@@ -40,6 +47,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void processContinuousInput(GLFWwindow* window, Scene& scene);
 bool runAutomatedTestSuite(Scene& scene, Camera& camera, GLFWwindow* window);
+bool runAutomatedReportCapture(Scene& scene, Camera& camera, GLFWwindow* window, Shader& basicShader);
 void captureViewportScreenshot(int width, int height, const std::string& filename);
 
 // Global scene pointer for callbacks
@@ -55,7 +63,14 @@ float g_CurrentMs = 16.6f;
 
 int main(int argc, char** argv)
 {
-    bool runTests = (argc > 1 && std::string(argv[1]) == "--test");
+    bool runTests = false;
+    bool captureReport = false;
+    for (int i = 1; i < argc; ++i)
+    {
+        std::string arg = argv[i];
+        if (arg == "--test") runTests = true;
+        if (arg == "--capture-report") captureReport = true;
+    }
 
     // 1. Initialize GLFW
     glfwInit();
@@ -63,7 +78,7 @@ int main(int argc, char** argv)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    if (runTests)
+    if (runTests || captureReport)
     {
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     }
@@ -109,6 +124,14 @@ int main(int argc, char** argv)
     // Initialize In-Window HUD and Context Interaction System
     g_Hud.init();
     g_InteractionManager.init(scene);
+
+    if (captureReport)
+    {
+        bool success = runAutomatedReportCapture(scene, camera, window, basicShader);
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return success ? 0 : 1;
+    }
 
     if (runTests)
     {
@@ -287,22 +310,44 @@ void processContinuousInput(GLFWwindow* window, Scene& scene)
         scene.modifySelectedRotation(glm::vec3(0.0f, -rSpeed, 0.0f));
 }
 
-// Capture and export high-fidelity OpenGL viewport image to 24-bit uncompressed BMP
+// Capture and export high-fidelity OpenGL viewport image to PNG or 24-bit uncompressed BMP
 void captureViewportScreenshot(int width, int height, const std::string& filename)
 {
     if (width <= 0 || height <= 0) return;
+
+    std::filesystem::path filePath(filename);
+    if (filePath.has_parent_path())
+    {
+        std::error_code ec;
+        std::filesystem::create_directories(filePath.parent_path(), ec);
+    }
+
     std::vector<unsigned char> pixels(width * height * 3);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
-    // Vertical flip because OpenGL origin is bottom-left and BMP expects top-down
+    // Vertical flip because OpenGL origin is bottom-left and image formats expect top-down
     std::vector<unsigned char> flipped(width * height * 3);
     for (int y = 0; y < height; ++y)
     {
         memcpy(&flipped[y * width * 3], &pixels[(height - 1 - y) * width * 3], width * 3);
     }
-    TextureGenerator::writeBMP24(filename, width, height, flipped);
+
+    bool success = false;
+    std::string ext = filePath.extension().string();
+    for (auto& c : ext) c = static_cast<char>(tolower(c));
+
+    if (ext == ".png")
+    {
+        success = (stbi_write_png(filename.c_str(), width, height, 3, flipped.data(), width * 3) != 0);
+    }
+    else
+    {
+        success = TextureGenerator::writeBMP24(filename, width, height, flipped);
+    }
+
     std::cout << "\n========================================================" << std::endl;
-    std::cout << " [SCREENSHOT] Viewport image captured and exported to: " << filename << std::endl;
+    std::cout << " [SCREENSHOT] Viewport image captured (" << (success ? "SUCCESS" : "FAILED")
+              << ") and exported to: " << filename << std::endl;
     std::cout << "========================================================\n" << std::endl;
 }
 
@@ -892,14 +937,19 @@ bool runAutomatedTestSuite(Scene& scene, Camera& camera, GLFWwindow* window)
     scene.replayMagicTrick();
     testAssert("Magic Show Trick Replay Restarts Timer (Key M)", scene.vanishingBox->stateTimer == 0.0f);
 
-    // Verify Viewport Screenshot Export (Key F10 feature)
+    // Verify Viewport Screenshot Export (Key F10 feature: BMP & PNG)
     captureViewportScreenshot(64, 64, "test_screenshot.bmp");
     bool ssExists = std::filesystem::exists("test_screenshot.bmp") && std::filesystem::file_size("test_screenshot.bmp") > 100;
     testAssert("Viewport Screenshot BMP Exported Cleanly", ssExists);
 
+    captureViewportScreenshot(64, 64, "test_screenshot.png");
+    bool pngExists = std::filesystem::exists("test_screenshot.png") && std::filesystem::file_size("test_screenshot.png") > 100;
+    testAssert("Viewport Screenshot PNG Exported Cleanly", pngExists);
+
     // Clean up temporary test files
     std::filesystem::remove("screenshot_hud_minimal.bmp");
     std::filesystem::remove("test_screenshot.bmp");
+    std::filesystem::remove("test_screenshot.png");
 
     // -------------------------------------------------------------------------
     // FINAL SUMMARY
@@ -910,4 +960,298 @@ bool runAutomatedTestSuite(Scene& scene, Camera& camera, GLFWwindow* window)
     std::cout << "========================================================================\n\n";
 
     return (passedTests == totalTests);
+}
+
+// =========================================================================
+// Automated Report Screenshot Capture Suite for LaTeX Final Report
+// =========================================================================
+bool runAutomatedReportCapture(Scene& scene, Camera& camera, GLFWwindow* window, Shader& basicShader)
+{
+    std::cout << "\n========================================================================\n";
+    std::cout << "  MATSURI NIGHTS - AUTOMATED REPORT FIGURE CAPTURE (--capture-report)\n";
+    std::cout << "  Generating High-Resolution PNG Screenshots for Academic Report\n";
+    std::cout << "========================================================================\n\n";
+
+    // Determine target output directory
+    std::vector<std::string> outputDirs;
+    std::string dir1 = "report/figures/";
+    std::string dir2 = "../report/figures/";
+
+    std::error_code ec;
+    std::filesystem::create_directories(dir1, ec);
+    std::filesystem::create_directories(dir2, ec);
+    outputDirs.push_back(dir1);
+    outputDirs.push_back(dir2);
+
+    struct ReportShot
+    {
+        std::string filename;
+        std::string caption;
+        glm::vec3 camPos;
+        float yaw;
+        float pitch;
+        float zoom;
+        float dayNight;
+        int shadingMode; // 0 = Blinn-Phong, 1 = Diffuse, 2 = Ambient
+        bool enableTextures;
+        bool enableShadows;
+        bool lanternLights;
+        bool rayTracing;
+        bool showHud;
+        std::function<void(Scene&)> setup;
+    };
+
+    std::vector<ReportShot> shots = {
+        // 1. Overview Day
+        {
+            "ss_01_overview_day.png",
+            "Preset 1: Full festival street overview in daytime with solar disc and soft shadows",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            0.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 2. Overview Night
+        {
+            "ss_02_overview_night.png",
+            "Preset 1: Full festival street overview at night with 14 point lights and starry sky",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            1.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 3. Torii Gate Night
+        {
+            "ss_03_torii_gate.png",
+            "Preset 3: Grand Torii shrine gate with glowing Chochin lanterns and Shimenawa rope",
+            glm::vec3(0.0f, 2.5f, -18.0f), -90.0f, 25.0f, 45.0f,
+            1.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 4. Magic Show Stage & Orb
+        {
+            "ss_04_magic_show_orb.png",
+            "Preset 2: Magic stage with magician figure and orbiting cyan magical orb point light",
+            glm::vec3(6.2f, 2.2f, -10.5f), -90.0f, 2.0f, 45.0f,
+            1.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 5. Vanishing Box Illusion
+        {
+            "ss_05_vanishing_box.png",
+            "Vanishing box illusion: golden chest during animated scaling and levitation phase",
+            glm::vec3(2.0f, 2.0f, -18.0f), -115.0f, 4.0f, 42.0f,
+            1.0f, 0, true, true, true, false, false,
+            [](Scene& s) { if (s.vanishingBox) s.vanishingBox->stateTimer = 2.8f; }
+        },
+        // 6. Takoyaki Food Stall
+        {
+            "ss_06_takoyaki_stall.png",
+            "Takoyaki stall with hopping balls, sauce texture, and warm canopy lantern",
+            glm::vec3(-5.2f, 1.8f, 8.5f), -90.0f, -5.0f, 45.0f,
+            1.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 7. Kakigori Dessert Stall
+        {
+            "ss_07_kakigori_stall.png",
+            "Kakigori shaved ice dessert stall with rotating flywheel, ice block, and colorful bowls",
+            glm::vec3(5.2f, 1.8f, 8.5f), -90.0f, -5.0f, 45.0f,
+            1.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 8. Machiya Townhouses Exterior
+        {
+            "ss_08_machiya_exterior.png",
+            "Exterior view of Machiya townhouses L1 & L2 featuring curved roof tiles and Shoji screens",
+            glm::vec3(-5.5f, 2.5f, 20.0f), -140.0f, 8.0f, 45.0f,
+            0.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 9. Machiya Interior & Shoji Screens
+        {
+            "ss_09_machiya_interior_shoji.png",
+            "Interior of Machiya living room: Tatami floor, Andon lamp, and glowing Shoji screens",
+            glm::vec3(-10.5f, 2.0f, 15.0f), 30.0f, 0.0f, 48.0f,
+            1.0f, 0, true, true, true, false, false,
+            [](Scene& s) {
+                if (!s.buildings.empty()) {
+                    s.buildings[0]->isDoorOpen = true;
+                    s.buildings[0]->doorSlideProgress = 1.0f;
+                }
+            }
+        },
+        // 10. Sakura Tree & Blossom Petals
+        {
+            "ss_10_sakura_tree_petals.png",
+            "Cherry blossom tree with curving cubic Bezier boughs and animated falling petals",
+            glm::vec3(6.5f, 2.2f, -15.0f), -85.0f, 15.0f, 45.0f,
+            1.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 11. Shading Mode: Blinn-Phong
+        {
+            "ss_11_shading_blinn_phong.png",
+            "Blinn-Phong illumination: combined ambient, diffuse, and specular highlights",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            1.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 12. Shading Mode: Diffuse Only
+        {
+            "ss_12_shading_diffuse_only.png",
+            "Diffuse only (Lambertian shading) with specular highlights zeroed out",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            1.0f, 1, true, true, true, false, false, nullptr
+        },
+        // 13. Shading Mode: Ambient Only
+        {
+            "ss_13_shading_ambient_only.png",
+            "Ambient only flat illumination demonstrating baseline indirect lighting",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            1.0f, 2, true, true, true, false, false, nullptr
+        },
+        // 14. Textures Disabled
+        {
+            "ss_14_textures_disabled.png",
+            "Raw geometric material colors with procedural diffuse textures disabled",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            0.0f, 0, false, true, true, false, false, nullptr
+        },
+        // 15. Shadows Disabled
+        {
+            "ss_15_shadows_disabled.png",
+            "Daytime street with directional shadow mapping disabled (flat unshadowed lighting)",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            0.0f, 0, true, false, true, false, false, nullptr
+        },
+        // 16. PCF Soft Shadows Enabled
+        {
+            "ss_16_pcf_soft_shadows.png",
+            "16-sample PCF soft shadow mapping active demonstrating filtered contact penumbrae",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            0.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 17. Real-Time GPU Ray Tracing
+        {
+            "ss_17_gpu_raytracing.png",
+            "Real-time GPU Whitted ray tracer: per-pixel primary rays, hard shadows, and mirror reflections",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            1.0f, 0, true, true, true, true, false, nullptr
+        },
+        // 18. Minimal In-Window HUD Overlay
+        {
+            "ss_18_hud_overlay.png",
+            "In-window minimal HUD overlay displaying FPS, selected object, and contextual control hints",
+            glm::vec3(0.0f, 3.5f, 26.0f), -90.0f, -2.0f, 45.0f,
+            1.0f, 0, true, true, true, false, true, nullptr
+        },
+        // 19. Crowd Walkers Limb Cycles
+        {
+            "ss_19_crowd_walkers.png",
+            "Hierarchical pedestrian crowd figures walking down street with swinging limbs and geta sandals",
+            glm::vec3(-1.5f, 1.8f, 5.0f), -90.0f, -2.0f, 45.0f,
+            1.0f, 0, true, true, true, false, false, nullptr
+        },
+        // 20. Fireworks Sky Burst
+        {
+            "ss_20_fireworks_burst.png",
+            "Nocturnal sky illuminated by apex fireworks burst particle flash (Point Light 5 active)",
+            glm::vec3(0.0f, 3.0f, -10.0f), -90.0f, 35.0f, 45.0f,
+            1.0f, 0, true, true, true, false, false,
+            [](Scene& s) {
+                s.triggerFirework();
+                s.update(1.2f);
+                s.updateLighting(1.2f);
+            }
+        }
+    };
+
+    int capturedCount = 0;
+    float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
+
+    for (size_t i = 0; i < shots.size(); ++i)
+    {
+        const auto& shot = shots[i];
+        std::cout << "[REPORT CAPTURE " << (i + 1) << "/" << shots.size() << "] Setting up: "
+                  << shot.filename << " - " << shot.caption << "\n";
+
+        // 1. Camera configuration
+        camera.Position = shot.camPos;
+        camera.Yaw = shot.yaw;
+        camera.Pitch = shot.pitch;
+        camera.Zoom = shot.zoom;
+        camera.ProcessMouseMovement(0.0f, 0.0f); // Recalculate Front/Right/Up
+
+        // 2. Scene state configuration
+        scene.dayNightFactor = shot.dayNight;
+        scene.shadingMode = shot.shadingMode;
+        scene.enableTextures = shot.enableTextures;
+        scene.enableShadows = shot.enableShadows;
+        scene.lanternLightsOn = shot.lanternLights;
+        scene.rayTracingMode = shot.rayTracing;
+
+        // 3. Custom setup hook
+        if (shot.setup)
+        {
+            shot.setup(scene);
+        }
+
+        // 4. Update scene physics & lighting
+        scene.update(0.016f);
+        scene.updateLighting(0.016f);
+        g_InteractionManager.update(camera, 0.016f, scene);
+
+        // 5. Render Scene
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+        glClearColor(0.08f, 0.09f, 0.14f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        if (scene.rayTracingMode)
+        {
+            scene.renderRayTraced(camera, SCR_WIDTH, SCR_HEIGHT);
+        }
+        else
+        {
+            scene.render(basicShader, camera, aspect, SCR_WIDTH, SCR_HEIGHT);
+        }
+
+        // 6. Render HUD if requested
+        if (shot.showHud)
+        {
+            g_Hud.isVisible = true;
+            g_Hud.update(0.1f, camera, scene, g_InteractionManager, 60.0f, 16.6f, SCR_WIDTH, SCR_HEIGHT);
+            g_Hud.render(SCR_WIDTH, SCR_HEIGHT);
+        }
+
+        // Finish draw calls
+        glFinish();
+
+        // 7. Capture screenshots to all output directories
+        bool allSaved = true;
+        for (const auto& dir : outputDirs)
+        {
+            std::string outPath = dir + shot.filename;
+            captureViewportScreenshot(SCR_WIDTH, SCR_HEIGHT, outPath);
+            if (!std::filesystem::exists(outPath) || std::filesystem::file_size(outPath) < 1000)
+            {
+                allSaved = false;
+            }
+        }
+
+        if (allSaved)
+        {
+            capturedCount++;
+            std::cout << "  -> Successfully exported: " << shot.filename << "\n\n";
+        }
+        else
+        {
+            std::cerr << "  -> FAILED to export: " << shot.filename << "\n\n";
+        }
+    }
+
+    // Reset scene to clean baseline state
+    scene.dayNightFactor = 0.0f;
+    scene.shadingMode = 0;
+    scene.enableTextures = true;
+    scene.enableShadows = true;
+    scene.lanternLightsOn = true;
+    scene.rayTracingMode = false;
+    g_Hud.isVisible = true;
+
+    std::cout << "========================================================================\n";
+    std::cout << "  REPORT CAPTURE SUMMARY: " << capturedCount << " / " << shots.size()
+              << " FIGURES EXPORTED (" << (capturedCount == (int)shots.size() ? "100% COMPLETE" : "PARTIAL") << ")\n";
+    std::cout << "========================================================================\n\n";
+
+    return (capturedCount == (int)shots.size());
 }

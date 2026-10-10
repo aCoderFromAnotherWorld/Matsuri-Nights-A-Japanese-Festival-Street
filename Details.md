@@ -224,7 +224,7 @@ Execute the precompiled binary with the `--test` flag:
 ```powershell
 & ".\Matsuri Nights — A Japanese Festival Street\x64\Release\Matsuri Nights — A Japanese Festival Street.exe" --test
 ```
-*Result:* Runs all 311 automated unit and integration tests and outputs an exhaustive report to stdout without displaying the GUI window.
+*Result:* Runs all 312 automated unit and integration tests (including BMP and PNG screenshot verification) and outputs an exhaustive report to stdout without displaying the GUI window.
 
 #### Working Directory & Asset Requirements
 The application resolves shader paths (`shaders/basic.vert`, etc.) and texture assets (`assets/textures/*.bmp`) relative to the executable working directory. If run from an alternate directory, `src/Shader.h` automatically engages embedded fallback GLSL source strings, and `src/TextureGenerator.h` automatically generates procedural BMP files to guarantee zero runtime crashes.
@@ -1447,13 +1447,14 @@ The completed codebase significantly exceeds the scope outlined in the initial `
 5. **Interactive Shoji Doors (<kbd>H</kbd>) & Sliding Windows (<kbd>G</kbd>):** Smooth ease-in-out animated child node translations relative to Machiya townhouse frames.
 6. **In-Window Minimalist HUD Overlay (<kbd>F1</kbd>):** Embedded $256 \times 256$ Consolas Bold font atlas with dedicated UI shaders, responsive layout, and zero external library dependencies.
 7. **15 Controllable Inspectables & Dual Selection Engine (<kbd>T</kbd> / <kbd>Shift+T</kbd>):** Context-sensitive view-cone auto-selection combined with 6-DOF manual transformation controls.
-8. **Automated Verification Harness (`Main.cpp --test`):** Comprehensive automated test harness asserting 311 unit and integration conditions with 100% success.
+8. **Automated Verification Harness (`Main.cpp --test`):** Comprehensive automated test harness asserting 312 unit and integration conditions with 100% success.
 9. **Rich Curved Geometry Generators (`Curves.h`):** Bézier tubes, Catmull-Rom splines, Bishop frames, and curved architectural *sori* beams.
+10. **Academic LaTeX Report & Automated Capture (`--capture-report`):** 50-page formal laboratory report (`report/main.pdf`) with 6 vector PDF diagrams and 20 automated high-resolution viewport screenshots captured across all key visual states.
 
 ### 14.2 Plan Divergences & Code Harmonization
 - **Light Toggle Keybinding:** Originally proposed as <kbd>L</kbd>. Remapped to <kbd>0</kbd> and <kbd>Numpad 0</kbd> in code to avoid conflicting with the $+X$ manual translation key (<kbd>J</kbd>/<kbd>L</kbd>).
 - **Inspectables Count:** Expanded from 11 objects to 15 objects (added the 4 Machiya townhouse buildings as inspectables 12–15).
-- **Point Light Count:** Expanded from 6 point lights to 12 point lights (added 6 warm interior lights inside townhouse rooms).
+- **Point Light Count:** Expanded from 6 point lights to 14 dynamic point lights (16 total lights: 1 Directional, 1 Spotlight, 14 Point Lights including 6 interior house lights and 2 Torii shrine lanterns).
 
 ---
 

@@ -12,6 +12,49 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Academic Project Report: Comprehensive LaTeX Documentation (`report/main.pdf`), Automated Capture Suite (`--capture-report`), & PNG Screenshot Export
+
+#### 1. Native PNG Screenshot Export & Automated Report Capture Harness (`Main.cpp`)
+* **Files Added/Modified:** `Libraries/include/stb_image_write.h`, `Libraries/include/stb/stb_image_write.h`, [`Main.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp)
+* **Goal & Scope:** Enable lossless PNG image capture alongside uncompressed BMP export and implement a headless/automated CLI flag `--capture-report` that systematically triggers and saves all 20 required academic figures across every rendering mode, lighting state, and animation view into `report/figures/`.
+* **Technical Details:**
+  * Added Sean Barrett's single-header `stb_image_write.h` (`STB_IMAGE_WRITE_IMPLEMENTATION`) to `Libraries/include/` and `Libraries/include/stb/`.
+  * Updated `captureViewportScreenshot(const std::string& filename)` to automatically detect `.png` extension and dispatch to `stbi_write_png(..., 3, flippedData, width * 3)`.
+  * Added `--capture-report` argument handler in `Main.cpp` driving camera coordinates, day/night cycles, lighting toggles, shading modes (Blinn-Phong, Diffuse, Ambient), PCF shadow states, GPU ray tracing, HUD overlays, and multi-object inspectables across 20 frames without manual user intervention.
+  * Augmented automated test suite in `Main.cpp: runAutomatedTests()` to assert PNG screenshot file generation, raising test count from 311 to **312 assertions (100% SUCCESS)**.
+
+#### 2. Vector Graphics & Mathematical Diagram Generation (`report/figures/make_diagrams.py`)
+* **Files Added:** `report/figures/make_diagrams.py`
+* **Generated Diagrams:**
+  1. `fig_render_pipeline.pdf` / `.png`: Two-pass frame architecture (Shadow FBO Pass $\to$ Forward Raster / GPU Ray Tracing $\to$ 2D Orthographic HUD Pass $\to$ Double Buffer Swap).
+  2. `fig_scene_graph_tree.pdf` / `.png`: Hierarchical Scene Graph DAG detailing parent-child TRS matrix propagation.
+  3. `fig_blinn_phong_vectors.pdf` / `.png`: Geometric vector diagram of incident light $\mathbf{L}$, view $\mathbf{V}$, normal $\mathbf{N}$, and halfway vector $\mathbf{H}$.
+  4. `fig_day_night_curves.pdf` / `.png`: Parametric time curves for sun elevation, ambient intensity, lantern emissive boost, and sky RGB interpolation.
+  5. `fig_shadow_pcf.pdf` / `.png`: Orthographic light frustum, depth buffer rasterization, and 16-sample PCF filter disk convolution.
+  6. `fig_catenary_bezier.pdf` / `.png`: Mathematical curves comparing hyperbolic catenary hanging sag against cubic Bézier roof curvature.
+
+#### 3. Formal Academic Project Report (`report/main.tex` & Modular Sections)
+* **Files Added:** `report/main.tex`, `report/sections/01_introduction.tex` through `14_conclusion.tex`, `report/analysis/project_inventory.md`, `report/README_COMPILE.txt`
+* **Format & Standards:** Formatted in accordance with KUET Department of Computer Science & Engineering (CSE4102) academic guidelines (A4 paper, Times New Roman typography via `mathptmx`, 1-inch margins, LaTeX chapter hierarchy, mathematical code citations `File.h/cpp: functionName()`).
+* **Content Structure (50 Pages, 14 Chapters):**
+  * **Chapter 1: Introduction & Project Scope:** Academic requirements fulfillment, 3D transformations, multi-body kinematics, day/night cycles.
+  * **Chapter 2: Architecture & Rendering Pipeline:** Double-buffered frame lifecycle, OpenGL state machines, shader uniform bindings.
+  * **Chapter 3: Mathematical Foundations:** TRS matrix algebra, Gram-Schmidt orthonormalization, halfway vector $\mathbf{H}$, catenary calculus, Bishop parallel transport.
+  * **Chapter 4: Geometry Engine & Primitive Generation:** Cube, Cylinder, Cone, UV Sphere, Plane, swept tubes, Bézier curvature.
+  * **Chapter 5: Hierarchical Scene Graph & Kinematics:** Recursive tree traversal, world matrix accumulation, relative reference frames.
+  * **Chapter 6: Illumination & Shading Pipeline:** Directional sun/moon, 14 dynamic point lights, stage spotlight, indoor skylight bounce, live shading modes.
+  * **Chapter 7: Realistic Soft Shadow Mapping:** Two-pass FBO depth generation, normal-scaled slope bias, 16-sample PCF filter.
+  * **Chapter 8: Procedural Texture Synthesis & Materials:** 7 procedural BMP textures, UV mapping, material parameters.
+  * **Chapter 9: Animation Catalogue & Dynamic Systems:** Takoyaki flip projectile physics, Kakigori shaved ice kinematics, lantern pendulums, sakura blossom drift, firework rocket explosions, magic show state machine.
+  * **Chapter 10: Dual Ray Tracing Architectures:** Full-screen GPU Whitted ray tracer (`shaders/raytrace.frag`), multi-threaded CPU snapshot engine (`RayTracer.h`).
+  * **Chapter 11: UI, HUD & Interaction:** Embedded $256\times 256$ Consolas Bold atlas, 2D orthographic batched text renderer, context action dispatcher.
+  * **Chapter 12: Automated Verification & Testing:** 312 unit test suite breakdown across all 5 verification categories.
+  * **Chapter 13: Controls Reference & Documentation Audit:** Authoritative keybinding catalog and reconciliation table of legacy documentation against source code.
+  * **Chapter 14: Conclusion & Future Enhancements:** Academic summary, PBR Cook-Torrance roadmap, volumetric fog, and bibliography.
+* **Compilation Status:** Built cleanly with MiKTeX `pdflatex` (0 errors, 50 pages, 13.7 MB output at `report/main.pdf`).
+
+---
+
 ### [2026-10-10] — Feature: Decorated Torii Shrine Gate Illuminations & 14 Dynamic Point Lights
 
 #### 1. Decorated Shrine Entrance Architecture (`Objects.h`, `Scene.h`)

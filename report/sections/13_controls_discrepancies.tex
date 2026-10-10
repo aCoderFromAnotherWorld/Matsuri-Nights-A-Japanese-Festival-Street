@@ -1,0 +1,115 @@
+\chapter{Controls Reference and Documentation Audit}
+\label{chap:controls}
+
+\section{Complete Interactive Controls Reference}
+Table~\ref{tab:complete_controls} provides the authoritative reference for all user inputs, keyboard hotkeys, and mouse interactions supported by \textit{Matsuri Nights}.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{3.5cm} p{3.2cm} p{7.7cm}}
+\toprule
+\textbf{Category} & \textbf{Key / Input Binding} & \textbf{Action / Engine Functionality} \\
+\midrule
+\multirow{4}{*}{\textbf{Camera Movement}} &
+\textbf{W / A / S / D} & Move camera Forward, Left, Backward, Right \\
+& \textbf{E / Q} & Elevate camera Up / Descend Down \\
+& \textbf{Left Shift} & Sprint modifier (2.5$\times$ velocity boost) \\
+& \textbf{Mouse Drag} & First-person 6-DOF look around (Pitch \& Yaw) \\
+& \textbf{Mouse Wheel} & Adjust camera field-of-view (Zoom $1^\circ \dots 60^\circ$) \\
+& \textbf{C} & Toggle mouse cursor capture (free mouse cursor) \\
+& \textbf{R} & Reset camera position and orientation to default origin \\
+\addlinespace
+\midrule
+\multirow{3}{*}{\textbf{Camera Presets}} &
+\textbf{1} & Preset 1: Festival street entrance $(0.0, 3.5, 26.0)$ \\
+& \textbf{2} & Preset 2: Magic stage \& audience close-up $(6.2, 2.2, -10.5)$ \\
+& \textbf{3} & Preset 3: Grand Torii gate and sky view $(0.0, 2.5, -18.0)$ \\
+\addlinespace
+\midrule
+\multirow{8}{*}{\textbf{Environment \& Shading}} &
+\textbf{N} & Toggle Day / Night celestial cycle ($0.0 \leftrightarrow 1.0$) \\
+& \textbf{Spacebar} & Pause / Resume all scene kinematic animations \\
+& \textbf{0 / Numpad 0} & Toggle lantern and stall illuminations (ON / Dimmed) \\
+& \textbf{P} & Cycle Shading Mode (Blinn-Phong $\to$ Diffuse $\to$ Ambient) \\
+& \textbf{V} & Toggle 16-sample PCF soft shadow mapping (ON / OFF) \\
+& \textbf{X} & Toggle diffuse texture mapping (ON / Material Colors) \\
+& \textbf{Z} & Toggle real-time GPU Whitted ray-tracing mode (ON / OFF) \\
+& \textbf{F9} & Trigger multi-threaded CPU ray-traced snapshot to BMP \\
+& \textbf{F} & Launch manual fireworks rocket into nocturnal sky \\
+\addlinespace
+\midrule
+\multirow{6}{*}{\textbf{Context \& Interaction}} &
+\textbf{F1} & Toggle in-window minimal HUD overlay (Show / Hide) \\
+& \textbf{F10} & Capture clean high-resolution viewport screenshot \\
+& \textbf{Shift + F10} & Capture high-resolution viewport screenshot with HUD \\
+& \textbf{T} & Cycle next target object \& lock manual transform mode \\
+& \textbf{Shift + T} & Unlock manual target $\to$ return to proximity auto-mode \\
+& \textbf{H} & Slide open / close nearest house front Shoji door \\
+& \textbf{G} & Slide open / close nearest house sliding Shoji windows \\
+& \textbf{B} & Toggle Wall Collision (Walk Mode $\leftrightarrow$ Noclip Flight) \\
+& \textbf{M} & Replay magic show trick sequence from Phase 1 \\
+\addlinespace
+\midrule
+\multirow{3}{*}{\textbf{Live Object Transforms}} &
+\textbf{I / K, J / L, U / O} & Translate selected object ($\pm Y, \pm X, \pm Z$) \\
+& \textbf{Arrow Keys} & Rotate selected object (Up/Down: Pitch, Left/Right: Yaw) \\
+& \textbf{+ / -} or \textbf{[ / ]} & Scale selected object ($\pm 10\%$ uniform scale) \\
+\bottomrule
+\end{tabularx}
+\caption{Authoritative Keybinding and Interaction Catalog (\texttt{Main.cpp: key\_callback()}).}
+\label{tab:complete_controls}
+\end{table}
+
+\section{Documentation Discrepancies and Audit}
+During the thorough audit of the project repository, discrepancies were identified between legacy markdown documentation files (\texttt{Plan.md}, \texttt{Details.md}, \texttt{controls.md}, \texttt{color\_changes.md}, and \texttt{README.md}) and the final ground-truth source code. Table~\ref{tab:doc_discrepancies} provides the authoritative reconciliation.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{3.2cm} p{3.8cm} p{4.2cm} p{3.2cm}}
+\toprule
+\textbf{Feature / Metric} & \textbf{Legacy Doc Statement} & \textbf{Ground-Truth Source Code} & \textbf{Code Citation} \\
+\midrule
+\textbf{Point Light Count} &
+Stated as 12 point lights (or 14 total lights). &
+\textbf{14 dynamic point lights} (0--13) plus 1 Directional and 1 Spotlight = \textbf{16 total lights}. &
+\texttt{shaders/basic.frag: line 44} \newline
+\texttt{src/Scene.h: line 646} \\
+\addlinespace
+\textbf{Inspectables Count} &
+Stated as 10 or 11 inspectable objects. &
+\textbf{15 inspectable objects} registered in \texttt{inspectables} array (indices 0--14). &
+\texttt{src/Scene.h: lines 880--898} \newline
+\texttt{Scene::setupInspectables()} \\
+\addlinespace
+\textbf{Screenshot Hotkey} &
+Early planning suggested Key \textbf{P} for screenshots. &
+Key \textbf{P} is bound to \textbf{Cycle Shading Mode}. Screenshots are triggered by \textbf{F10} and \textbf{Shift+F10}. &
+\texttt{Main.cpp: lines 324--331} \newline
+\texttt{Main.cpp: lines 380--381} \\
+\addlinespace
+\textbf{Light Toggle Key} &
+Early notes used Key \textbf{L} to toggle lights. &
+Remapped to \textbf{Key 0} and \textbf{Numpad 0} to preserve \textbf{J/L} for $\pm X$ translation. &
+\texttt{Main.cpp: lines 357--361} \\
+\addlinespace
+\textbf{C++ Standard Dialect} &
+Some markdown sections referenced C++17. &
+The project explicitly compiles under \textbf{ISO C++20} (\texttt{/std:c++20}). &
+\texttt{Matsuri Nights.vcxproj: line 77} \\
+\addlinespace
+\textbf{Door Interaction Range} &
+Early notes implied global interaction. &
+Interaction is restricted to player proximity within \textbf{5.0 meters}. &
+\texttt{src/Scene.h: lines 1525, 1570} \\
+\addlinespace
+\textbf{CPU Ray Tracer Export} &
+Legacy notes suggested PNG or PPM. &
+Native CPU tracer writes uncompressed 24-bit \textbf{BMP} (\texttt{writeBMP24}). &
+\texttt{src/RayTracer.h: line 655} \\
+\bottomrule
+\end{tabularx}
+\caption{Reconciliation of Legacy Documentation Discrepancies Against Code Truth.}
+\label{tab:doc_discrepancies}
+\end{table}

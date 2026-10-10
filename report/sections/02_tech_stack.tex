@@ -1,0 +1,99 @@
+\chapter{Technology Stack and Build Architecture}
+\label{chap:tech_stack}
+
+\section{Core Libraries and Dependency Stack}
+To ensure deterministic execution, high computational performance, and strict platform compliance, \textit{Matsuri Nights} avoids heavy third-party graphics engines (such as Unity or Unreal) and is developed strictly at the systems graphics level. Table~\ref{tab:dependencies} summarizes the software libraries utilized across the codebase.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{3.2cm} p{2.2cm} p{5.5cm} p{3.5cm}}
+\toprule
+\textbf{Library / Tool} & \textbf{Exact Version} & \textbf{Role in Engine Architecture} & \textbf{Linkage Type} \\
+\midrule
+\textbf{C++ ISO Standard} & C++20 \newline (\texttt{/std:c++20}) & Strongly typed language core, constexpr metaprogramming, modern STL containers, \texttt{std::thread}, and \texttt{std::filesystem}. & Native MSVC \\
+\addlinespace
+\textbf{OpenGL} & 3.3 Core Profile & Direct hardware acceleration via the programmable rasterization pipeline (Vertex \& Fragment Shaders, FBOs, VAOs). & Hardware Driver (\texttt{opengl32.lib}) \\
+\addlinespace
+\textbf{GLFW} & 3.5.1 & Cross-platform window creation, OpenGL context management, VSync control, mouse/keyboard polling, and raw input callbacks. & Static Library (\texttt{glfw3.lib}) \\
+\addlinespace
+\textbf{GLAD} & Version 0.1.36 (OpenGL 3.3 Core) & Runtime OpenGL extension loader querying GPU driver function pointers via \texttt{glfwGetProcAddress}. & Source Compilation (\texttt{glad.c}) \\
+\addlinespace
+\textbf{GLM} & 0.9.9.8 & Header-only mathematics library providing affine vector algebra, $4\times 4$ matrices, quaternions, and projection formulas. & Header-Only (\texttt{glm/}) \\
+\addlinespace
+\textbf{stb\_image} & 2.29 & Lightweight single-header image loader decoding 24-bit and 32-bit raster assets into raw RGBA memory buffers. & Header-Only (\texttt{stb\_image.h}) \\
+\addlinespace
+\textbf{stb\_image\_write} & 1.16 & Single-header image encoder for exporting viewport framebuffers to high-fidelity uncompressed PNG image files. & Header-Only (\texttt{stb\_image\_write.h}) \\
+\addlinespace
+\textbf{Consolas Font Atlas} & 256$\times$256 Bitmap & Static embedded monospace font glyph atlas enabling zero-dependency, ultra-fast 2D HUD telemetry overlay rendering. & Static Constexpr Array (\texttt{FontAtlasData.h}) \\
+\bottomrule
+\end{tabularx}
+\caption{Core Dependencies and Software Stack.}
+\label{tab:dependencies}
+\end{table}
+
+\section{Project Directory Structure}
+The repository separates first-party source logic, shaders, UI components, static assets, and third-party libraries into clean structural tiers:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize, frame=single, backgroundcolor=\color{gray!10}]
+Matsuri-Nights-A-Japanese-Festival-Street/
+|-- assets/
+|   |-- textures/                  # Synthesized 24-bit BMP texture assets (256x256)
+|       |-- gold_leaf.bmp, lantern_paper.bmp, roof_tiles.bmp, sakura_bark.bmp
+|       |-- stone_pavement.bmp, takoyaki_food.bmp, tatami_cloth.bmp, wood_timber.bmp
+|-- Matsuri Nights - A Japanese Festival Street/
+|   |-- glad.c                     # GLAD OpenGL loader source file
+|   |-- Main.cpp                   # Application lifecycle, render loop, test harness
+|   |-- Matsuri Nights.vcxproj     # MSVC Visual Studio 2026 project file (/std:c++20)
+|   |-- Libraries/
+|   |   |-- include/               # GLAD, GLFW, GLM, and STB header trees
+|   |   |-- lib/                   # Pre-compiled static libraries (glfw3.lib)
+|   |-- shaders/
+|   |   |-- basic.vert, basic.frag # Forward 3D Blinn-Phong shading and dynamic sky
+|   |   |-- shadow_depth.vert/.frag# Directional light-space depth pass shaders
+|   |   |-- raytrace.vert/.frag    # Real-time GPU Whitted ray-tracing quad shaders
+|   |   |-- hud.vert, hud.frag     # Orthographic 2D UI batch shaders
+|   |-- src/
+|       |-- Camera.h, Transform.h, Mesh.h, SceneNode.h, Light.h, Shader.h
+|       |-- Primitives.h, Curves.h, Objects.h, Scene.h, Texture.h, TextureGenerator.h
+|       |-- RayTracer.h            # Multi-threaded CPU ray-tracing snapshot engine
+|       |-- ui/                    # In-window HUD and interaction management
+|           |-- Hud.h, Hud.cpp, Interactable.h, InteractionManager.h/.cpp, FontAtlasData.h
+|-- report/
+|   |-- main.tex                   # Academic LaTeX final project report
+|   |-- figures/                   # Vector PDF diagrams and high-res PNG screenshots
+|   |-- sections/                  # Modular chapter TeX documents
+|-- run.bat                        # Automated launch script
+\end{lstlisting}
+
+\section{Build and Execution Instructions}
+\subsection{Prerequisites}
+\begin{enumerate}
+    \item \textbf{Operating System:} Microsoft Windows 10 or Windows 11 (x64).
+    \item \textbf{IDE / Toolset:} Visual Studio 2026 (MSVC v145 toolset) or Visual Studio 2022 (MSVC v143).
+    \item \textbf{Hardware Requirements:} Dedicated GPU supporting OpenGL 3.3 Core Profile with at least 1 GB of VRAM.
+\end{enumerate}
+
+\subsection{Building via Visual Studio GUI}
+\begin{enumerate}
+    \item Open \texttt{Matsuri Nights - A Japanese Festival Street.slnx} (or \texttt{.vcxproj}) in Visual Studio.
+    \item Select the build configuration target: \textbf{Debug} or \textbf{Release}, on platform \textbf{x64}.
+    \item Ensure the working directory is set to the project root containing \texttt{assets/} and \texttt{shaders/}.
+    \item Press \textbf{Ctrl + Shift + B} to build the solution. Compilation proceeds with zero warnings and zero errors.
+    \item Press \textbf{F5} to run the interactive festival application.
+\end{enumerate}
+
+\subsection{Command-Line Building via MSBuild}
+To compile from PowerShell or the Developer Command Prompt for Visual Studio:
+\begin{lstlisting}[language=bash, basicstyle=\ttfamily\scriptsize, frame=single]
+# Clean and compile in Debug x64 mode
+& "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" `
+    "Matsuri Nights - A Japanese Festival Street\Matsuri Nights - A Japanese Festival Street.vcxproj" `
+    -p:Configuration=Debug -p:Platform=x64
+
+# Execute automated test suite (verifying 312 unit assertions)
+& ".\Matsuri Nights - A Japanese Festival Street\x64\Debug\Matsuri Nights - A Japanese Festival Street.exe" --test
+
+# Execute automated report figure capture (generating ss_01 through ss_20)
+& ".\Matsuri Nights - A Japanese Festival Street\x64\Debug\Matsuri Nights - A Japanese Festival Street.exe" --capture-report
+\end{lstlisting}

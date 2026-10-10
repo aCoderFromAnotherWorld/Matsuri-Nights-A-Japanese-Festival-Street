@@ -1,0 +1,93 @@
+\chapter{Geometric Primitives and Swept Geometries}
+\label{chap:geometry}
+
+\section{Geometric Primitive Factory Architecture}
+Rather than relying on static external OBJ or FBX model files, all geometry in \textit{Matsuri Nights} is generated procedurally via mathematical functions defined in \texttt{src/Primitives.h} and \texttt{src/Curves.h}. This procedural architecture ensures that vertex normals, texture coordinates, and tangent frames are mathematically exact and eliminates external asset loading overhead.
+
+\section{Standard Geometric Primitives}
+Table~\ref{tab:primitives_summary} lists the fundamental primitives provided by \texttt{Primitives.h}, detailing their vertex layout, triangle counts, and procedural construction.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{2.5cm} p{2.2cm} p{2.2cm} p{7.5cm}}
+\toprule
+\textbf{Primitive} & \textbf{Vertex Count} & \textbf{Index Count} & \textbf{Construction Methodology \& Normal Layout} \\
+\midrule
+\textbf{Cube} \newline (\texttt{createCube}) &
+24 vertices &
+36 indices \newline (12 triangles) &
+6 independent quad faces ($+Z, -Z, -X, +X, +Y, -Y$). Each face possesses 4 unique vertices with duplicate corner positions to ensure sharp, unshared face normals ($\pm X, \pm Y, \pm Z$). \\
+\addlinespace
+\textbf{Cylinder} \newline (\texttt{createCylinder}) &
+102 vertices &
+288 indices \newline (96 triangles) &
+Constructed with $S = 24$ radial segments. Comprises $(S+1)\times 2 = 50$ side wall vertices with smooth radial normals $\mathbf{N} = [\cos\theta, 0, \sin\theta]^T$, 26 top disc cap vertices with $\mathbf{N} = [0, 1, 0]^T$, and 26 bottom cap vertices with $\mathbf{N} = [0, -1, 0]^T$. \\
+\addlinespace
+\textbf{Cone} \newline (\texttt{createCone}) &
+52 vertices &
+144 indices \newline (48 triangles) &
+Side mantle evaluated over $S = 24$ segments with slanted outward normals $\mathbf{N} = \operatorname{normalize}([r\cos\theta, r/h, r\sin\theta]^T)$, sharing apex vertex, plus a closed circular base cap disc. \\
+\addlinespace
+\textbf{Sphere} \newline (\texttt{createSphere}) &
+525 vertices &
+2880 indices \newline (960 triangles) &
+UV sphere evaluated across $R = 20$ latitude rings and $S = 24$ longitude sectors. Radial outward normals $\mathbf{N} = \mathbf{P} / r$, with polar caps degenerating gracefully into triangle fans. \\
+\addlinespace
+\textbf{Plane} \newline (\texttt{createPlane}) &
+4 vertices &
+6 indices \newline (2 triangles) &
+Horizontal quad spanning $[-w/2, +w/2] \times [-d/2, +d/2]$ with upward normal $\mathbf{N} = [0, 1, 0]^T$ and normalized UV mapping $[0, 1]^2$. \\
+\bottomrule
+\end{tabularx}
+\caption{Summary of Standard Geometric Primitives (\texttt{src/Primitives.h}).}
+\label{tab:primitives_summary}
+\end{table}
+
+\section{Parametric Swept Tubes and Curved Architectural Beams}
+\subsection{Generalized Swept Tubes via Bishop Frames}
+The engine provides a generalized swept surface generator, \texttt{Curves::createSweptTube}, which takes arbitrary 3D parametric trajectory functions $\mathbf{P}(t)$, tangent evaluators $\mathbf{T}(t)$, and variable radius functions $R(t)$. Using the Bishop frame parallel transport algorithm described in Section~\ref{eq:bishop_frame}, a circle of radius $R(t_i)$ is swept across longitudinal slices:
+\begin{equation}
+\mathbf{V}_{i, j} = \mathbf{P}(t_i) + R(t_i) \cdot \left[ \cos(\phi_j) \mathbf{N}_i + \sin(\phi_j) \mathbf{B}_i \right]
+\label{eq:swept_vertex}
+\end{equation}
+where $\phi_j = \frac{2\pi j}{S_{\text{rad}}}$ and surface normals correspond to $\mathbf{N}_{\text{surf}} = \cos(\phi_j) \mathbf{N}_i + \sin(\phi_j) \mathbf{B}_i$.
+
+\subsection{Curved Architectural Beams (\textit{Kasagi} and \textit{Shimaki})}
+The prominent upward-flaring top beam (\textit{Kasagi}) and sub-beam (\textit{Shimaki}) of the Torii gate cannot be represented via straight cylinders or boxes. The engine implements \texttt{Curves::createCurvedBeam}, which sweeps an asymmetric trapezoidal cross-sectional profile along a cubic B\'ezier spine curve:
+\begin{itemize}
+    \item \textbf{Cubic B\'ezier Spine:} Control points $\mathbf{P}_0 = [-3.8, 6.4, 0]$, $\mathbf{P}_1 = [-1.5, 6.15, 0]$, $\mathbf{P}_2 = [1.5, 6.15, 0]$, $\mathbf{P}_3 = [3.8, 6.4, 0]$, providing an authentic Japanese shrine curve with pronounced upward flare at the eaves (\textit{Sori}).
+    \item \textbf{Cross-Section:} 4 corner vertices defining a trapezoid wider at the top than the bottom, with chamfered rain gutters along the roof ridge.
+\end{itemize}
+
+\subsection{Sacred Shimenawa Catenary Ropes}
+The sacred straw rope spanning the Torii gate pillars is generated via \texttt{Curves::createCatenaryRope} (444 vertices, 864 triangles). Using Equations~\ref{eq:catenary_code} and~\ref{eq:catenary_tan}, the rope maintains a natural gravitational sag with 36 longitudinal slices and 12 radial segments.
+
+\section{Organic Botanical and Human Anatomical Meshes}
+To avoid sterile blocky geometry, \texttt{src/Curves.h} implements specialized procedural synthesizers for botanical and human characters:
+\begin{enumerate}
+    \item \textbf{Curved Cherry Blossom Petals (\texttt{createCurvedPetalMesh}):} Generates individual petals featuring gentle 3D concave cupping along the central midrib and a distinctive notched petal apex tip.
+    \item \textbf{Cherry Blossom Clusters (\texttt{createSakuraBlossomLobe}):} Assembles 5 radially arranged curved petals around a central pistil and stamen core, forming realistic blossom clusters.
+    \item \textbf{Pine Needle Fans (\texttt{createPineNeedleClusterMesh}):} Generates radial needle tufts for bonsai trees and planter boxes.
+    \item \textbf{Articulated Human Head (\texttt{createHumanHeadMesh}):} A contoured cranial mesh with tapered jawline, occipital curvature, and neck socket.
+    \item \textbf{Kimono Torso (\texttt{createHumanTorsoMesh}):} Models traditional Japanese festival attire with chest taper, overlapping kimono lapels (\textit{Eri}), and a raised waist sash (\textit{Obi}).
+    \item \textbf{Articulated Limbs (\texttt{createArticulatedLimbMesh}):} Tapered limb cylinders capped with rounded hemispheres representing shoulder, elbow, hip, and knee pivot sockets.
+    \item \textbf{Geta Sandal Foot (\texttt{createGetaFootMesh}):} Generates traditional elevated wooden clog sandals (\textit{Geta}) featuring an elevated base plate, two vertical ground teeth (\textit{Ha}), and an angled fabric toe strap (\textit{Hanao}).
+\end{enumerate}
+
+\section{OpenGL Mesh Buffer Management}
+Each synthesized primitive is uploaded to GPU memory via the \texttt{Mesh} class (\texttt{src/Mesh.h}). Vertex attributes are interleaved into a single Vertex Buffer Object (VBO):
+\begin{lstlisting}[language=C++, basicstyle=\ttfamily\scriptsize]
+struct Vertex {
+    glm::vec3 Position;  // Offset 0,  Size 12 bytes
+    glm::vec3 Normal;    // Offset 12, Size 12 bytes
+    glm::vec2 TexCoords; // Offset 24, Size 8 bytes
+}; // Total stride: 32 bytes
+\end{lstlisting}
+The Vertex Array Object (VAO) binds the VBO and Element Buffer Object (EBO), configuring layout locations:
+\begin{itemize}
+    \item \textbf{Location 0 (\texttt{aPos}):} \texttt{glVertexAttribPointer(0, 3, GL\_FLOAT, GL\_FALSE, 32, (void*)0)}
+    \item \textbf{Location 1 (\texttt{aNormal}):} \texttt{glVertexAttribPointer(1, 3, GL\_FLOAT, GL\_FALSE, 32, (void*)12)}
+    \item \textbf{Location 2 (\texttt{aTexCoords}):} \texttt{glVertexAttribPointer(2, 2, GL\_FLOAT, GL\_FALSE, 32, (void*)24)}
+\end{itemize}
+Draw calls are dispatched via indexed rendering: \texttt{glDrawElements(GL\_TRIANGLES, indexCount, GL\_UNSIGNED\_INT, 0)}.

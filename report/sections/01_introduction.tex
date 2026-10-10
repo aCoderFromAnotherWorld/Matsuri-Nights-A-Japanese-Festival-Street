@@ -1,0 +1,83 @@
+\chapter{Introduction and Project Overview}
+\label{chap:intro}
+
+\section{Project Background and Cultural Theme}
+Computer graphics combines mathematical modeling, computational geometry, and optics to generate synthetic images that faithfully simulate real-world physical phenomena. In the context of \textbf{CSE4102: Computer Graphics and Image Processing Laboratory} at Khulna University of Engineering \& Technology (KUET), this project presents \textbf{``Matsuri Nights --- A Japanese Festival Street''}, an interactive, high-performance, real-time 3D graphics application built completely from scratch using Modern OpenGL (Core Profile 3.3), C++20, and GLFW.
+
+The project models a vibrant, culturally authentic Japanese summer festival street (\textit{Matsuri}) lined with traditional two-story wooden townhouses (\textit{Machiya}), illuminated festival food stalls (\textit{Yatai}), a grand sacred Shinto shrine entrance (\textit{Torii} gate), weeping cherry blossom trees (\textit{Sakura}), a theatrical magic performance stage, and dynamic pedestrian crowds. Beyond aesthetic craftsmanship, the scene serves as an architectural testbed for core computer graphics concepts:
+\begin{enumerate}
+    \item \textbf{Hierarchical 3D Transformations:} Nested reference frames where local model matrices compound along scene graph edges.
+    \item \textbf{Motion in Moving Reference Frames:} Entities whose kinematic trajectories depend strictly on parent node coordinate systems.
+    \item \textbf{Advanced Optical Illumination:} A comprehensive multi-light Blinn-Phong shading pipeline featuring 16 active dynamic light sources (sun/moon celestial directional light, 14 point lights, and 1 tracking spotlight).
+    \item \textbf{Realistic Soft Shadow Mapping:} A 2048$\times$2048 depth framebuffer pass with 16-sample Percentage-Closer Filtering (PCF) and slope-scaled normal bias.
+    \item \textbf{Dual Ray Tracing Extensions:} Both an interactive real-time GPU Whitted ray tracer operating on a full-screen quad and an asynchronous multi-threaded CPU Whitted ray-tracing snapshot generator.
+    \item \textbf{Contextual User Interface \& Automated Testing:} A low-overhead bitmap font atlas HUD overlay and a built-in automated test suite containing 312 deterministic verification tests.
+\end{enumerate}
+
+\section{Course Requirements Compliance Matrix}
+The syllabus of CSE4102 establishes strict pedagogical requirements. Table~\ref{tab:course_compliance} details how every required criterion is satisfied, cross-referenced with the implementing source code files.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{4.2cm} p{6.8cm} p{4.2cm}}
+\toprule
+\textbf{Course Requirement} & \textbf{Implementation in Matsuri Nights} & \textbf{Source Code Location} \\
+\midrule
+\textbf{3D Transformations} \newline (Translation, Rotation, Scaling) &
+Every scene entity possesses a dedicated \texttt{Transform} struct supporting 3D translations, Euler rotations (Pitch, Yaw, Roll), and scaling. All 15 inspectable objects can be translated, rotated, and scaled in real time via hotkeys. &
+\texttt{src/Transform.h: lines 32--54} \newline
+\texttt{src/Scene.h: lines 929--955} \\
+\addlinespace
+\textbf{Motion Relative to Another Reference Frame} &
+1. \textit{Swinging Lanterns:} Lantern bodies swing in an arc as children of a rotating rope pivot anchor. \newline
+2. \textit{Magic Orb:} Mystical orb orbits the moving hand bone of the magician figure on stage. \newline
+3. \textit{Walking Limbs:} Pedestrian limbs flex relative to moving hip/shoulder joints. &
+\texttt{src/Objects.h: lines 2835--2850} \newline
+\texttt{src/Objects.h: lines 4175--4205} \newline
+\texttt{src/Objects.h: lines 4760--4840} \\
+\addlinespace
+\textbf{Complex Moving Objects} &
+1. \textit{Articulated Magician:} Multi-jointed human figure performing the vanishing box illusion. \newline
+2. \textit{Takoyaki Stall:} 6 individual food balls executing parabolic hopping physics. \newline
+3. \textit{Kakigori Machine:} Rotating ice shaver flywheel and dessert bowls. &
+\texttt{src/Objects.h: lines 4012--4240} \newline
+\texttt{src/Objects.h: lines 3120--3175} \newline
+\texttt{src/Objects.h: lines 3360--3420} \\
+\addlinespace
+\textbf{At Least 5 Distinct Objects} &
+The project contains 17 distinct scene objects: Ground, 4 Machiya Houses, Torii Gate, Sakura Trees, Lantern Spans, Takoyaki Stall, Kakigori Stall, Vendor Figures, Magic Stage, Magician, Vanishing Box, Spotlight Rig, Audience, Crowd Walkers, Fireworks, and Sky Dome. &
+\texttt{src/Objects.h} \newline
+\texttt{src/Scene.h: lines 30--49} \\
+\addlinespace
+\textbf{Lighting and Material Shading} &
+Full Blinn-Phong illumination model supporting ambient, diffuse, and specular components with material shininess and specular strength. Cycles between Blinn-Phong, Diffuse-Only, and Ambient-Only shading. &
+\texttt{shaders/basic.frag: lines 107--204} \newline
+\texttt{src/Light.h: lines 6--48} \\
+\addlinespace
+\textbf{Moving Light Sources} &
+1. Point Light 0 tracks the moving Magic Orb. \newline
+2. Point Lights 3 \& 4 track swinging street lanterns. \newline
+3. Point Light 5 dynamically illuminates the apex of fireworks bursts. \newline
+4. Spotlight tracks the magician across the stage. &
+\texttt{src/Scene.h: lines 793--840} \newline
+\texttt{src/Scene.h: lines 851--870} \\
+\addlinespace
+\textbf{Day and Night Transitions} &
+Smooth continuous interpolation between bright daytime sun and nocturnal festival night with celestial sun disk, corona bloom, lunar craters, and procedural twinkling stars. &
+\texttt{shaders/basic.frag: lines 208--302} \newline
+\texttt{src/Scene.h: lines 782--792} \\
+\bottomrule
+\end{tabularx}
+\caption{CSE4102 Course Requirements Compliance Matrix.}
+\label{tab:course_compliance}
+\end{table}
+
+\section{Development Milestone Progression}
+The project was constructed across three foundational milestones and supplemented with advanced computer graphics enhancements:
+\begin{itemize}
+    \item \textbf{Phase 1 --- Geometry, Scene Graph, and Kinematics:} Construction of mathematical primitives (cubes, cylinders, cones, spheres, planes), parametric swept curves (B\'ezier, catenary, splines), the hierarchical scene graph architecture (\texttt{SceneNode}), and six core animation cycles.
+    \item \textbf{Phase 2 --- Illumination, Shading, and Photorealism:} Implementation of the Blinn-Phong illumination shader, dynamic day/night ambient color temperatures, 16 active dynamic light sources (directional, point, and spotlights), and material reflectance coefficients.
+    \item \textbf{Phase 3 --- Texture Synthesis and Surface Mapping:} Generation of procedural 24-bit BMP texture maps (timber, ceramic roof tiles, cobblestones, Washi paper, Tatami grass, gold leaf, and cherry bark) alongside UV coordinate unwrapping and texture tiling controls.
+    \item \textbf{Advanced Additions:} Directional soft shadow mapping with 16-sample PCF, a real-time GPU Whitted ray tracer on a full-screen quad, an asynchronous multi-threaded CPU ray-tracing snapshot exporter, interactive sliding Shoji doors and windows with continuous collision detection, an embedded bitmap font HUD overlay, and a 312-test automated verification suite.
+\end{itemize}
