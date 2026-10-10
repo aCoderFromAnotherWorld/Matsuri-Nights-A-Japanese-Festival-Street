@@ -26,7 +26,7 @@ Every visual mesh in the project belongs to a `SceneNode` in the hierarchical sc
   where $\alpha$ is the material shininess exponent (`shininess`) and $k_s$ is the specular reflectivity coefficient (`specularStrength`).
 * **Active Scene Light Sources:**
   1. **Directional Light (Sun / Moon):** Sweeps across the sky; sunlight is warm golden-white `(1.0, 0.95, 0.8)` during day; moon is cold silvery indigo `(0.15, 0.20, 0.35)` at night.
-  2. **12 Dynamic Point Lights:**
+  2. **14 Dynamic Point Lights:**
      * **Point Light 0 (Magic Orb):** Cyan-blue arcane glow `(0.2, 0.6, 1.0)` orbiting the magician.
      * **Point Light 1 (Takoyaki Stall Lantern):** Warm amber glow `(1.0, 0.6, 0.2)` illuminating food stall counters.
      * **Point Light 2 (Kakigori Stall Lantern):** Rose-magenta glow `(1.0, 0.4, 0.6)` on shaved ice syrups.
@@ -38,6 +38,8 @@ Every visual mesh in the project belongs to a `SceneNode` in the hierarchical sc
      * **Point Light 9 (Machiya R1 Second Floor Bedroom):** Soft warm amber chamber lighting `(1.35, 1.0, 0.60)`.
      * **Point Light 10 (Machiya L2 Living Room):** Cozy domestic interior glow `(1.2, 0.9, 0.55)`.
      * **Point Light 11 (Machiya R2 Living Room):** Cozy domestic interior glow `(1.2, 0.9, 0.55)`.
+     * **Point Light 12 (Torii Left Gate Shrine Lantern):** Warm radiant amber illumination `(1.50, 1.05, 0.50)` illuminating the left pillar, crossbeam, and entrance approach.
+     * **Point Light 13 (Torii Right Gate Shrine Lantern):** Warm radiant amber illumination `(1.50, 1.05, 0.50)` illuminating the right pillar, crossbeam, and entrance approach.
   3. **Stage Spotlight:**
      * Conical spotlight mounted above the stage housing tracking the magician.
      * Inner cutoff angle $\cos(15^\circ)$ and outer cutoff angle $\cos(20^\circ)$ for smooth penumbra falloff.
@@ -131,13 +133,38 @@ Every visual mesh in the project belongs to a `SceneNode` in the hierarchical sc
 
 All object colors are located inside **`Matsuri Nights — A Japanese Festival Street/src/Objects.h`**.
 
-### 1. Torii Shrine Gate
-* **File:** `src/Objects.h` (around line 340)
-* **Code to edit:**
+### 1. Torii Shrine Gate & Decorative Illuminations
+* **File:** `src/Objects.h` inside `ToriiGate`
+* **Architectural Frame & Pillars:**
 ```cpp
-glm::vec4 vermilion(0.85f, 0.22f, 0.12f, 1.0f); // Main pillars & crossbeams
-glm::vec4 black(0.12f, 0.12f, 0.14f, 1.0f);     // Central tablet strut (Gakuzuka)
+glm::vec4 vermilion(0.85f, 0.22f, 0.12f, 1.0f); // Main pillars & crossbeams (Nuki, Shimaki)
+glm::vec4 black(0.12f, 0.12f, 0.14f, 1.0f);     // Central tablet (Gakuzuka) & Kasagi roof cap
 glm::vec4 stone(0.45f, 0.45f, 0.48f, 1.0f);     // Pedestal bases (Kamebara)
+glm::vec4 goldLeaf(0.92f, 0.80f, 0.25f, 1.0f);  // Gilded plaque frame & circular crest disk
+```
+* **Hanging Chochin Lanterns (Underside of Nuki):**
+```cpp
+glm::vec4 lanternRed(0.92f, 0.18f, 0.12f, 1.0f); // Ribbed vermilion washi paper
+glm::vec3 lanternGlow(2.6f, 1.4f, 0.5f);         // Emissive inner shrine flame glow
+glm::vec4 kanjiBand(0.96f, 0.94f, 0.90f, 1.0f);  // Central white festival kanji band
+glm::vec4 silkTassel(0.92f, 0.80f, 0.25f, 1.0f); // Golden silk hanging tassel
+```
+* **Pillar Cantilever Bracket Lanterns (Tsuri-Doro):**
+```cpp
+glm::vec4 bronze(0.18f, 0.18f, 0.20f, 1.0f);      // Wrought-iron mounting arm & strut
+glm::vec4 washiAmber(1.0f, 0.82f, 0.45f, 1.0f);   // Translucent warm amber paper chamber
+glm::vec3 pillarGlow(3.0f, 1.8f, 0.6f);          // Emissive golden chamber glow
+```
+* **Twin Traditional Stone Lanterns (Ishi-Doro):**
+```cpp
+glm::vec4 granite(0.45f, 0.45f, 0.48f, 1.0f);    // Kiso base, Sao post, Chudai & Hoju finial
+glm::vec4 slateRoof(0.35f, 0.35f, 0.38f, 1.0f);  // Flared pagoda umbrella roof (Kasa)
+glm::vec3 flameGlow(3.5f, 2.4f, 1.0f);           // Radiant sacred flame core (Hibukuro)
+```
+* **Sacred Shimenawa Rope & Shide Streamers:**
+```cpp
+glm::vec4 strawWheat(0.82f, 0.72f, 0.45f, 1.0f); // Braided rice straw rope & tassels
+glm::vec4 paperWhite(0.96f, 0.94f, 0.90f, 1.0f); // Folded white zigzag Shide streamers
 ```
 
 ### 2. Traditional Machiya Townhouses (Interior & Exterior)

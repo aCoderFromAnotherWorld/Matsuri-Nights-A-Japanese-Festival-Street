@@ -11,7 +11,7 @@
 **Matsuri Nights** is an advanced, real-time interactive 3D simulation of a traditional Japanese summer evening festival (*matsuri*). Built from scratch using modern C++17, OpenGL 3.3+ Core Profile, GLFW 3.5.1, GLAD, and GLM, the project demonstrates core computer graphics fundamentals alongside cutting-edge rendering techniques:
 
 * **Hierarchical Scene Graphs & Kinematics:** Full parent-child transformation tree with multi-joint articulated rigs, projectile parabolic physics, and catenary rope curves.
-* **Blinn-Phong Illumination Pipeline:** Directional sun/moon, 12 dynamic point lights, stage spotlight with smooth angular falloff, and indoor skylight bounce.
+* **Blinn-Phong Illumination Pipeline:** Directional sun/moon, 14 dynamic point lights, stage spotlight with smooth angular falloff, and indoor skylight bounce.
 * **Soft Shadow Mapping:** 16-sample PCF filter with normal-scaled adaptive depth bias rendered via an offscreen $2048 \times 2048$ FBO.
 * **Procedural Texture Synthesis:** 7 procedurally generated 24-bit uncompressed texture maps (timber, roof tiles, stone pavement, tatami cloth, gold leaf, sakura bark, washi paper).
 * **Dual Ray Tracing Pipeline:** Real-time GPU Whitted ray tracer (60+ FPS, <kbd>Z</kbd>) and multi-threaded CPU software ray tracer (<kbd>F9</kbd>) with recursive specular reflections and analytical hard shadows.
@@ -40,7 +40,7 @@
 
 ### 2. Multi-Source Lighting & PCF Shadow Pipeline
 * **Directional Sun / Moon:** Dynamic celestial light sweeping across the sky during Day/Night transitions (<kbd>N</kbd>).
-* **12 Dynamic Point Lights:**
+* **14 Dynamic Point Lights:**
   * Light 0: Magic Orb arcane cyan glow `(0.2, 0.6, 1.0)`.
   * Light 1: Takoyaki Stall warm amber lantern `(1.0, 0.6, 0.2)`.
   * Light 2: Kakigori Stall rose-magenta lantern `(1.0, 0.4, 0.6)`.
@@ -48,6 +48,7 @@
   * Light 5: High-altitude exploding fireworks flash.
   * Lights 6–9: Machiya L1 & R1 living rooms and upper bedrooms.
   * Lights 10–11: Machiya L2 & R2 cozy domestic living rooms.
+  * Lights 12–13: Torii Shrine Gate Left & Right radiant amber illuminations `(1.50, 1.05, 0.50)`.
 * **Stage Spotlight:** Smooth inner ($\cos 15^\circ$) and outer ($\cos 20^\circ$) angular penumbra tracking the magician.
 * **PCF Soft Shadows:** 16-sample kernel with normal-scaled depth bias eliminating shadow acne across building walls, awnings, and cobblestones.
 
@@ -112,7 +113,7 @@ Press <kbd>T</kbd> to cycle target selection live in the viewport:
 6. `Stage Spotlight Housing` (Tracking rig)
 7. `Takoyaki Stall` (Full unit with 6 flipping/hopping balls)
 8. `Kakigori Stall` (Full unit with ice shaver, spinning flywheel, and 6 animated bowls)
-9. `Torii Gate` (Grand shrine entrance anchor)
+9. `Torii Gate` (Grand decorated shrine entrance with hanging lanterns, pillar lights, and stone lanterns)
 10. `Sakura Blossom Tree` (Hierarchical foliage and drifting petals)
 11. `Crowd Walker #1` (Street walking pedestrian rig)
 12. `Machiya Building L1` (Left Front Townhouse)

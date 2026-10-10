@@ -367,12 +367,30 @@ public:
         {
             auto assignTorii = [&](auto& self, std::shared_ptr<SceneNode> node) -> void {
                 if (!node) return;
-                if (node->name.find("Gakuzuka") != std::string::npos)
+                if (node->name.find("LanternPaper") != std::string::npos || node->name.find("PillarLanternPaper") != std::string::npos)
+                {
+                    node->texture = &texLantern;
+                    node->textureTiling = 1.0f;
+                    node->shininess = 32.0f;
+                    node->specularStrength = 0.40f;
+                }
+                else if (node->name.find("StoneLanternFlame") != std::string::npos)
+                {
+                    node->texture = nullptr;
+                }
+                else if (node->name.find("Stone") != std::string::npos || node->name.find("Base") != std::string::npos || node->name.find("Kiso") != std::string::npos || node->name.find("Chudai") != std::string::npos || node->name.find("Sao") != std::string::npos)
+                {
+                    node->texture = &texStone;
+                    node->textureTiling = 2.0f;
+                    node->shininess = 16.0f;
+                    node->specularStrength = 0.20f;
+                }
+                else if (node->name.find("Gakuzuka") != std::string::npos || node->name.find("Gold") != std::string::npos || node->name.find("Crest") != std::string::npos || node->name.find("Finial") != std::string::npos || node->name.find("Tassel") != std::string::npos)
                 {
                     node->texture = &texGold;
                     node->textureTiling = 1.0f;
-                    node->shininess = 48.0f;
-                    node->specularStrength = 0.85f;
+                    node->shininess = 64.0f;
+                    node->specularStrength = 0.90f;
                 }
                 else
                 {
@@ -625,7 +643,7 @@ public:
 
     void initLighting()
     {
-        pointLights.resize(12);
+        pointLights.resize(14);
 
         // Point Light 0: Magic Orb (Cyan/mystical blue moving light)
         pointLights[0].ambient = glm::vec3(0.05f, 0.10f, 0.15f);
@@ -731,6 +749,24 @@ public:
         pointLights[11].linear = 0.08f;
         pointLights[11].quadratic = 0.022f;
 
+        // Point Light 12: Torii Gate Left Lantern & Shrine Illumination
+        pointLights[12].position = glm::vec3(-2.8f, 6.8f, -31.5f);
+        pointLights[12].ambient = glm::vec3(0.08f, 0.05f, 0.02f);
+        pointLights[12].diffuse = glm::vec3(1.50f, 1.05f, 0.50f);
+        pointLights[12].specular = glm::vec3(1.30f, 1.00f, 0.55f);
+        pointLights[12].constant = 1.0f;
+        pointLights[12].linear = 0.07f;
+        pointLights[12].quadratic = 0.018f;
+
+        // Point Light 13: Torii Gate Right Lantern & Shrine Illumination
+        pointLights[13].position = glm::vec3(2.8f, 6.8f, -31.5f);
+        pointLights[13].ambient = glm::vec3(0.08f, 0.05f, 0.02f);
+        pointLights[13].diffuse = glm::vec3(1.50f, 1.05f, 0.50f);
+        pointLights[13].specular = glm::vec3(1.30f, 1.00f, 0.55f);
+        pointLights[13].constant = 1.0f;
+        pointLights[13].linear = 0.07f;
+        pointLights[13].quadratic = 0.018f;
+
         // Spotlight: Stage tracking spotlight
         spotLight.ambient = glm::vec3(0.05f, 0.05f, 0.04f);
         spotLight.diffuse = glm::vec3(1.5f, 1.35f, 1.1f);
@@ -812,7 +848,19 @@ public:
         pointLights[10].diffuse = glm::vec3(1.35f, 1.10f, 0.70f) * roomLightScale;
         pointLights[11].diffuse = glm::vec3(1.35f, 1.10f, 0.70f) * roomLightScale;
 
-        // 7. Spotlight: Tracks spotlight housing orientation in real-time
+        // 7. Torii Gate Shrine Illuminations (Point Lights 12 & 13)
+        if (toriiGate && toriiGate->leftLightAnchor && toriiGate->rightLightAnchor)
+        {
+            pointLights[12].position = toriiGate->leftLightAnchor->getWorldPosition();
+            pointLights[13].position = toriiGate->rightLightAnchor->getWorldPosition();
+        }
+        float toriiNightBoost = glm::mix(0.25f, 1.45f, dayNightFactor) * lightScale;
+        pointLights[12].diffuse = glm::vec3(1.50f, 1.05f, 0.50f) * toriiNightBoost;
+        pointLights[12].specular = glm::vec3(1.30f, 1.00f, 0.55f) * toriiNightBoost;
+        pointLights[13].diffuse = glm::vec3(1.50f, 1.05f, 0.50f) * toriiNightBoost;
+        pointLights[13].specular = glm::vec3(1.30f, 1.00f, 0.55f) * toriiNightBoost;
+
+        // 8. Spotlight: Tracks spotlight housing orientation in real-time
         if (spotlightRig && spotlightRig->lampHousing)
         {
             spotLight.position = spotlightRig->lampHousing->getWorldPosition();
@@ -939,6 +987,10 @@ public:
                 }
             }
         }
+        if (toriiGate)
+        {
+            toriiGate->setLights(lanternLightsOn);
+        }
         std::cout << "\n========================================================" << std::endl;
         std::cout << " [LIGHTS] Lantern & Stall Illuminations: " << (lanternLightsOn ? "LIT (Active Glow)" : "OFF (Dimmed)") << std::endl;
         std::cout << "========================================================\n" << std::endl;
@@ -988,6 +1040,9 @@ public:
         {
             dayNightFactor = std::max(targetFactor, dayNightFactor - dayNightSpeed * dt);
         }
+
+        if (toriiGate)
+            toriiGate->update(dt, dayNightFactor, lanternLightsOn);
 
         if (!isPaused)
         {

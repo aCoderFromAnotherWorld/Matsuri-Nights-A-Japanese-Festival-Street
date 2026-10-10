@@ -41,7 +41,7 @@ struct Material {
     float specularStrength;
 };
 
-#define NR_POINT_LIGHTS 12
+#define NR_POINT_LIGHTS 14
 
 uniform vec4 objectColor;
 uniform float dayNightFactor; // 0.0 = bright day, 1.0 = festival night

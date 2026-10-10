@@ -2120,6 +2120,42 @@ class ToriiGate
 {
 public:
     std::shared_ptr<SceneNode> root;
+    std::shared_ptr<SceneNode> leftLightAnchor;
+    std::shared_ptr<SceneNode> rightLightAnchor;
+    std::vector<std::shared_ptr<SceneNode>> emissiveLanterns;
+
+    void setLights(bool active)
+    {
+        for (auto& node : emissiveLanterns)
+        {
+            if (node)
+            {
+                node->isEmissive = active;
+            }
+        }
+    }
+
+    void update(float dt, float nightFactor, bool lightsOn)
+    {
+        float intensity = lightsOn ? glm::mix(0.65f, 2.85f, nightFactor) : 0.05f;
+        for (auto& node : emissiveLanterns)
+        {
+            if (!node) continue;
+            node->isEmissive = lightsOn;
+            if (node->name.find("StoneLanternFlame") != std::string::npos)
+            {
+                node->emissiveColor = glm::vec3(3.5f, 2.4f, 1.0f) * intensity;
+            }
+            else if (node->name.find("PillarLantern") != std::string::npos)
+            {
+                node->emissiveColor = glm::vec3(3.0f, 1.8f, 0.6f) * intensity;
+            }
+            else
+            {
+                node->emissiveColor = glm::vec3(2.6f, 1.4f, 0.5f) * intensity;
+            }
+        }
+    }
 
     ToriiGate(SceneMeshes& meshes, const glm::vec3& pos)
     {
@@ -2129,7 +2165,14 @@ public:
         glm::vec4 vermilion(0.85f, 0.22f, 0.12f, 1.0f);
         glm::vec4 black(0.12f, 0.12f, 0.14f, 1.0f);
         glm::vec4 stone(0.45f, 0.45f, 0.48f, 1.0f);
+        glm::vec4 goldLeaf(0.92f, 0.80f, 0.25f, 1.0f);
+        glm::vec4 paperWhite(0.96f, 0.94f, 0.90f, 1.0f);
+        glm::vec4 strawWheat(0.82f, 0.72f, 0.45f, 1.0f);
+        glm::vec4 bronze(0.18f, 0.18f, 0.20f, 1.0f);
 
+        // -------------------------------------------------------------
+        // 1. Core Architectural Frame
+        // -------------------------------------------------------------
         // Stone pedestal bases (Kamebara)
         auto baseL = std::make_shared<SceneNode>("Torii_BaseL");
         baseL->mesh = &meshes.cylinder;
@@ -2150,7 +2193,7 @@ public:
         colL->mesh = &meshes.cylinder;
         colL->transform.position = glm::vec3(-4.5f, 5.5f, 0.0f);
         colL->transform.scale = glm::vec3(0.9f, 9.5f, 0.9f);
-        colL->transform.rotation.z = -1.5f; // subtle authentic inward tilt
+        colL->transform.rotation.z = -1.5f; // authentic inward tilt
         colL->color = vermilion;
         root->addChild(colL);
 
@@ -2170,13 +2213,32 @@ public:
         nuki->color = vermilion;
         root->addChild(nuki);
 
-        // Central vertical tablet / strut (Gakuzuka)
+        // Central vertical tablet / strut (Gakuzuka) with Gilded Gold Border & Crest
         auto gakuzuka = std::make_shared<SceneNode>("Torii_Gakuzuka");
         gakuzuka->mesh = &meshes.cube;
         gakuzuka->transform.position = glm::vec3(0.0f, 9.25f, 0.0f);
         gakuzuka->transform.scale = glm::vec3(1.2f, 1.4f, 0.35f);
         gakuzuka->color = black;
         root->addChild(gakuzuka);
+
+        auto gakuzukaGoldFrame = std::make_shared<SceneNode>("Torii_Gakuzuka_GoldFrame");
+        gakuzukaGoldFrame->mesh = &meshes.cube;
+        gakuzukaGoldFrame->transform.position = glm::vec3(0.0f, 9.25f, 0.02f);
+        gakuzukaGoldFrame->transform.scale = glm::vec3(1.36f, 1.56f, 0.32f);
+        gakuzukaGoldFrame->color = goldLeaf;
+        gakuzukaGoldFrame->shininess = 64.0f;
+        gakuzukaGoldFrame->specularStrength = 0.90f;
+        root->addChild(gakuzukaGoldFrame);
+
+        auto gakuzukaCrest = std::make_shared<SceneNode>("Torii_Gakuzuka_CrestDisk");
+        gakuzukaCrest->mesh = &meshes.cylinder;
+        gakuzukaCrest->transform.position = glm::vec3(0.0f, 9.25f, 0.20f);
+        gakuzukaCrest->transform.rotation.x = 90.0f;
+        gakuzukaCrest->transform.scale = glm::vec3(0.42f, 0.04f, 0.42f);
+        gakuzukaCrest->color = goldLeaf;
+        gakuzukaCrest->shininess = 72.0f;
+        gakuzukaCrest->specularStrength = 0.95f;
+        root->addChild(gakuzukaCrest);
 
         // Sub-top curved crossbeam (Shimaki) with authentic Japanese upward sori
         auto shimaki = std::make_shared<SceneNode>("Torii_Shimaki");
@@ -2191,6 +2253,267 @@ public:
         kasagi->transform.position = glm::vec3(0.0f, 10.65f, 0.0f);
         kasagi->color = black;
         root->addChild(kasagi);
+
+        // -------------------------------------------------------------
+        // 2. Sacred Straw Rope (Shimenawa) & Folded Paper Streamers (Shide)
+        // -------------------------------------------------------------
+        auto shimenawa = std::make_shared<SceneNode>("Torii_Shimenawa");
+        shimenawa->mesh = &meshes.cylinder;
+        shimenawa->transform.position = glm::vec3(0.0f, 7.95f, 0.22f);
+        shimenawa->transform.rotation.z = 90.0f;
+        shimenawa->transform.scale = glm::vec3(0.14f, 8.6f, 0.14f);
+        shimenawa->color = strawWheat;
+        root->addChild(shimenawa);
+
+        // Straw tassels hanging from the rope
+        float tasselX[3] = { -2.0f, 0.0f, 2.0f };
+        for (int i = 0; i < 3; ++i)
+        {
+            auto tassel = std::make_shared<SceneNode>("Torii_Shimenawa_Tassel_" + std::to_string(i));
+            tassel->mesh = &meshes.cone;
+            tassel->transform.position = glm::vec3(tasselX[i], 7.62f, 0.22f);
+            tassel->transform.rotation.x = 180.0f;
+            tassel->transform.scale = glm::vec3(0.12f, 0.45f, 0.12f);
+            tassel->color = strawWheat;
+            root->addChild(tassel);
+        }
+
+        // 4 Zigzag Shide sacred folded paper streamers
+        float shideX[4] = { -3.1f, -1.0f, 1.0f, 3.1f };
+        for (int i = 0; i < 4; ++i)
+        {
+            auto shideTop = std::make_shared<SceneNode>("Torii_Shide_Top_" + std::to_string(i));
+            shideTop->mesh = &meshes.cube;
+            shideTop->transform.position = glm::vec3(shideX[i], 7.65f, 0.24f);
+            shideTop->transform.rotation.z = (i % 2 == 0) ? -12.0f : 12.0f;
+            shideTop->transform.scale = glm::vec3(0.16f, 0.28f, 0.02f);
+            shideTop->color = paperWhite;
+            root->addChild(shideTop);
+
+            auto shideBot = std::make_shared<SceneNode>("Torii_Shide_Bot_" + std::to_string(i));
+            shideBot->mesh = &meshes.cube;
+            shideBot->transform.position = glm::vec3(shideX[i] + ((i % 2 == 0) ? 0.05f : -0.05f), 7.42f, 0.24f);
+            shideBot->transform.rotation.z = (i % 2 == 0) ? 14.0f : -14.0f;
+            shideBot->transform.scale = glm::vec3(0.14f, 0.26f, 0.02f);
+            shideBot->color = paperWhite;
+            root->addChild(shideBot);
+        }
+
+        // -------------------------------------------------------------
+        // 3. Four Grand Hanging Chochin Lanterns on Nuki Crossbeam
+        // -------------------------------------------------------------
+        float lanternX[4] = { -3.2f, -1.15f, 1.15f, 3.2f };
+        for (int i = 0; i < 4; ++i)
+        {
+            // Suspension cord
+            auto cord = std::make_shared<SceneNode>("Torii_Lantern_Cord_" + std::to_string(i));
+            cord->mesh = &meshes.cylinder;
+            cord->transform.position = glm::vec3(lanternX[i], 7.72f, 0.0f);
+            cord->transform.scale = glm::vec3(0.025f, 0.32f, 0.025f);
+            cord->color = bronze;
+            root->addChild(cord);
+
+            // Black top cap
+            auto topCap = std::make_shared<SceneNode>("Torii_Lantern_TopCap_" + std::to_string(i));
+            topCap->mesh = &meshes.cylinder;
+            topCap->transform.position = glm::vec3(lanternX[i], 7.52f, 0.0f);
+            topCap->transform.scale = glm::vec3(0.36f, 0.08f, 0.36f);
+            topCap->color = black;
+            root->addChild(topCap);
+
+            // Radiant vermilion washi paper body
+            auto paper = std::make_shared<SceneNode>("Torii_LanternPaper_" + std::to_string(i));
+            paper->mesh = &meshes.sphere;
+            paper->transform.position = glm::vec3(lanternX[i], 7.08f, 0.0f);
+            paper->transform.scale = glm::vec3(0.44f, 0.60f, 0.44f);
+            paper->color = glm::vec4(0.92f, 0.18f, 0.12f, 1.0f);
+            paper->isEmissive = true;
+            paper->emissiveColor = glm::vec3(2.6f, 1.4f, 0.5f);
+            root->addChild(paper);
+            emissiveLanterns.push_back(paper);
+
+            // White calligraphy kanji band
+            auto band = std::make_shared<SceneNode>("Torii_Lantern_Band_" + std::to_string(i));
+            band->mesh = &meshes.cylinder;
+            band->transform.position = glm::vec3(lanternX[i], 7.08f, 0.0f);
+            band->transform.scale = glm::vec3(0.46f, 0.24f, 0.46f);
+            band->color = paperWhite;
+            root->addChild(band);
+
+            // Black bottom cap
+            auto botCap = std::make_shared<SceneNode>("Torii_Lantern_BotCap_" + std::to_string(i));
+            botCap->mesh = &meshes.cylinder;
+            botCap->transform.position = glm::vec3(lanternX[i], 6.64f, 0.0f);
+            botCap->transform.scale = glm::vec3(0.32f, 0.08f, 0.32f);
+            botCap->color = black;
+            root->addChild(botCap);
+
+            // Golden silk hanging tassel
+            auto tassel = std::make_shared<SceneNode>("Torii_Lantern_Tassel_" + std::to_string(i));
+            tassel->mesh = &meshes.cone;
+            tassel->transform.position = glm::vec3(lanternX[i], 6.42f, 0.0f);
+            tassel->transform.rotation.x = 180.0f;
+            tassel->transform.scale = glm::vec3(0.12f, 0.36f, 0.12f);
+            tassel->color = goldLeaf;
+            root->addChild(tassel);
+        }
+
+        // -------------------------------------------------------------
+        // 4. Two Front Pillar-Mounted Cantilever Bracket Lanterns (Tsuri-Doro)
+        // -------------------------------------------------------------
+        float pillarX[2] = { -4.5f, 4.5f };
+        for (int p = 0; p < 2; ++p)
+        {
+            std::string side = (p == 0) ? "L" : "R";
+            float px = pillarX[p];
+
+            // Wrought-iron mounting arm projecting forward (+Z)
+            auto arm = std::make_shared<SceneNode>("Torii_PillarBracket_Arm_" + side);
+            arm->mesh = &meshes.cube;
+            arm->transform.position = glm::vec3(px, 4.80f, 0.45f);
+            arm->transform.scale = glm::vec3(0.08f, 0.08f, 0.90f);
+            arm->color = bronze;
+            root->addChild(arm);
+
+            // Diagonal support strut
+            auto strut = std::make_shared<SceneNode>("Torii_PillarBracket_Strut_" + side);
+            strut->mesh = &meshes.cube;
+            strut->transform.position = glm::vec3(px, 4.55f, 0.40f);
+            strut->transform.rotation.x = -40.0f;
+            strut->transform.scale = glm::vec3(0.06f, 0.06f, 0.45f);
+            strut->color = bronze;
+            root->addChild(strut);
+
+            // Hexagonal pagoda roof canopy
+            auto roof = std::make_shared<SceneNode>("Torii_PillarLantern_Roof_" + side);
+            roof->mesh = &meshes.cone;
+            roof->transform.position = glm::vec3(px, 4.65f, 0.85f);
+            roof->transform.scale = glm::vec3(0.48f, 0.20f, 0.48f);
+            roof->color = black;
+            root->addChild(roof);
+
+            // Glowing translucent amber washi paper chamber
+            auto chamber = std::make_shared<SceneNode>("Torii_PillarLanternPaper_" + side);
+            chamber->mesh = &meshes.cylinder;
+            chamber->transform.position = glm::vec3(px, 4.38f, 0.85f);
+            chamber->transform.scale = glm::vec3(0.32f, 0.42f, 0.32f);
+            chamber->color = glm::vec4(1.0f, 0.82f, 0.45f, 1.0f);
+            chamber->isEmissive = true;
+            chamber->emissiveColor = glm::vec3(3.0f, 1.8f, 0.6f);
+            root->addChild(chamber);
+            emissiveLanterns.push_back(chamber);
+
+            // Wooden base tray
+            auto tray = std::make_shared<SceneNode>("Torii_PillarLantern_Tray_" + side);
+            tray->mesh = &meshes.cube;
+            tray->transform.position = glm::vec3(px, 4.14f, 0.85f);
+            tray->transform.scale = glm::vec3(0.36f, 0.06f, 0.36f);
+            tray->color = black;
+            root->addChild(tray);
+
+            // Drop finial
+            auto finial = std::make_shared<SceneNode>("Torii_PillarLantern_Finial_" + side);
+            finial->mesh = &meshes.cone;
+            finial->transform.position = glm::vec3(px, 3.98f, 0.85f);
+            finial->transform.rotation.x = 180.0f;
+            finial->transform.scale = glm::vec3(0.08f, 0.24f, 0.08f);
+            finial->color = goldLeaf;
+            root->addChild(finial);
+        }
+
+        // -------------------------------------------------------------
+        // 5. Two Grand Traditional Japanese Stone Lanterns (Ishi-Doro)
+        // -------------------------------------------------------------
+        float stoneLanternX[2] = { -3.8f, 3.8f };
+        for (int s = 0; s < 2; ++s)
+        {
+            std::string side = (s == 0) ? "L" : "R";
+            float sx = stoneLanternX[s];
+            float sz = 2.4f;
+
+            // Kiso: Stepped Foundation Plinth
+            auto kisoLower = std::make_shared<SceneNode>("Torii_StoneLantern_KisoLower_" + side);
+            kisoLower->mesh = &meshes.cylinder;
+            kisoLower->transform.position = glm::vec3(sx, 0.12f, sz);
+            kisoLower->transform.scale = glm::vec3(1.10f, 0.24f, 1.10f);
+            kisoLower->color = stone;
+            root->addChild(kisoLower);
+
+            auto kisoUpper = std::make_shared<SceneNode>("Torii_StoneLantern_KisoUpper_" + side);
+            kisoUpper->mesh = &meshes.cylinder;
+            kisoUpper->transform.position = glm::vec3(sx, 0.32f, sz);
+            kisoUpper->transform.scale = glm::vec3(0.85f, 0.16f, 0.85f);
+            kisoUpper->color = stone;
+            root->addChild(kisoUpper);
+
+            // Sao: Cylindrical Stone Shaft
+            auto sao = std::make_shared<SceneNode>("Torii_StoneLantern_Sao_" + side);
+            sao->mesh = &meshes.cylinder;
+            sao->transform.position = glm::vec3(sx, 0.88f, sz);
+            sao->transform.scale = glm::vec3(0.42f, 0.95f, 0.42f);
+            sao->color = stone;
+            root->addChild(sao);
+
+            // Chudai: Middle Lotus Platform
+            auto chudai = std::make_shared<SceneNode>("Torii_StoneLantern_Chudai_" + side);
+            chudai->mesh = &meshes.cylinder;
+            chudai->transform.position = glm::vec3(sx, 1.42f, sz);
+            chudai->transform.scale = glm::vec3(0.92f, 0.18f, 0.92f);
+            chudai->color = stone;
+            root->addChild(chudai);
+
+            // Hibukuro: Light Chamber Framing Corner Posts
+            float ribOffset = 0.25f;
+            for (int r = 0; r < 4; ++r)
+            {
+                float rx = ((r % 2 == 0) ? -1.0f : 1.0f) * ribOffset;
+                float rz = ((r < 2) ? -1.0f : 1.0f) * ribOffset;
+                auto post = std::make_shared<SceneNode>("Torii_StoneLantern_Post_" + side + "_" + std::to_string(r));
+                post->mesh = &meshes.cube;
+                post->transform.position = glm::vec3(sx + rx, 1.70f, sz + rz);
+                post->transform.scale = glm::vec3(0.08f, 0.42f, 0.08f);
+                post->color = stone;
+                root->addChild(post);
+            }
+
+            // Glowing Internal Sacred Flame / Candle Core
+            auto flame = std::make_shared<SceneNode>("Torii_StoneLanternFlame_" + side);
+            flame->mesh = &meshes.sphere;
+            flame->transform.position = glm::vec3(sx, 1.70f, sz);
+            flame->transform.scale = glm::vec3(0.20f, 0.28f, 0.20f);
+            flame->color = glm::vec4(1.0f, 0.85f, 0.40f, 1.0f);
+            flame->isEmissive = true;
+            flame->emissiveColor = glm::vec3(3.5f, 2.4f, 1.0f);
+            root->addChild(flame);
+            emissiveLanterns.push_back(flame);
+
+            // Kasa: Flared Pagoda Umbrella Roof
+            auto kasa = std::make_shared<SceneNode>("Torii_StoneLantern_Kasa_" + side);
+            kasa->mesh = &meshes.cone;
+            kasa->transform.position = glm::vec3(sx, 2.05f, sz);
+            kasa->transform.scale = glm::vec3(1.15f, 0.40f, 1.15f);
+            kasa->color = glm::vec4(0.35f, 0.35f, 0.38f, 1.0f);
+            root->addChild(kasa);
+
+            // Hoju: Sacred Lotus Pearl Finial
+            auto hoju = std::make_shared<SceneNode>("Torii_StoneLantern_Hoju_" + side);
+            hoju->mesh = &meshes.sphere;
+            hoju->transform.position = glm::vec3(sx, 2.38f, sz);
+            hoju->transform.scale = glm::vec3(0.18f, 0.22f, 0.18f);
+            hoju->color = stone;
+            root->addChild(hoju);
+        }
+
+        // -------------------------------------------------------------
+        // 6. Dynamic Point Light Anchors (Torii Left & Right Illuminations)
+        // -------------------------------------------------------------
+        leftLightAnchor = std::make_shared<SceneNode>("Torii_LightAnchor_L");
+        leftLightAnchor->transform.position = glm::vec3(-2.8f, 6.8f, 0.5f);
+        root->addChild(leftLightAnchor);
+
+        rightLightAnchor = std::make_shared<SceneNode>("Torii_LightAnchor_R");
+        rightLightAnchor->transform.position = glm::vec3(2.8f, 6.8f, 0.5f);
+        root->addChild(rightLightAnchor);
 
         root->setStaticRecursive(true);
     }

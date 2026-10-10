@@ -96,7 +96,7 @@ Press the number keys to quickly showcase key areas to the evaluator:
   * *(Fireworks also launch automatically at periodic intervals when night mode is active).*
 * **Cycle Shading Mode (<kbd>P</kbd>):**
   * Toggles between all 3 required shading configurations live in the fragment shader:
-    1. **Full Blinn-Phong Shading:** Ambient + Diffuse (Lambert) + Specular (Halfway vector $\mathbf{H} = \frac{\mathbf{L}+\mathbf{V}}{\|\mathbf{L}+\mathbf{V}\|}$) across Directional Light, 12 Dynamic Point Lights, and Stage Spotlight.
+    1. **Full Blinn-Phong Shading:** Ambient + Diffuse (Lambert) + Specular (Halfway vector $\mathbf{H} = \frac{\mathbf{L}+\mathbf{V}}{\|\mathbf{L}+\mathbf{V}\|}$) across Directional Light, 14 Dynamic Point Lights, and Stage Spotlight.
     2. **Diffuse Only:** Ambient + Diffuse terms only (specular highlights disabled to demonstrate Lambertian reflectance).
     3. **Ambient Only:** Uniform ambient lighting only (flat shading baseline).
 * **Toggle Textures (<kbd>X</kbd>):**
@@ -160,7 +160,7 @@ Built specifically to satisfy the course requirement: *"Any object's position, r
 | **6** | **Spotlight Housing** | **Tracking Dynamic Rotation.** Cone lamp housing rotating in pitch and yaw to track the stage. |
 | **7** | **Takoyaki Stall** | **Complex Multi-Part Model.** Assembly of stall counter, awning, griddle, and spinning/hopping takoyaki spheres. |
 | **8** | **Kakigori Stall** | **Complex Multi-Part Model.** Assembly of stall counter, awning, vintage ice shaving machine with rotating flywheel, and 6 animated shaved ice dessert bowls. |
-| **9** | **Torii Gate** | **Static Shrine Anchor.** Serves as the fixed reference architecture against which all moving objects are judged. |
+| **9** | **Torii Gate** | **Decorated Shrine Portal.** Grand shrine entrance decorated with 4 hanging Chochin lanterns, 2 pillar bracket lanterns, twin stone lanterns (Ishi-Doro), sacred Shimenawa rope, and 2 dedicated dynamic point lights. |
 | **10** | **Sakura Blossom Tree** | **Branched Hierarchy & Petal Kinematics.** Trunk, bough branches, blossom foliage clusters, and falling petals with sinusoidal drift. |
 | **11** | **Crowd Walker #1** | **Articulated Walk Cycle.** Moving figure with translational pathing, vertical step bobbing, and alternating leg cycles. |
 | **12** | **Machiya_L1** | **Interactive Townhouse Building.** Traditional architecture with sliding Shoji door, windows, and interior tatami/furniture (Left Front). |

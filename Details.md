@@ -67,7 +67,7 @@
 9. [Lighting, Shading and Illumination](#9-lighting-shading-and-illumination)
    - [9.1 Blinn-Phong Shading Pipeline](#91-blinn-phong-shading-pipeline)
    - [9.2 Live Shading Modes](#92-live-shading-modes)
-   - [9.3 Complete Light Source Specification (12 Dynamic Lights)](#93-complete-light-source-specification-12-dynamic-lights)
+   - [9.3 Complete Light Source Specification (14 Dynamic Point Lights & 16 Total Lights)](#93-complete-light-source-specification-14-dynamic-point-lights--16-total-lights)
    - [9.4 Day/Night Solar & Lunar Blend Machine](#94-daynight-solar--lunar-blend-machine)
    - [9.5 16-Sample PCF Soft Shadow Mapping](#95-16-sample-pcf-soft-shadow-mapping)
    - [9.6 Comprehensive Materials Matrix](#96-comprehensive-materials-matrix)
@@ -163,12 +163,13 @@ The application is structured to systematically satisfy and exceed every require
 
 4. **Lighting, Shading, and Color Modulation:**
    - Evaluates Blinn-Phong per-fragment reflection, diffuse Lambertian shading, and ambient baselines switchable live via <kbd>P</kbd>.
-   - Features 12 dynamic lights: 1 directional light, 11 point lights, and 1 cone spotlight.
+   - Features 16 dynamic lights: 1 directional light, 14 point lights, and 1 cone spotlight.
 
 5. **Moving Light Sources & Illumination Feedback:**
    - Point Light #0 tracks the orbiting magic orb.
    - Point Lights #3 & #4 track the oscillating bodies of swinging street lanterns.
    - Point Light #5 flashes dynamically at firework detonation points.
+   - Point Lights #12 & #13 dynamically track the Torii shrine gate anchors.
    - The Stage Spotlight dynamically rotates its cutoff cone to follow the magician.
 
 6. **Daylight and Nightlight Views:**
@@ -180,7 +181,7 @@ Every planned project phase is **100% complete and verified**:
 | Development Phase | Status | Primary Code Evidence |
 |---|:---:|---|
 | **Phase 1: Geometry, Structure & Motion** | **DONE** | `Primitives.h` (Cube, Cylinder, Cone, Sphere, Plane, Swept Tubes), `Transform.h`, `SceneNode.h`, `Objects.h` (17 composite classes), and hierarchical kinematics in `Scene::update()`. |
-| **Phase 2: Illumination, Shading & Colors** | **DONE** | `shaders/basic.vert`, `shaders/basic.frag`, `Light.h`, `Scene::initLighting()`, `Scene::updateLighting()`, 12 dynamic lights, day/night lerp, and 3-mode shading switch (<kbd>P</kbd>). |
+| **Phase 2: Illumination, Shading & Colors** | **DONE** | `shaders/basic.vert`, `shaders/basic.frag`, `Light.h`, `Scene::initLighting()`, `Scene::updateLighting()`, 14 dynamic point lights (16 total lights), day/night lerp, and 3-mode shading switch (<kbd>P</kbd>). |
 | **Phase 3: Diffuse Texturing & Emissive Maps** | **DONE** | `Texture.h`, `TextureGenerator.h`, procedural BMP generators, active diffuse texture units in `basic.frag`, emissive night glow maps on lanterns and Shoji windows, texture toggle (<kbd>X</kbd>). |
 | **Advanced Extension: GPU Whitted Ray Tracing** | **DONE** | Full-screen quad GPU Whitted ray tracer in `shaders/raytrace.vert` & `shaders/raytrace.frag` (<kbd>Z</kbd>) + multi-threaded CPU snapshot exporter in `RayTracer.h` (<kbd>F9</kbd>). |
 | **Advanced Extension: 16-Sample PCF Soft Shadows** | **DONE** | $2048 \times 2048$ depth framebuffer FBO in `Scene.h`, `shaders/shadow_depth.vert`, `shaders/shadow_depth.frag`, slope-scaled depth bias in `basic.frag` (<kbd>V</kbd>). |
@@ -421,7 +422,7 @@ The program executes a deterministic, multi-stage rendering pipeline each frame:
 |    - If rayTracingMode == true:                                                   |
 |         Draw full-screen quad with raytrace.frag.                                 |
 |      Else:                                                                        |
-|         Upload view, projection, 12 dynamic lights, material uniforms.            |
+|         Upload view, projection, 14 dynamic point lights, material uniforms.            |
 |         Bind shadowMap depth texture to GL_TEXTURE1.                              |
 |         Traverse scene graph via draw() (draws meshes with diffuse/emissive).     |
 +-----------------------------------------------------------------------------------+
@@ -467,7 +468,7 @@ To ensure visual fidelity and prevent state corruption between 3D passes and the
 ### 4.3 GLSL Shader Program Catalog
 
 #### 1. Core Scene Shader (`shaders/basic.vert` & `shaders/basic.frag`)
-- **Purpose:** Primary 3D geometry rendering pipeline implementing Blinn-Phong illumination, 12 dynamic lights, 16-sample PCF soft shadow mapping, diffuse texture mapping, emissive glows, and the celestial sky dome.
+- **Purpose:** Primary 3D geometry rendering pipeline implementing Blinn-Phong illumination, 14 dynamic point lights (16 total lights), 16-sample PCF soft shadow mapping, diffuse texture mapping, emissive glows, and the celestial sky dome.
 - **Vertex Attributes (`layout (location = ...)`):**
   - `0`: `vec3 aPos` (Model-space vertex position)
   - `1`: `vec3 aNormal` (Model-space surface normal)
@@ -841,11 +842,17 @@ orbNode->transform.position = glm::vec3(orbX, orbY, orbZ);
 - **Interactive Doors & Windows:** Front sliding door translates $+1.35\text{m}$ along $Z$ when <kbd>H</kbd> is pressed. Upper window sashes translate $\pm 0.65\text{m}$ along $X$ when <kbd>G</kbd> is pressed.
 - **Lighting:** Houses 6 interior amber point lights (Lights #6 through #11) in ground-floor living rooms and upper bedrooms.
 
-### 7.3 Torii Shrine Gate
+### 7.3 Torii Shrine Gate & Decorative Illuminations
 - **File & Class:** `src/Objects.h: ToriiGate`
 - **Position:** Anchored at $(0.0, 0.0, -32.0\text{m})$ framing the street terminus.
-- **Primitives Used:** Two vertical `Cylinder` columns (*hashira*) with $1.5^\circ$ inward entasis tilt, two granite *daiishi* base stones, one horizontal *nuki* tie-beam, central *gakuzuka* tablet plaque with gold leaf finish, curved *shimaki* sub-lintel (`Curves::createCurvedBeam`), and upper curved *kasagi* roof beam with upward *sori* arch ($0.40\text{m}$ rise) and beveled cap.
-- **Color & Material:** Brilliant vermilion red (`glm::vec4(0.85, 0.22, 0.12, 1.0)`), black caps, gold plaque.
+- **Primitives Used:** Two vertical `Cylinder` columns (*hashira*) with $1.5^\circ$ inward entasis tilt, two granite *daiishi* base stones, one horizontal *nuki* tie-beam, central *gakuzuka* tablet plaque with gilded gold leaf finish and circular crest disk, curved *shimaki* sub-lintel (`Curves::createCurvedBeam`), and upper curved *kasagi* roof beam with upward *sori* arch ($0.40\text{m}$ rise) and beveled cap.
+- **Festive Decorative Additions:**
+  - **4 Grand Hanging Chochin Lanterns:** Suspended under the Nuki crossbeam ($X = \pm 3.2, \pm 1.15$) with bronze cords, black caps, radiant vermilion washi paper bodies (`isEmissive = true`, glowing `(2.6, 1.4, 0.5)`), white kanji bands, and golden silk tassels.
+  - **2 Pillar-Mounted Cantilever Bracket Lanterns (*Tsuri-Doro*):** Forged bronze bracket arms at $Y = 4.8\text{m}$ on each pillar, hexagonal pagoda roof canopies, glowing warm amber washi diffuser cylinders (`(3.0, 1.8, 0.6)`), and teardrop finials.
+  - **2 Traditional Japanese Stone Lanterns (*Ishi-Doro*):** Flanking the entrance path at $X = \pm 3.8\text{m}, Z = 2.4\text{m}$ with stepped *Kiso* plinths, fluted *Sao* shafts, lotus *Chudai* shelves, hollow *Hibukuro* chambers with radiant sacred flame cores (`(3.5, 2.4, 1.0)`), flared pagoda *Kasa* roofs, and lotus *Hoju* jewel finials.
+  - **Sacred Straw Rope (*Shimenawa*) & Streamers (*Shide*):** Braided straw rope with 3 hanging tassels and 4 folded white zigzag paper streamers spanning beneath the Nuki crossbeam.
+  - **2 Dynamic Point Light Anchors:** Left and right anchors tracking Point Lights #12 and #13.
+- **Color & Material:** Brilliant vermilion red (`glm::vec4(0.85, 0.22, 0.12, 1.0)`), black caps, gold plaque, granite stone, and straw wheat.
 
 ### 7.4 Cherry Blossom Trees (x7) & Detached Falling Petals
 - **File & Class:** `src/Objects.h: SakuraTree`
@@ -1085,7 +1092,7 @@ Pressing <kbd>P</kbd> cycles the uniform `shadingMode` live in `basic.frag`:
 2. `shadingMode = 1` (**Diffuse Only**): Ambient + Diffuse terms only. Specular highlights disabled to demonstrate pure matte Lambertian reflectance.
 3. `shadingMode = 2` (**Ambient Only**): Flat ambient baseline illumination for report visual comparisons.
 
-### 9.3 Complete Light Source Specification (12 Dynamic Lights)
+### 9.3 Complete Light Source Specification (14 Dynamic Point Lights & 16 Total Lights)
 
 ```
 +-------------------------------------------------------------------------------------------------------+
@@ -1106,6 +1113,8 @@ Pressing <kbd>P</kbd> cycles the uniform `shadingMode` live in `basic.frag`:
 | Point #9 | Point       | Warm Amber: (1.35,1.10,0)| Machiya_R1 Upper Bedroom    | Kc=1.0, Kl=0.08, Kq=0.02|
 | Point #10| Point       | Cozy Glow: (1.35,1.10,0) | Machiya_L2 Living Room      | Kc=1.0, Kl=0.08, Kq=0.02|
 | Point #11| Point       | Cozy Glow: (1.35,1.10,0) | Machiya_R2 Living Room      | Kc=1.0, Kl=0.08, Kq=0.02|
+| Point #12| Point       | Radiant Gold: (1.50,1.05)| Torii Gate Left Lantern     | Kc=1.0, Kl=0.07, Kq=0.018|
+| Point #13| Point       | Radiant Gold: (1.50,1.05)| Torii Gate Right Lantern    | Kc=1.0, Kl=0.07, Kq=0.018|
 +-------------------------------------------------------------------------------------------------------+
 | SpotLight| Spotlight   | Warm Stage: (1.2,1.1,0.9)| Stage Rig Cone Housing      | Inner: 15°, Outer: 22°  |
 |          |             |                          | (tracks Magician yaw/pitch) | Kc=1.0, Kl=0.06, Kq=0.01|
@@ -1148,7 +1157,9 @@ Triggered via <kbd>N</kbd>, `dayNightFactor` ($0.0 = \text{Day}, 1.0 = \text{Nig
 | **Shoji Window Rice Paper** | 1.0 | Window Lerp | $(0.1, 0.1, 0.1)$ | 8.0 | 0.10 | Amber Glow | None (`isWindow = true`) |
 | **Paper Lantern Bodies** | 1.0 | $(1.0, 0.28, 0.15)$ | $(0.4, 0.4, 0.4)$ | 16.0 | 0.30 | $(1.0, 0.45, 0.15)$ | `lantern_paper.bmp` (1.0x) |
 | **Torii Gate Vermilion Wood**| Auto | $(0.85, 0.22, 0.12)$ | $(0.4, 0.4, 0.4)$ | 28.0 | 0.35 | None | `wood_timber.bmp` (3.0x) |
-| **Torii Tablet Plaque** | Auto | $(0.95, 0.82, 0.25)$ | $(0.9, 0.9, 0.9)$ | 48.0 | 0.85 | None | `gold_leaf.bmp` (1.0x) |
+| **Torii Tablet Plaque** | Auto | $(0.95, 0.82, 0.25)$ | $(0.9, 0.9, 0.9)$ | 64.0 | 0.90 | None | `gold_leaf.bmp` (1.0x) |
+| **Torii Hanging Lanterns** | 1.0 | $(0.92, 0.18, 0.12)$ | $(0.4, 0.4, 0.4)$ | 32.0 | 0.40 | $(2.6, 1.4, 0.5)$ | `lantern_paper.bmp` (1.0x) |
+| **Torii Stone Lantern Flame**| 1.0 | $(1.0, 0.85, 0.40)$ | $(0.8, 0.8, 0.8)$ | 64.0 | 0.90 | $(3.5, 2.4, 1.0)$ | None (`isEmissive = true`) |
 | **Sakura Tree Bark** | Auto | $(0.38, 0.28, 0.22)$ | $(0.2, 0.2, 0.2)$ | 12.0 | 0.15 | None | `sakura_bark.bmp` (2.0x) |
 | **Sakura Petals & Foliage** | Auto | $(0.98, 0.72, 0.82)$ | $(0.2, 0.2, 0.2)$ | 12.0 | 0.15 | None | None |
 | **Takoyaki Cast Iron Griddle**| Auto | $(0.18, 0.18, 0.20)$ | $(0.9, 0.9, 0.9)$ | 64.0 | 0.90 | None | None |

@@ -12,6 +12,33 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Feature: Decorated Torii Shrine Gate Illuminations & 14 Dynamic Point Lights
+
+#### 1. Decorated Shrine Entrance Architecture (`Objects.h`, `Scene.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h), [`Matsuri Nights — A Japanese Festival Street/shaders/basic.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/shaders/basic.frag)
+* **Goal & Scope:** Decorate the grand Torii Shrine Gate at the street terminus ($Z = -32.0\text{m}$) with traditional Japanese shrine lanterns and light sources so that in festival darkness it radiates a warm, majestic, and beautiful atmosphere.
+* **New Architectural Components Added to `ToriiGate`:**
+  1. **Four Grand Hanging Chochin Lanterns:** Suspended beneath the Nuki crossbeam at $X \in \{-3.2\text{m}, -1.15\text{m}, +1.15\text{m}, +3.2\text{m}\}$ at $Y = 7.08\text{m}$. Modeled with dark bronze suspension cords, black lacquer top caps, ribbed vermilion washi paper bodies (`isEmissive = true`, glowing `(2.6, 1.4, 0.5)`), white kanji bands, black bottom caps, and golden silk hanging tassels.
+  2. **Two Front Pillar-Mounted Cantilever Bracket Lanterns (*Tsuri-Doro*):** Mounted at $Y = 4.80\text{m}$ on each main pillar ($X = \pm 4.5\text{m}$) projecting forward along $+Z$ to $Z = 0.85\text{m}$. Modeled with wrought-iron cantilever arms, diagonal support struts, hexagonal pagoda roof canopies, glowing warm amber washi diffuser cylinders (`(3.0, 1.8, 0.6)`), wooden base trays, and teardrop finials.
+  3. **Twin Traditional Japanese Stone Lanterns (*Ishi-Doro* 石灯籠):** Flanking the front entrance approach at $X = \pm 3.8\text{m}, Z = 2.4\text{m}$ (world $Z = -29.6\text{m}$). Each lantern stands $2.4\text{m}$ tall and is assembled from 6 authentic components: stepped foundation plinth (*Kiso*), cylindrical stone shaft (*Sao*), middle lotus platform (*Chudai*), hollow light chamber (*Hibukuro*) with 4 framing corner posts and radiant sacred flame core (`isEmissive = true`, glowing fire amber `(3.5, 2.4, 1.0)`), flared pagoda umbrella roof (*Kasa*), and lotus pearl jewel finial (*Hoju*).
+  4. **Sacred Straw Rope (*Shimenawa*) & Folded Paper Streamers (*Shide*):** Spans beneath the Nuki crossbeam between pillars ($X \in [-4.3\text{m}, +4.3\text{m}]$). Modeled with a braided golden wheat straw rope cylinder, 3 hanging straw tassels, and 4 folded white zigzag paper streamers (*Shide*).
+  5. **Gilded Plaque Frame & Crest:** Central Gakuzuka tablet updated with a gilded gold leaf frame (`shininess = 64.0`, `specularStrength = 0.90`) and circular gold shrine crest disk (*Shinmon*).
+
+#### 2. Multi-Source Illumination Expansion: 14 Dynamic Point Lights (`basic.frag`, `Scene.h`)
+* **Fragment Shader Pipeline (`shaders/basic.frag`):**
+  * Increased `#define NR_POINT_LIGHTS` from 12 to 14.
+* **Scene Lighting Engine (`Scene.h`):**
+  * Expanded `pointLights` vector size to 14.
+  * **Point Light 12 (Torii Left Gate Shrine Lantern):** Positioned at $(X = -2.8\text{m}, Y = 6.8\text{m}, Z = -31.5\text{m})$, radiating warm golden-amber illumination (`diffuse = (1.50, 1.05, 0.50)`, `specular = (1.30, 1.00, 0.55)`, $k_c = 1.0, k_l = 0.07, k_q = 0.018$).
+  * **Point Light 13 (Torii Right Gate Shrine Lantern):** Positioned at $(X = +2.8\text{m}, Y = 6.8\text{m}, Z = -31.5\text{m})$, radiating matching golden-amber illumination across the right pillar, crossbeam, and entrance path.
+  * **Hierarchical Anchor Tracking:** Created `leftLightAnchor` and `rightLightAnchor` child nodes inside `ToriiGate`. In `Scene::updateLighting()`, Point Lights 12 & 13 dynamically query `getWorldPosition()`, guaranteeing that if an examiner transforms or inspects the Torii Gate, the point lights dynamically follow the gate in 3D space.
+  * **Dynamic Night & Toggle Modulation:** Diffuse and specular terms scale smoothly with day/night transitions ($\text{boost} = \text{mix}(0.25, 1.45, \text{dayNightFactor}) \times \text{lightScale}$) and dim immediately when festival lights are toggled with <kbd>0</kbd> / <kbd>KP_0</kbd>.
+* **Emissive Dynamic Update (`ToriiGate::update`):**
+  * Added `ToriiGate::update(dt, nightFactor, lightsOn)` called per-frame in `Scene::update()`, scaling the emissive brilliance of all 8 glowing lantern cores and flame nodes between daylight and night.
+  * Integrated with `Scene::toggleLanternLights()` so <kbd>0</kbd> / <kbd>KP_0</kbd> toggles all Torii gate illuminations.
+
+---
+
 ### [2026-10-10] — Documentation: In-Depth Technical Specification (`Details.md`) & `Plan.md` Milestone Completion
 
 #### 1. In-Depth Technical Specification Document (`Details.md`)

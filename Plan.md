@@ -14,7 +14,7 @@
 The project demonstrates:
 1. **Hierarchical 3D Model Transformations:** Complex parent-child scene graph structures with animated multi-joint rigs, swinging lanterns, orbiting orbs, and sliding doors.
 2. **Transformations Relative to Another Object's Reference Frame:** Pendulum swinging lanterns relative to catenary rope pivots; orbiting magic orb relative to the magician's articulated hand bone; stage spotlight aiming relative to tracking housing; sliding Shoji doors and windows relative to Machiya townhouse frames.
-3. **Advanced Dynamic Illumination & Shading:** 12 dynamic lights (1 directional sun/moon light, 11 dynamic point lights, and 1 cone-attenuated tracking spotlight), continuous day-to-night state transitions, and real-time Blinn-Phong, Diffuse-Only, and Ambient-Only shading models.
+3. **Advanced Dynamic Illumination & Shading:** 16 dynamic lights (1 directional sun/moon light, 14 dynamic point lights, and 1 cone-attenuated tracking spotlight), continuous day-to-night state transitions, and real-time Blinn-Phong, Diffuse-Only, and Ambient-Only shading models.
 4. **Diffuse & Emissive Texturing:** Multi-sampled diffuse texture mapping with procedural fallbacks, material shininess parameters, and nighttime emissive glows on lanterns and Shoji rice-paper screens.
 5. **Advanced Graphics Pipeline Extensions:**
    - **Real-Time GPU Whitted Ray Tracing** (<kbd>Z</kbd>) via a dedicated full-screen fragment shader and analytical geometry intersections.
@@ -108,7 +108,7 @@ The matsuri scene features **17 distinct composite objects** (exceeding the cour
 |:---:|---|---|---|
 | **1** | **Ground Plane** | Scaled textured `Plane` | Static reference street surface with stone pavement tiling. |
 | **2** | **Machiya Townhouses (x4)** | Scaled `Cube` frames, pyramidal `Cone`/`Cube` roofs, timber beams, interior rooms, tatami floors, stairs | Features **interactive sliding Shoji doors** (<kbd>H</kbd>) and **sliding windows** (<kbd>G</kbd>) with animated local translation; houses warm interior living room and bedroom lantern point lights. |
-| **3** | **Torii Gate** | Vertical `Cylinder` columns, curved `Cube` lintels (kasagi/shimaki), tie-beams | Static grand vermilion shrine gate framing the street terminus. |
+| **3** | **Torii Gate** | Vertical `Cylinder` columns, curved `Cube` lintels (kasagi/shimaki), tie-beams | Grand vermilion shrine gate decorated with 4 hanging Chochin lanterns, 2 pillar bracket lanterns, twin stone lanterns (Ishi-Doro), sacred Shimenawa straw rope with Shide streamers, and 2 dedicated dynamic point lights framing the street terminus. |
 | **4** | **Sakura Tree** | `Cylinder` trunk & branches, multi-cluster pink `Sphere` foliage | **Complex motion:** Individual falling petal spheres detach, drift laterally via sinusoidal wind drift, and respawn at top branch nodes. |
 | **5** | **Overhead Lantern Spans (x4)** | Catenary rope splines, 16 paper lanterns (`Sphere` + `Cylinder` caps) | **Relative transform:** Catenary rope pivot oscillation; child lantern bodies swing like pendulums; Point Lights #3 & #4 track swinging lantern positions. |
 | **6** | **Takoyaki Food Stall** | Timber frame, fabric awning, metal griddle, 6 takoyaki spheres with sauce & aonori | **Complex motion:** Takoyaki balls spin continuously in grill cavities and execute periodic parabolic hops (flipping simulation). |
@@ -128,15 +128,16 @@ The matsuri scene features **17 distinct composite objects** (exceeding the cour
 
 ## 5. Illumination, Shading & Colors
 
-### 5.1 Dynamic Lighting Engine (12 Total Lights)
+### 5.1 Dynamic Lighting Engine (16 Total Lights)
 The lighting pipeline supports three distinct light classes rendered per-fragment using the **Blinn-Phong** reflection model:
 - **1 Directional Light (Sun/Moon):** Sweeps along a celestial arc. Interpolates between warm sunlight $(\text{ambient } 0.42, \text{diffuse } 0.85)$ and cool moonlight $(\text{ambient } 0.12, \text{diffuse } 0.20)$ via the day/night blend factor.
-- **11 Point Lights with Quadratic Distance Attenuation ($1 / (k_c + k_l d + k_q d^2)$):**
+- **14 Point Lights with Quadratic Distance Attenuation ($1 / (k_c + k_l d + k_q d^2)$):**
   - *Light 0 (Magic Orb):* Tracks moving orb position in real-time; casts dynamic cyan highlights.
   - *Lights 1 & 2 (Stalls):* Amber and cyan illumination above the food stalls.
   - *Lights 3 & 4 (Lantern Spans):* Track the oscillating world positions of swinging paper lanterns.
   - *Light 5 (Fireworks Sky Flash):* Dynamically activates at firework apex burst positions with random vibrant explosion tints.
   - *Lights 6–11 (Machiya Interiors):* Warm amber lighting inside ground-floor living rooms and upper bedrooms of all 4 townhouses.
+  - *Lights 12 & 13 (Torii Shrine Gate):* Warm golden-amber radiant illumination positioned on the left and right sides of the Torii gate, tracking gate transforms.
 - **1 Dynamic Spotlight (Stage):** Mounted inside the stage cone housing. Constrained by inner ($14^\circ$) and outer ($22^\circ$) cutoff cosines; rotates in real-time to track the magician.
 
 ### 5.2 Shading Models (<kbd>P</kbd>)
@@ -283,8 +284,8 @@ The project exposes 15 distinct scene entities for live manual inspection and 6-
 - [x] **Phase 2: Illumination & Phong Shading**
   - Per-fragment Blinn-Phong lighting shader implemented with material shininess.
   - Shading model cycle (<kbd>P</kbd>) allows live switching between Blinn-Phong, Diffuse, and Ambient.
-- [x] **Phase 2: 12 Dynamic Light Sources**
-  - Directional Sun/Moonlight, 11 Point Lights (Orb, Stalls, Lanterns, Fireworks, Machiya interiors), and 1 Stage Spotlight implemented.
+- [x] **Phase 2: 16 Dynamic Light Sources**
+  - Directional Sun/Moonlight, 14 Point Lights (Orb, Stalls, Lanterns, Fireworks, Machiya interiors, Torii Gate shrine illuminations), and 1 Stage Spotlight implemented.
   - Real-time light position tracking verified (orb light, swinging lantern lights, spotlight housing tracking).
 - [x] **Phase 2: Smooth Day $\longleftrightarrow$ Night Transition**
   - Key <kbd>N</kbd> interpolates celestial vectors, sky dome colors, ambient levels, and light intensities.
