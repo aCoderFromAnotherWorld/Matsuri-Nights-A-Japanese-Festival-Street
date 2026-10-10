@@ -23,6 +23,7 @@
 ---
 
 ## Documentation Index
+* **[`explanation.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/explanation.md):** Exhaustive step-by-step codebase engineering and theoretical explanation guide (1,677 lines) answering What, Why, and How across every subsystem, line/block, mathematical derivation, matrix proof, and algorithm from zero to final project.
 * **[`report/main.pdf`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/report/main.pdf):** Authoritative 40-page (34-page core) academic laboratory report formatted in LaTeX (A4, Times New Roman, MiKTeX `pdflatex`) submitted for CSE4102.
 * **[`Details.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Details.md):** Exhaustive technical specification covering every system, math formula, shader layout, lighting source, and asset hierarchy.
 * **[`Plan.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Plan.md):** Master milestone ledger with all Phase 1, Phase 2, and Phase 3 goals verified and completed.

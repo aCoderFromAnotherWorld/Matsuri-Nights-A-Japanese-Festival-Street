@@ -12,6 +12,23 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Documentation: Comprehensive Codebase Engineering & Theory Guide (`explanation.md`)
+
+* **Files Added:** [`explanation.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/explanation.md) (110 KB, 1,677 lines)
+* **Goal & Scope:** Create an exhaustive, textbook-grade technical documentation and architectural reference explaining the entire project from zero to the final application, answering **WHAT**, **WHY**, and **HOW** for every subsystem, class, method, math formula, matrix, and shader routine in simple and clear language.
+* **Key Sections Provided in `explanation.md`:**
+  1. **Introduction & Architectural Vision:** Project scope, cultural context, graphics pipeline Mermaid flowchart.
+  2. **Chronological Evolution (Steps 0 to 17):** Tracing the exact development path from an empty C++ project to window creation, shaders, cameras, TRS math, parametric primitives, swept differential geometry, scene graph trees, Blinn-Phong forward illumination, celestial day/night cycles, 16-sample PCF soft shadows, pure procedural 24-bit BMP texture synthesis, architectural modeling, hierarchical kinematics, dual ray tracing (real-time GPU Whitted & multi-core CPU), AABB doorway collisions, monospace font HUD, and automated test harness.
+  3. **Core Mathematical Foundations & Derivations:** Complete derivations and proofs for the 6 coordinate spaces, homogeneous coordinates, proof of $M = T \cdot R_y \cdot R_x \cdot R_z \cdot S$, mathematical proof of the normal matrix $N = (M^{-1})^T$ under non-uniform scaling, Gram-Schmidt view matrix orthonormalization, perspective projection $1/z$ non-linear depth precision, Blinn-Phong half-vector $\vec{H}$ derivation vs Phong reflection vector $\vec{R}$, polynomial distance attenuation $1/(k_c + k_l d + k_q d^2)$, spotlight cutoff cones, shadow map adaptive slope biasing and 16-sample PCF disc convolution, Bézier & Catenary equations, Bishop parallel transport rotation-minimizing frames (RMF) via Rodrigues' rotation formula, and analytical ray tracing intersection math (Ray-Sphere quadratic, Ray-Box Kay-Kajiya slab method, Snell's law reflections).
+  4. **File-by-File & Block-by-Block Deep Dive:** Detailed What/Why/How analysis for all first-party files (`Main.cpp`, `Camera.h`, `Transform.h`, `Mesh.h`, `Primitives.h`, `Curves.h`, `SceneNode.h`, `Light.h`, `Shader.h`, `Texture.h`, `TextureGenerator.h`, `Objects.h`, `Scene.h`, `RayTracer.h`, `FontAtlasData.h`, `Hud`, `Interactable`, `InteractionManager`, and all `.vert`/`.frag` shaders).
+  5. **Complete Scene Graph Architectural Hierarchy:** Indented structural ASCII tree showing parent-child relationships and relative coordinates for all 17 scene components.
+  6. **Dynamic Systems & Kinematic Physics Deep-Dive:** Exact formulas for damped harmonic lantern swaying, compound 3D magic orb orbits, anti-phase bipedal pedestrian walking gaits, aerodynamic sakura petal drift, and spherical ballistic firework explosions.
+  7. **Collision Detection & Navigation System:** Continuous AABB constraint resolution, sliding collision planes, and dynamic doorway portal pass-through logic.
+  8. **Automated Verification & Test Suite Architecture:** Categorical breakdown of all 312 unit test assertions passing with 100% success.
+  9. **Master Reference:** Keybindings table, 16 dynamic light sources registry, and procedural texture asset registry.
+
+---
+
 ### [2026-10-10] — Academic Project Report: Comprehensive LaTeX Documentation (`report/main.pdf`), Automated Capture Suite (`--capture-report`), & PNG Screenshot Export
 
 #### 1. Native PNG Screenshot Export & Automated Report Capture Harness (`Main.cpp`)
