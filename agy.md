@@ -12,6 +12,45 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Verification & Test: Comprehensive Automated Control & Transform Test Suite
+
+#### 1. Automated Verification Suite (`Main.cpp`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/Main.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp)
+* **Goal & Scope:** Implement and execute an end-to-end automated test harness covering all 11 controllable inspectable objects, interactive Shoji house doors and windows, rendering and environment toggles, kinematics, and animations.
+* **Coverage & Verifications (239 / 239 Tests Passed - 100% Success):**
+  * **Section 1: All 11 Controllable Objects & Manual Transforms:**
+    1. `Lantern [Body]` (Child of Swinging Rope Pivot)
+    2. `Lantern [Rope Pivot]` (Parent Anchor Node)
+    3. `Magic Orb` (Child of Magician's Hand Bone)
+    4. `Magician Figure` (Root Articulated Rig)
+    5. `Vanishing Box` (Scale-to-Zero Demo)
+    6. `Stage Spotlight Housing` (Tracking Rig)
+    7. `Takoyaki Stall` (Full Unit with 6 Balls)
+    8. `Kakigori Stall` (Full Unit with Shaver & 6 Bowls)
+    9. `Torii Gate` (Grand Shrine Entrance)
+    10. `Sakura Blossom Tree` (Hierarchical Foliage)
+    11. `Crowd Walker #1` (Walking Street Rig)
+    * For every object: verified non-null node, translation along $+X/-X, +Y/-Y, +Z/-Z$, rotation along pitch & yaw, scaling up (1.1x) and scaling down (0.9x), world matrix propagation, and cycling forward/backward with wrap-around across indices $[0, 10]$.
+  * **Section 2: Interactive House Doors & Sliding Windows:**
+    * Tested all 4 Machiya buildings (`Machiya_L1`, `Machiya_L2`, `Machiya_R1`, `Machiya_R2`):
+      * Front Shoji door toggle open/closed (Key `H`), progress interpolation along local Z ($1.35\text{m}$ track), and distance threshold rejection ($>5.0\text{m}$).
+      * Sliding Shoji windows toggle open/closed (Key `G`), progress interpolation, and distance rejection ($>14.0\text{m}$).
+  * **Section 3: Environment, Rendering & Lighting Toggles:**
+    * Day / Night transition toggle (Key `N`): verified `targetNight` inversion and smooth factor blend.
+    * Animation pause / resume (Key `Space`): verified `isPaused` and time freezing.
+    * Shading mode cycle (Key `P`): verified Blinn-Phong $\to$ Diffuse $\to$ Ambient $\to$ Blinn-Phong cycle.
+    * Textures toggle (Key `X`): verified `enableTextures` toggle.
+    * Soft shadow mapping toggle (Key `V`): verified `enableShadows` toggle.
+    * Real-time GPU ray tracing toggle (Key `Z`): verified `rayTracingMode` toggle.
+    * Wall collision & doorway kinematics (Key `B`): verified solid wall blocking when door is closed, pass-through portal when door is open, and noclip penetration.
+    * Manual firework rocket launch (Key `F`): verified `LAUNCHING` state $\to$ ascent $\to$ `BURSTING` active burst phase.
+    * Camera presets (Keys `1`, `2`, `3`, `R`): verified positions, yaw, pitch, and origin reset.
+  * **Section 4: Complex Multi-Object Animations:**
+    * Verified 6 Takoyaki balls, 6 Kakigori bowls, ice shaver wheel rotation, active ice mound, and dynamic update cycles.
+* **Test Command:** Run `.\x64\Release\Matsuri Nights — A Japanese Festival Street.exe --test` or `.\x64\Debug\Matsuri Nights — A Japanese Festival Street.exe --test`.
+
+---
+
 ### [2026-10-10] — Feature: Kakigori Stall Desserts & Dynamic Hopping / Presentation Animation
 
 #### 1. Kakigori Dessert Servings & Stall Counter Layout (`Objects.h`, `Scene.h`)

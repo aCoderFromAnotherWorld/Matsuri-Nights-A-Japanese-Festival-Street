@@ -10,6 +10,10 @@
 #include "src/Scene.h"
 
 #include <iostream>
+#include <string>
+#include <vector>
+#include <cmath>
+#include <iomanip>
 
 // Window dimensions
 const unsigned int SCR_WIDTH = 1280;
@@ -32,17 +36,25 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void processContinuousInput(GLFWwindow* window, Scene& scene);
+bool runAutomatedTestSuite(Scene& scene, Camera& camera, GLFWwindow* window);
 
 // Global scene pointer for callbacks
 Scene* g_Scene = nullptr;
 
-int main()
+int main(int argc, char** argv)
 {
+    bool runTests = (argc > 1 && std::string(argv[1]) == "--test");
+
     // 1. Initialize GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    if (runTests)
+    {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    }
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -81,6 +93,14 @@ int main()
     Shader basicShader("shaders/basic.vert", "shaders/basic.frag");
     Scene scene;
     g_Scene = &scene;
+
+    if (runTests)
+    {
+        bool success = runAutomatedTestSuite(scene, camera, window);
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return success ? 0 : 1;
+    }
 
     // Print banner and controls in console
     std::cout << "\n========================================================================\n";
@@ -367,4 +387,338 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+// =========================================================================
+// Automated Comprehensive Test Suite for All Controllable Objects & Toggles
+// =========================================================================
+bool runAutomatedTestSuite(Scene& scene, Camera& camera, GLFWwindow* window)
+{
+    std::cout << "\n========================================================================\n";
+    std::cout << "  MATSURI NIGHTS - AUTOMATED COMPREHENSIVE CONTROL & TRANSFORM TEST SUITE\n";
+    std::cout << "  Verifying All Controllable Objects, Interactive Elements & Toggles\n";
+    std::cout << "========================================================================\n\n";
+
+    int totalTests = 0;
+    int passedTests = 0;
+
+    auto testAssert = [&](const std::string& testName, bool condition, const std::string& details = "") {
+        totalTests++;
+        if (condition)
+        {
+            passedTests++;
+            std::cout << "  [PASS] " << testName;
+            if (!details.empty()) std::cout << " (" << details << ")";
+            std::cout << "\n";
+        }
+        else
+        {
+            std::cerr << "  [FAIL] " << testName << " -- FAILED!";
+            if (!details.empty()) std::cerr << " (" << details << ")";
+            std::cerr << "\n";
+        }
+    };
+
+    // -------------------------------------------------------------------------
+    // SECTION 1: ALL 11 CONTROLLABLE INSPECTABLE OBJECTS & TRANSFORMS
+    // -------------------------------------------------------------------------
+    std::cout << "\n--- [SECTION 1: CONTROLLABLE INSPECTABLE OBJECTS & TRANSFORMS] ---\n";
+    testAssert("Inspectables List Count == 11", scene.inspectables.size() == 11, "Count = " + std::to_string(scene.inspectables.size()));
+
+    // Pause scene animation so automated transform measurements are deterministic
+    scene.isPaused = true;
+
+    for (size_t i = 0; i < scene.inspectables.size(); ++i)
+    {
+        scene.selectedIndex = static_cast<int>(i);
+        auto& item = scene.inspectables[i];
+        std::string objHeader = "Obj #" + std::to_string(i + 1) + ": " + item.displayName;
+        std::cout << "\nTesting " << objHeader << "\n";
+
+        testAssert(objHeader + " Node Valid", item.node != nullptr);
+        if (!item.node) continue;
+
+        glm::vec3 origPos = item.node->transform.position;
+        glm::vec3 origRot = item.node->transform.rotation;
+        glm::vec3 origScale = item.node->transform.scale;
+
+        // 1. Translation along X, Y, Z
+        glm::vec3 dX(2.5f, 0.0f, 0.0f);
+        scene.modifySelectedPosition(dX);
+        testAssert(objHeader + " Translate +X", glm::distance(item.node->transform.position, origPos + dX) < 0.001f);
+
+        scene.modifySelectedPosition(-dX);
+        testAssert(objHeader + " Translate -X (Return)", glm::distance(item.node->transform.position, origPos) < 0.001f);
+
+        glm::vec3 dY(0.0f, 1.8f, 0.0f);
+        scene.modifySelectedPosition(dY);
+        testAssert(objHeader + " Translate +Y", glm::distance(item.node->transform.position, origPos + dY) < 0.001f);
+
+        scene.modifySelectedPosition(-dY);
+        testAssert(objHeader + " Translate -Y (Return)", glm::distance(item.node->transform.position, origPos) < 0.001f);
+
+        glm::vec3 dZ(0.0f, 0.0f, 3.2f);
+        scene.modifySelectedPosition(dZ);
+        testAssert(objHeader + " Translate +Z", glm::distance(item.node->transform.position, origPos + dZ) < 0.001f);
+
+        scene.modifySelectedPosition(-dZ);
+        testAssert(objHeader + " Translate -Z (Return)", glm::distance(item.node->transform.position, origPos) < 0.001f);
+
+        // 2. Rotation (Pitch and Yaw)
+        glm::vec3 rPitch(15.0f, 0.0f, 0.0f);
+        scene.modifySelectedRotation(rPitch);
+        testAssert(objHeader + " Rotate +Pitch", glm::distance(item.node->transform.rotation, origRot + rPitch) < 0.001f);
+
+        scene.modifySelectedRotation(-rPitch);
+        testAssert(objHeader + " Rotate -Pitch (Return)", glm::distance(item.node->transform.rotation, origRot) < 0.001f);
+
+        glm::vec3 rYaw(0.0f, 30.0f, 0.0f);
+        scene.modifySelectedRotation(rYaw);
+        testAssert(objHeader + " Rotate +Yaw", glm::distance(item.node->transform.rotation, origRot + rYaw) < 0.001f);
+
+        scene.modifySelectedRotation(-rYaw);
+        testAssert(objHeader + " Rotate -Yaw (Return)", glm::distance(item.node->transform.rotation, origRot) < 0.001f);
+
+        // 3. Scaling (Scale Up and Scale Down)
+        scene.modifySelectedScale(1.1f);
+        testAssert(objHeader + " Scale Up 1.1x", glm::distance(item.node->transform.scale, origScale * 1.1f) < 0.001f);
+
+        scene.modifySelectedScale(1.0f / 1.1f);
+        testAssert(objHeader + " Scale Down (Return)", glm::distance(item.node->transform.scale, origScale) < 0.001f);
+        item.node->transform.scale = origScale; // Exact reset
+
+        // 4. World Matrix Propagation
+        scene.rootNode->updateWorldMatrix(glm::mat4(1.0f));
+        glm::vec3 worldPos = item.node->getWorldPosition();
+        testAssert(objHeader + " World Matrix Valid", !std::isnan(worldPos.x) && !std::isnan(worldPos.y) && !std::isnan(worldPos.z));
+    }
+
+    // Test cycling forward and backward
+    std::cout << "\nTesting Object Cycling (Key T):\n";
+    scene.selectedIndex = 0;
+    scene.cycleInspectable(1);
+    testAssert("Cycle Forward 0 -> 1", scene.selectedIndex == 1);
+    scene.cycleInspectable(-1);
+    testAssert("Cycle Backward 1 -> 0", scene.selectedIndex == 0);
+    scene.cycleInspectable(-1);
+    testAssert("Cycle Backward 0 -> 10 (Wrap)", scene.selectedIndex == 10);
+    scene.cycleInspectable(1);
+    testAssert("Cycle Forward 10 -> 0 (Wrap)", scene.selectedIndex == 0);
+
+    // -------------------------------------------------------------------------
+    // SECTION 2: INTERACTIVE SHOJI DOORS & SLIDING WINDOWS
+    // -------------------------------------------------------------------------
+    std::cout << "\n--- [SECTION 2: INTERACTIVE HOUSE DOORS & WINDOWS] ---\n";
+    testAssert("Machiya Buildings Count == 4", scene.buildings.size() == 4);
+
+    for (size_t b = 0; b < scene.buildings.size(); ++b)
+    {
+        auto& bld = scene.buildings[b];
+        if (!bld) continue;
+        std::string bldName = bld->root ? bld->root->name : ("Building_" + std::to_string(b));
+        std::cout << "\nTesting " << bldName << " Door & Window Interactions:\n";
+
+        // Test Door
+        glm::vec3 doorPos = bld->worldPos;
+        if (std::abs(bld->rotationY - 180.0f) < 1.0f)
+            doorPos += glm::vec3(-4.14f, 1.2f, 0.90f);
+        else
+            doorPos += glm::vec3(4.14f, 1.2f, -0.90f);
+
+        testAssert(bldName + " Door Initially Closed", !bld->isDoorOpen);
+
+        // Player stands right at door entrance and presses H
+        scene.interactNearestDoor(doorPos);
+        testAssert(bldName + " Toggle Door Open (Press H)", bld->isDoorOpen);
+
+        // Update animation over a few frames
+        for (int step = 0; step < 10; ++step) bld->update(0.05f);
+        testAssert(bldName + " Door Sliding Progressing Open", bld->doorSlideProgress > 0.3f && bld->slidingDoorGroup->transform.position.z > 0.4f);
+
+        // Toggle door close
+        scene.interactNearestDoor(doorPos);
+        testAssert(bldName + " Toggle Door Closed (Press H)", !bld->isDoorOpen);
+
+        for (int step = 0; step < 15; ++step) bld->update(0.05f);
+        testAssert(bldName + " Door Sliding Progressing Closed", bld->doorSlideProgress < 0.2f);
+
+        // Out of range door interaction test (player far away at Y = 50m)
+        scene.interactNearestDoor(glm::vec3(0.0f, 50.0f, 0.0f));
+        testAssert(bldName + " Far Interaction Disallowed", !bld->isDoorOpen);
+
+        // Test Windows
+        testAssert(bldName + " Windows Initially Closed", !bld->isWindowOpen);
+
+        // Player stands near building and presses G
+        scene.interactNearestWindow(bld->worldPos);
+        testAssert(bldName + " Toggle Windows Open (Press G)", bld->isWindowOpen);
+
+        for (int step = 0; step < 10; ++step) bld->update(0.05f);
+        testAssert(bldName + " Window Sliding Progressing Open", bld->windowSlideProgress > 0.3f);
+
+        // Toggle windows close
+        scene.interactNearestWindow(bld->worldPos);
+        testAssert(bldName + " Toggle Windows Closed (Press G)", !bld->isWindowOpen);
+
+        for (int step = 0; step < 15; ++step) bld->update(0.05f);
+        testAssert(bldName + " Window Sliding Progressing Closed", bld->windowSlideProgress < 0.2f);
+    }
+
+    // -------------------------------------------------------------------------
+    // SECTION 3: ENVIRONMENT, RENDERING & LIGHTING TOGGLES
+    // -------------------------------------------------------------------------
+    std::cout << "\n--- [SECTION 3: ENVIRONMENT, RENDERING & LIGHTING TOGGLES] ---\n";
+
+    // 1. Day / Night Toggle (Key N)
+    bool initNight = scene.targetNight;
+    scene.toggleDayNight();
+    testAssert("Day/Night Toggle 1 (Target Inverted)", scene.targetNight != initNight);
+    scene.toggleDayNight();
+    testAssert("Day/Night Toggle 2 (Target Restored)", scene.targetNight == initNight);
+
+    // 2. Pause / Resume Toggle (Key Space)
+    scene.isPaused = false;
+    scene.totalTime = 0.0f;
+    scene.update(0.1f);
+    float tRunning = scene.totalTime;
+    testAssert("Scene Animation Running (Time Advances)", tRunning > 0.0f);
+
+    scene.togglePause();
+    testAssert("Pause Toggle (isPaused == true)", scene.isPaused == true);
+    scene.update(0.1f);
+    testAssert("Paused State Prevents Time Advance", scene.totalTime == tRunning);
+
+    scene.togglePause();
+    testAssert("Resume Toggle (isPaused == false)", scene.isPaused == false);
+    scene.update(0.1f);
+    testAssert("Resumed State Advances Time", scene.totalTime > tRunning);
+
+    // 3. Shading Mode Cycle (Key P)
+    scene.shadingMode = 0;
+    scene.cycleShadingMode();
+    testAssert("Shading Mode Cycle 0 -> 1 (Diffuse Only)", scene.shadingMode == 1);
+    scene.cycleShadingMode();
+    testAssert("Shading Mode Cycle 1 -> 2 (Ambient Only)", scene.shadingMode == 2);
+    scene.cycleShadingMode();
+    testAssert("Shading Mode Cycle 2 -> 0 (Blinn-Phong)", scene.shadingMode == 0);
+
+    // 4. Textures Toggle (Key X)
+    bool initTex = scene.enableTextures;
+    scene.toggleTextures();
+    testAssert("Textures Toggle OFF", scene.enableTextures == !initTex);
+    scene.toggleTextures();
+    testAssert("Textures Toggle ON", scene.enableTextures == initTex);
+
+    // 5. Shadow Mapping Toggle (Key V)
+    bool initShadow = scene.enableShadows;
+    scene.toggleShadows();
+    testAssert("Shadows Toggle OFF", scene.enableShadows == !initShadow);
+    scene.toggleShadows();
+    testAssert("Shadows Toggle ON", scene.enableShadows == initShadow);
+
+    // 6. Real-Time GPU Ray Tracing Toggle (Key Z)
+    bool initRT = scene.rayTracingMode;
+    scene.toggleRayTracing();
+    testAssert("Ray Tracing Toggle ON", scene.rayTracingMode == !initRT);
+    scene.toggleRayTracing();
+    testAssert("Ray Tracing Toggle OFF", scene.rayTracingMode == initRT);
+
+    // 7. Wall Collision & Kinematics (Key B)
+    bool initCol = scene.collisionEnabled;
+    scene.toggleCollision();
+    testAssert("Collision Toggle Inverted", scene.collisionEnabled != initCol);
+    scene.toggleCollision();
+    testAssert("Collision Toggle Restored", scene.collisionEnabled == initCol);
+
+    // Test Collision Resolution Logic
+    scene.collisionEnabled = true;
+    auto& testBld = scene.buildings[0]; // Machiya_L1 at (-10.5, 0, 16.0), rotY = 0
+    glm::vec3 oldP = testBld->worldPos + glm::vec3(4.5f, 1.0f, 0.0f);
+    glm::vec3 insideP = testBld->worldPos + glm::vec3(3.9f, 1.0f, 0.0f);
+    testBld->setDoorOpen(false);
+    glm::vec3 resClosed = scene.resolveCollision(oldP, insideP);
+    testAssert("Solid Wall Blocks Penetration (Door Closed)", resClosed.x >= testBld->worldPos.x + 4.30f);
+
+    // Open door and verify doorway portal pass-through
+    glm::vec3 oldPDoor = testBld->worldPos + glm::vec3(4.5f, 1.0f, -0.90f);
+    glm::vec3 insidePDoor = testBld->worldPos + glm::vec3(3.9f, 1.0f, -0.90f);
+    testBld->setDoorOpen(true);
+    glm::vec3 resOpen = scene.resolveCollision(oldPDoor, insidePDoor);
+    testAssert("Doorway Portal Allows Pass-Through (Door Open)", resOpen.x == insidePDoor.x);
+    testBld->setDoorOpen(false);
+
+    // Test Noclip fly mode
+    scene.collisionEnabled = false;
+    glm::vec3 resNoclip = scene.resolveCollision(oldP, insideP);
+    testAssert("Noclip Mode Disables Wall Blocking", resNoclip == insideP);
+    scene.collisionEnabled = true;
+
+    // 8. Manual Firework Launch (Key F)
+    scene.triggerFirework();
+    bool rocketLaunched = false;
+    for (const auto& r : scene.fireworks->rockets)
+    {
+        if (r.state == FireworkRocket::LAUNCHING)
+            rocketLaunched = true;
+    }
+    testAssert("Firework Rocket Launched (Key F)", rocketLaunched);
+
+    // Update fireworks to reach apex and burst
+    for (int step = 0; step < 25; ++step)
+        scene.fireworks->update(0.06f, false);
+
+    glm::vec3 bPos, bCol;
+    bool burstActive = scene.fireworks && scene.fireworks->getActiveBurst(bPos, bCol);
+    testAssert("Firework Explodes in Sky (Active Burst)", burstActive);
+
+    // 9. Camera Presets (Keys 1, 2, 3, R)
+    std::cout << "\nTesting Camera Presets:\n";
+    camera.Position = glm::vec3(0.0f, 3.5f, 26.0f);
+    camera.Yaw = -90.0f;
+    camera.Pitch = -2.0f;
+    testAssert("Camera Preset 1 (Street Entrance)", camera.Position == glm::vec3(0.0f, 3.5f, 26.0f) && camera.Yaw == -90.0f);
+
+    camera.Position = glm::vec3(6.2f, 2.2f, -10.5f);
+    camera.Yaw = -90.0f;
+    camera.Pitch = 2.0f;
+    testAssert("Camera Preset 2 (Magic Stage)", camera.Position == glm::vec3(6.2f, 2.2f, -10.5f) && camera.Yaw == -90.0f);
+
+    camera.Position = glm::vec3(0.0f, 2.5f, -18.0f);
+    camera.Yaw = -90.0f;
+    camera.Pitch = 25.0f;
+    testAssert("Camera Preset 3 (Torii Gate & Sky)", camera.Position == glm::vec3(0.0f, 2.5f, -18.0f) && camera.Pitch == 25.0f);
+
+    camera.Position = glm::vec3(0.0f, 3.5f, 26.0f);
+    camera.Yaw = -90.0f;
+    camera.Pitch = -2.0f;
+    testAssert("Camera Reset R (Restored Origin)", camera.Position == glm::vec3(0.0f, 3.5f, 26.0f));
+
+    // -------------------------------------------------------------------------
+    // SECTION 4: FESTIVAL STALL ANIMATIONS
+    // -------------------------------------------------------------------------
+    std::cout << "\n--- [SECTION 4: FESTIVAL STALL ANIMATIONS] ---\n";
+    testAssert("Takoyaki Stall Exists", scene.takoyakiStall != nullptr);
+    testAssert("Takoyaki Balls Count == 6", scene.takoyakiStall && scene.takoyakiStall->balls.size() == 6);
+
+    testAssert("Kakigori Stall Exists", scene.kakigoriStall != nullptr);
+    testAssert("Kakigori Servings Count == 6", scene.kakigoriStall && scene.kakigoriStall->servings.size() == 6);
+    testAssert("Kakigori Shaver Wheel Exists", scene.kakigoriStall && scene.kakigoriStall->shaverWheel != nullptr);
+    testAssert("Kakigori Active Shaver Ice Mound Exists", scene.kakigoriStall && scene.kakigoriStall->shaverActiveIce != nullptr);
+
+    // Update stalls over 1 second to verify dynamic animations
+    float origShaverRot = scene.kakigoriStall->shaverWheel->transform.rotation.x;
+    float origKakiRot = scene.kakigoriStall->servings[0].rootNode->transform.rotation.y;
+    scene.kakigoriStall->update(scene.totalTime, 1.0f);
+    testAssert("Kakigori Shaver Wheel Rotates dynamically", scene.kakigoriStall->shaverWheel->transform.rotation.x > origShaverRot + 100.0f);
+    testAssert("Kakigori Bowls Rotate dynamically", scene.kakigoriStall->servings[0].rootNode->transform.rotation.y != origKakiRot);
+
+    // -------------------------------------------------------------------------
+    // FINAL SUMMARY
+    // -------------------------------------------------------------------------
+    std::cout << "\n========================================================================\n";
+    std::cout << "  TEST SUMMARY: " << passedTests << " / " << totalTests << " TESTS PASSED ("
+              << (passedTests == totalTests ? "100% SUCCESS" : "FAILED") << ")\n";
+    std::cout << "========================================================================\n\n";
+
+    return (passedTests == totalTests);
 }
