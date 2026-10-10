@@ -12,6 +12,168 @@ This document tracks all features, additions, bug fixes, transformations, and ar
 
 ## Log Entries
 
+### [2026-10-10] — Documentation: In-Depth Technical Specification (`Details.md`) & `Plan.md` Milestone Completion
+
+#### 1. In-Depth Technical Specification Document (`Details.md`)
+* **Files Added:** [`Details.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Details.md)
+* **Goal & Scope:** Author an exhaustive, rigorous 1,388-line technical reference manual and academic project report detailing every system, mathematical formula, shader layout, lighting source, and asset in "Matsuri Nights — A Japanese Festival Street".
+* **Key Sections & Coverage:**
+  1. **Project Overview & Academic Compliance:** Course details (CSE4102, KUET), 3D transformations, relative coordinate frames, complex animated objects (Takoyaki, Kakigori, Magic show), 12 dynamic lights, moving light sources, day/night transitions, and complete phase 1, 2, 3 verification.
+  2. **Tech Stack & Build System:** C++17, OpenGL 3.3 Core Profile, GLFW 3.5.1, GLAD, GLM, Visual Studio 2026 (v145 toolset) MSBuild configuration, and single-header dependencies.
+  3. **Repository Structure & File Registry:** Annotated directory tree and exhaustive file-by-file table documenting purpose, primary classes, and dependencies.
+  4. **System Architecture & Frame Flow:** Complete lifecycle from `main()` to termination, frame execution order (input $\to$ kinematics $\to$ shadow depth pass $\to$ Blinn-Phong 3D pass / Ray Tracer $\to$ HUD overlay $\to$ buffer swap), OpenGL state management, and full uniform layout tables for all 4 shader programs (`basic`, `shadowDepth`, `raytrace`, `hud`). Included Mermaid architectural and frame execution flowcharts.
+  5. **Geometry System:** Analytical vertex generation, parameter matrices, UV layout, and triangle count breakdowns for Cube, Cylinder, Cone, Sphere, and Plane primitives, accompanied by the `Mesh` VAO/VBO/EBO wrapper.
+  6. **Transform System & Scene Graph:** Local matrix composition ($M = T \cdot R_z \cdot R_y \cdot R_x \cdot S$), recursive world matrix propagation ($W_c = W_p \cdot L_c$), and complete Mermaid hierarchy tree of the entire festival street scene graph.
+  7. **Camera System & User Controls:** First-person Euler angle spherical trigonometry ($\text{yaw}, \text{pitch}$), view matrix calculation, FPS mouse look, FOV zoom, smooth collision sliding, preset camera viewpoints, and exhaustive keybinding reference matrix.
+  8. **Lighting & Material Pipeline:** Blinn-Phong illumination model with halfway vector $\mathbf{H}$, directional sunlight/moonlight, 12 dynamic point lights, stage spotlight with smooth angular falloff, indoor skylight bounce, 16-sample PCF soft shadow mapping, and dual Whitted ray tracing engines (real-time GPU + multi-threaded CPU).
+  9. **Procedural Texture Generation & Materials:** 7 procedurally synthesized 24-bit uncompressed `.bmp` texture maps (wood timber, roof tiles, stone pavement, tatami cloth, gold leaf, sakura bark, lantern paper) and UV texture mapping math.
+  10. **Kinematics & Hierarchical Animation:** Rigorous physics formulas for Takoyaki parabolic projectile flipping, Kakigori presentation hopping and shaver flywheel rotation, wind-driven lantern pendulum kinematics, cherry blossom flutter and ground drifting, crowd navigation corridor, and magic trick phases.
+  11. **Doorway Kinematics & Collision Engine:** Sliding Shoji door and window interpolation, camera-to-portal distance validation, and dynamic AABB collision masking allowing passage only when doors are open.
+  12. **In-Window HUD Overlay & Interaction System:** Orthographic 2D overlay pass, OpenGL state preservation, embedded Consolas Bold texture atlas, 10 Hz rate limiter, and context-sensitive action dispatcher.
+  13. **Verification & Test Suite:** 311 automated unit & integration tests, execution instructions, and verification proof.
+  14. **Plan vs Implementation Analysis:** Detailed audit contrasting initial design notes against actual production code.
+
+#### 2. Plan.md Milestone Completion Signoff (`Plan.md`)
+* **Files Modified:** [`Plan.md`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Plan.md)
+* **Status:** Completely audited and rewrote `Plan.md` to reflect the final state of the codebase. Marked all Phase 1, Phase 2, and Phase 3 milestones, advanced additions, and HUD/interaction deliverables as fully completed (`[x]`).
+
+---
+
+### [2026-10-10] — Verification & Test: Expanded 311-Test Automated Control, Transform & UI Harness
+
+#### 1. Automated Verification Suite (`Main.cpp`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/Main.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp)
+* **Goal & Scope:** Expand the automated test suite from 239 to 311 tests, providing complete end-to-end coverage across all 15 inspectable objects (including all 4 traditional Machiya townhouses), HUD rendering, high-DPI framebuffer resizing, clean screenshot capture, and lighting key remapping.
+* **Results: 311 / 311 Automated Tests Passed (100% Success):**
+  * **Section 1: All 15 Controllable Objects & 6-DOF Manual Transforms:**
+    1. `Lantern [Body]` (Child of Swinging Rope Pivot)
+    2. `Lantern [Rope Pivot]` (Parent Anchor Node)
+    3. `Magic Orb` (Child of Magician's Hand Bone)
+    4. `Magician Figure` (Root Articulated Rig)
+    5. `Vanishing Box` (Scale-to-Zero Demo)
+    6. `Stage Spotlight Housing` (Tracking Rig)
+    7. `Takoyaki Stall` (Full Unit with 6 Balls)
+    8. `Kakigori Stall` (Full Unit with Shaver & 6 Bowls)
+    9. `Torii Gate` (Grand Shrine Entrance)
+    10. `Sakura Blossom Tree` (Hierarchical Foliage)
+    11. `Crowd Walker #1` (Walking Street Rig)
+    12. `Machiya Building L1` (Left Front Townhouse)
+    13. `Machiya Building L2` (Left Rear Townhouse)
+    14. `Machiya Building R1` (Right Front Townhouse)
+    15. `Machiya Building R2` (Right Rear Townhouse)
+    * For every object: verified non-null pointer, translation along $+X/-X, +Y/-Y, +Z/-Z$, pitch and yaw rotations, scaling up ($1.1\times$) and scaling down ($0.9\times$), world matrix propagation, and cycling forward/backward with wrap-around across all 15 indices $[0, 14]$.
+  * **Section 2: Interactive House Doors & Sliding Windows:**
+    * Tested all 4 Machiya buildings (`Machiya_L1`, `Machiya_L2`, `Machiya_R1`, `Machiya_R2`):
+      * Front Shoji door toggle open/closed (Key `H`), progress interpolation along local Z ($1.35\text{m}$ track), and distance threshold rejection ($>5.0\text{m}$).
+      * Sliding Shoji windows toggle open/closed (Key `G`), progress interpolation, and distance rejection ($>14.0\text{m}$).
+  * **Section 3: Environment, Rendering & Lighting Toggles:**
+    * Day / Night transition toggle (Key `N`): verified `targetNight` inversion and smooth factor blend.
+    * Animation pause / resume (Key `Space`): verified `isPaused` and time freezing.
+    * Shading mode cycle (Key `P`): verified Blinn-Phong $\to$ Diffuse $\to$ Ambient $\to$ Blinn-Phong cycle.
+    * Textures toggle (Key `X`): verified `enableTextures` toggle.
+    * Soft shadow mapping toggle (Key `V`): verified `enableShadows` toggle.
+    * Real-time GPU ray tracing toggle (Key `Z`): verified `rayTracingMode` toggle.
+    * Wall collision & doorway kinematics (Key `B`): verified solid wall blocking when door is closed, pass-through portal when door is open, and noclip penetration.
+    * Manual firework rocket launch (Key `F`): verified `LAUNCHING` state $\to$ ascent $\to$ `BURSTING` active burst phase.
+    * Festival lights toggle (Keys `0` and `KP_0`): verified point and street light illumination toggle without interfering with <kbd>J</kbd>/<kbd>L</kbd> object translation.
+    * Camera presets (Keys `1`, `2`, `3`, `R`): verified positions, yaw, pitch, and origin reset.
+  * **Section 4: Complex Multi-Object Animations:**
+    * Verified 6 Takoyaki balls, 6 Kakigori bowls, ice shaver wheel rotation, active ice mound, and dynamic update cycles.
+  * **Section 5: HUD Overlay & State Integrity:**
+    * Verified HUD enable/disable toggle (Key `F1`).
+    * Verified framebuffer resizing layout safety (ignoring zero-size framebuffers on minimize).
+    * Verified clean screenshot capture (HUD automatically hidden for <kbd>P</kbd>, captured for <kbd>Shift</kbd>+<kbd>P</kbd>).
+* **Test Command:** Run `.\x64\Debug\Matsuri Nights - A Japanese Festival Street.exe --test`.
+
+---
+
+### [2026-10-10] — Bug Fix: Machiya Townhouse Inspection & Transformation Synchronization
+
+#### 1. Inspection Synchronization & Scene Integration (`Scene.h`, `InteractionManager.cpp`, `Objects.h`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h), [`Matsuri Nights — A Japanese Festival Street/src/ui/InteractionManager.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/InteractionManager.cpp), [`Matsuri Nights — A Japanese Festival Street/src/Objects.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Objects.h)
+* **Problem Addressed:**
+  * When cycling selected objects with <kbd>T</kbd>, the HUD displayed `Machiya_L1`, `Machiya_L2`, `Machiya_R1`, or `Machiya_R2` when cycling past index 10. However, manual transformation keystrokes (<kbd>I</kbd>/<kbd>K</kbd>, <kbd>J</kbd>/<kbd>L</kbd>, <kbd>U</kbd>/<kbd>O</kbd>, Numpad keys) continued to move `Walker #1` instead of the selected Machiya building.
+* **Root Cause:**
+  * `Scene::inspectables` only contained 11 items (indices 0..10), while `InteractionManager` contained 15 registered interactables. When selection index reached 11..14, `Scene::getSelectedNode()` clamped or fell back to the last valid inspectable (`Walker #1`), causing a desynchronization between what the HUD reported and what the transformation engine manipulated.
+* **Solution & Fix Implementation:**
+  1. **Registered All 4 Machiya Buildings in `Scene::inspectables`:**
+     * Added entries 11, 12, 13, and 14 to `Scene::setupInspectables()`:
+       * Index 11: `Machiya Building L1` (`machiyaL1->buildingNode.get()`)
+       * Index 12: `Machiya Building L2` (`machiyaL2->buildingNode.get()`)
+       * Index 13: `Machiya Building R1` (`machiyaR1->buildingNode.get()`)
+       * Index 14: `Machiya Building R2` (`machiyaR2->buildingNode.get()`)
+  2. **Synchronized `scene.selectedIndex` in `InteractionManager::cycleSelection()`:**
+     * Updated `InteractionManager::cycleSelection()` so that whenever selection is cycled (via <kbd>T</kbd> or context interaction), `scene.selectedIndex` is explicitly updated to match, guaranteeing 100% 1:1 parity across both systems.
+  3. **Synchronized Transform State in `MachiyaBuilding::update()`:**
+     * Added synchronization of `worldPos` and `rotationY` from `buildingNode->transform.position` and `rotation.y` inside `MachiyaBuilding::update()`. As a result, when an examiner translates or rotates a Machiya townhouse with the transformation keys, its doorway interaction trigger zones, window positions, and collision boundary boxes dynamically follow the new building location in real-time.
+
+---
+
+### [2026-10-10] — Controls: Festival Lighting Hotkey Remapped to `0` / `KP_0`
+
+#### 1. Keystroke Collision Elimination (`Main.cpp`, `Scene.h`, `InteractionManager.cpp`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/Main.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/Main.cpp), [`Matsuri Nights — A Japanese Festival Street/src/Scene.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/Scene.h), [`Matsuri Nights — A Japanese Festival Street/src/ui/InteractionManager.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/InteractionManager.cpp)
+* **Problem Addressed:**
+  * Previously, key <kbd>L</kbd> was bound to toggle festival point lights. However, <kbd>L</kbd> is also the primary horizontal translation key for moving the currently selected inspectable object along $+X$ (<kbd>J</kbd>/<kbd>L</kbd> translation axis). Pressing <kbd>L</kbd> caused the lighting to flicker on and off while attempting to translate objects.
+* **Solution:**
+  * Remapped festival lights toggle to <kbd>0</kbd> (Number row 0, `GLFW_KEY_0`) and <kbd>KP_0</kbd> (Keypad 0, `GLFW_KEY_KP_0`).
+  * Restored uninterrupted, collision-free 6-DOF transformation control:
+    * Translation: <kbd>I</kbd> / <kbd>K</kbd> ($\pm Z$), <kbd>J</kbd> / <kbd>L</kbd> ($\pm X$), <kbd>U</kbd> / <kbd>O</kbd> ($\pm Y$).
+    * Rotation: <kbd>Numpad 8</kbd> / <kbd>Numpad 2</kbd> (Pitch), <kbd>Numpad 4</kbd> / <kbd>Numpad 6</kbd> (Yaw).
+    * Scaling: <kbd>+</kbd> / <kbd>-</kbd> ($1.1\times$ / $0.9\times$).
+  * Updated HUD contextual action hints and console logs to display `[0] Toggle Lights`.
+
+---
+
+### [2026-10-10] — UX Refinement: Minimalist HUD Redesign & Consolas Bold Font Atlas
+
+#### 1. Embedded Consolas Bold Font Atlas (`FontAtlasData.h`, `shaders/hud.frag`)
+* **Files Added:** [`Matsuri Nights — A Japanese Festival Street/src/ui/FontAtlasData.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/FontAtlasData.h)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/shaders/hud.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/shaders/hud.frag)
+* **Goal & Scope:** Eliminate blurry or hard-to-read bitmap text rendering by introducing a pre-baked $256 \times 256$ texture atlas with crisp Consolas Bold glyphs for ASCII characters 32..126.
+* **Implementation Details:**
+  * `FontAtlasData.h` defines a self-contained, statically compiled C++ byte array containing uncompressed 8-bit glyph textures and per-character UV bounding coordinates.
+  * `shaders/hud.frag` applies smoothstep edge interpolation and a subtle dark shadow pass behind each character, ensuring crystal-clear legibility against bright daytime skies as well as dark nighttime backdrops.
+
+#### 2. Sleek Minimalist HUD Panel Layout (`Hud.h`, `Hud.cpp`)
+* **Files Modified:** [`Matsuri Nights — A Japanese Festival Street/src/ui/Hud.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/Hud.h), [`Matsuri Nights — A Japanese Festival Street/src/ui/Hud.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/Hud.cpp)
+* **Design Transformation:**
+  * Replaced the verbose multi-section HUD overlay with an eye-soothing, compact card (~225px wide $\times$ ~100px tall) anchored cleanly to the top-right corner.
+  * Formatted content into 5 essential lines:
+    1. **Status Header:** Live frame rate indicator (`STATUS: 60 FPS`).
+    2. **Active Target:** Color-coded selected object name (yellow for selected, cyan for nearby interactable).
+    3. **Transform Keystroke Hint:** `[T] Cycle Target` / transform keys.
+    4. **Context Action Hint:** Relevant real-time interaction (e.g. `[H] Toggle Door`, `[G] Toggle Window`, `[0] Toggle Lights`, `[M] Magic Trick`).
+    5. **Footer:** Toggle reminder (`[F1] Toggle HUD`).
+  * Built-in 10 Hz rate limiter on CPU vertex buffer regeneration to eliminate per-frame dynamic memory allocation.
+
+---
+
+### [2026-10-10] — Feature: In-Window Semi-Transparent HUD Overlay & Context Interaction System
+
+#### 1. Core UI Architecture & Interaction Framework (`Hud.h`, `Hud.cpp`, `Interactable.h`, `InteractionManager.h`, `InteractionManager.cpp`)
+* **Files Added:**
+  * [`Matsuri Nights — A Japanese Festival Street/src/ui/Hud.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/Hud.h)
+  * [`Matsuri Nights — A Japanese Festival Street/src/ui/Hud.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/Hud.cpp)
+  * [`Matsuri Nights — A Japanese Festival Street/src/ui/Interactable.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/Interactable.h)
+  * [`Matsuri Nights — A Japanese Festival Street/src/ui/InteractionManager.h`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/InteractionManager.h)
+  * [`Matsuri Nights — A Japanese Festival Street/src/ui/InteractionManager.cpp`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/Matsuri%20Nights%20%E2%80%94%20A%20Japanese%20Festival%20Street/src/ui/InteractionManager.cpp)
+  * [`Matsuri Nights — A Japanese Festival Street/shaders/hud.vert`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/shaders/hud.vert)
+  * [`Matsuri Nights — A Japanese Festival Street/shaders/hud.frag`](file:///C:/Users/mdabu/OneDrive/Desktop/practice/Graphics/Matsuri-Nights-A-Japanese-Festival-Street/shaders/hud.frag)
+* **Goal & Scope:** Implement an in-window Heads-Up Display (HUD) and context-sensitive interaction framework without introducing heavy external dependencies (such as Dear ImGui or FreeType).
+* **Render Pipeline & OpenGL State Isolation:**
+  * Executed as a distinct 2D orthographic pass following completion of the 3D scene pass.
+  * Orthographic projection computed in pixel coordinates: `glm::ortho(0.0f, fbWidth, fbHeight, 0.0f, -1.0f, 1.0f)`.
+  * Comprehensive OpenGL state isolation: queried and saved previous `GL_DEPTH_TEST`, `GL_CULL_FACE`, `GL_BLEND`, blend functions, bound shader program, and active VAO. Disabled depth testing and face culling during the overlay pass; enabled alpha blending `glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)`. Restored the exact OpenGL state upon pass completion.
+* **Anchor & High-DPI Handling:**
+  * Uses `glfwGetFramebufferSize()` to anchor to the top-right window boundary.
+  * Guards against zero-sized framebuffers on window minimization to prevent divide-by-zero or OpenGL projection errors.
+* **Screenshot Integration:**
+  * Automatically suppresses HUD rendering during screenshot capture (<kbd>P</kbd>) so exported promotional stills remain clean.
+  * Allows <kbd>Shift</kbd>+<kbd>P</kbd> to capture screenshots with the HUD visible when desired.
+
+---
+
 ### [2026-10-10] — Verification & Test: Comprehensive Automated Control & Transform Test Suite
 
 #### 1. Automated Verification Suite (`Main.cpp`)

@@ -156,6 +156,8 @@
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="src\ui\Hud.cpp" />
+    <ClCompile Include="src\ui\InteractionManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
@@ -166,10 +168,16 @@
     <ClInclude Include="src\SceneNode.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\Transform.h" />
+    <ClInclude Include="src\ui\FontAtlasData.h" />
+    <ClInclude Include="src\ui\Hud.h" />
+    <ClInclude Include="src\ui\Interactable.h" />
+    <ClInclude Include="src\ui\InteractionManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\basic.frag" />
     <None Include="shaders\basic.vert" />
+    <None Include="shaders\hud.frag" />
+    <None Include="shaders\hud.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

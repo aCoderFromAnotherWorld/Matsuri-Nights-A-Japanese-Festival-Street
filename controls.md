@@ -14,12 +14,16 @@
 | **Mouse Move** | Look around (FPS-style Pitch and Yaw) |
 | **Mouse Scroll** | Zoom in / Zoom out (Adjusts Field of View from $1^\circ$ to $60^\circ$) |
 | **<kbd>C</kbd>** | Toggle mouse cursor lock / unlock |
+| **<kbd>F1</kbd>** | **Toggle In-Window Semi-Transparent HUD Overlay** (Top-right corner) |
+| **<kbd>F10</kbd>** | **Capture Viewport Screenshot** (`screenshot_clean.bmp`; <kbd>Shift+F10</kbd> captures with HUD) |
 | **<kbd>R</kbd>** | Reset camera back to festival street entrance |
 | **<kbd>1</kbd>** | Preset View 1: Festival Street Entrance |
 | **<kbd>2</kbd>** | Preset View 2: Magic Show Stage Close-up |
 | **<kbd>3</kbd>** | Preset View 3: Torii Gate & Fireworks Sky |
 | **<kbd>Space</kbd>** | Pause / Resume all scene animations and motion |
 | **<kbd>N</kbd>** | Smooth Day $\longleftrightarrow$ Festival Night transition |
+| **<kbd>0</kbd> / <kbd>KP_0</kbd>** | **Toggle Lantern & Stall Illumination** (Lights ON / Dimmed) |
+| **<kbd>M</kbd>** | **Replay Magic Show Trick Sequence** (Vanishing box & floating orb) |
 | **<kbd>F</kbd>** | Manually launch a Firework rocket |
 | **<kbd>P</kbd>** | Cycle Shading Mode (Blinn-Phong $\rightarrow$ Diffuse Only $\rightarrow$ Ambient Only) |
 | **<kbd>X</kbd>** | Toggle Diffuse Textures ON / OFF |
@@ -29,7 +33,7 @@
 | **<kbd>B</kbd>** | Toggle **Wall Collision Mode** (Walk Mode: solid walls & stairs $\longleftrightarrow$ Noclip Fly Mode) |
 | **<kbd>Z</kbd>** | Toggle **Real-Time GPU Ray Tracing Mode** ON / OFF (60+ FPS Whitted Ray Tracer) |
 | **<kbd>F9</kbd>** | Capture & Export **CPU Multi-Threaded Ray-Traced Snapshot** to `raytraced_snapshot.bmp` |
-| **<kbd>T</kbd>** | Cycle selectable object for **Live Inspection & Transformation** |
+| **<kbd>T</kbd>** | **Cycle Target Object Selection** (<kbd>Shift+T</kbd> returns to Proximity Auto-Select) |
 | **<kbd>I</kbd> / <kbd>K</kbd>** | Translate selected object along $\pm Y$ (Up / Down) |
 | **<kbd>J</kbd> / <kbd>L</kbd>** | Translate selected object along $\pm X$ (Left / Right) |
 | **<kbd>U</kbd> / <kbd>O</kbd>** | Translate selected object along $\pm Z$ (Forward / Backward) |
@@ -92,7 +96,7 @@ Press the number keys to quickly showcase key areas to the evaluator:
   * *(Fireworks also launch automatically at periodic intervals when night mode is active).*
 * **Cycle Shading Mode (<kbd>P</kbd>):**
   * Toggles between all 3 required shading configurations live in the fragment shader:
-    1. **Full Blinn-Phong Shading:** Ambient + Diffuse (Lambert) + Specular (Halfway vector $\mathbf{H} = \frac{\mathbf{L}+\mathbf{V}}{\|\mathbf{L}+\mathbf{V}\|}$) across Directional Light, 6 Point Lights, and Stage Spotlight.
+    1. **Full Blinn-Phong Shading:** Ambient + Diffuse (Lambert) + Specular (Halfway vector $\mathbf{H} = \frac{\mathbf{L}+\mathbf{V}}{\|\mathbf{L}+\mathbf{V}\|}$) across Directional Light, 12 Dynamic Point Lights, and Stage Spotlight.
     2. **Diffuse Only:** Ambient + Diffuse terms only (specular highlights disabled to demonstrate Lambertian reflectance).
     3. **Ambient Only:** Uniform ambient lighting only (flat shading baseline).
 * **Toggle Textures (<kbd>X</kbd>):**
@@ -144,7 +148,7 @@ Built specifically to satisfy the course requirement: *"Any object's position, r
    * **<kbd>←</kbd> / <kbd>→</kbd> (Left / Right Arrows):** Rotate Yaw live.
    * **<kbd>[</kbd> / <kbd>]</kbd>:** Scale down (shrink) or scale up (enlarge).
 
-### The 10 Inspectable Objects & Academic Requirements
+### The 15 Inspectable Objects & Academic Requirements
 
 | # | Inspectable Object | Hierarchy / Academic Requirement Demonstrated |
 |:---:|---|---|
@@ -155,9 +159,14 @@ Built specifically to satisfy the course requirement: *"Any object's position, r
 | **5** | **Vanishing Box** | **Scale-to-Zero Transform.** Demonstrates dynamic continuous scaling to zero ($s \rightarrow 0$) followed by discrete positional teleportation and restoration. |
 | **6** | **Spotlight Housing** | **Tracking Dynamic Rotation.** Cone lamp housing rotating in pitch and yaw to track the stage. |
 | **7** | **Takoyaki Stall** | **Complex Multi-Part Model.** Assembly of stall counter, awning, griddle, and spinning/hopping takoyaki spheres. |
-| **8** | **Torii Gate** | **Static Shrine Anchor.** Serves as the fixed reference architecture against which all moving objects are judged. |
-| **9** | **Sakura Blossom Tree** | **Branched Hierarchy & Petal Kinematics.** Trunk, bough branches, blossom foliage clusters, and falling petals with sinusoidal drift. |
-| **10** | **Crowd Walker #1** | **Articulated Walk Cycle.** Moving figure with translational pathing, vertical step bobbing, and alternating leg cycles. |
+| **8** | **Kakigori Stall** | **Complex Multi-Part Model.** Assembly of stall counter, awning, vintage ice shaving machine with rotating flywheel, and 6 animated shaved ice dessert bowls. |
+| **9** | **Torii Gate** | **Static Shrine Anchor.** Serves as the fixed reference architecture against which all moving objects are judged. |
+| **10** | **Sakura Blossom Tree** | **Branched Hierarchy & Petal Kinematics.** Trunk, bough branches, blossom foliage clusters, and falling petals with sinusoidal drift. |
+| **11** | **Crowd Walker #1** | **Articulated Walk Cycle.** Moving figure with translational pathing, vertical step bobbing, and alternating leg cycles. |
+| **12** | **Machiya_L1** | **Interactive Townhouse Building.** Traditional architecture with sliding Shoji door, windows, and interior tatami/furniture (Left Front). |
+| **13** | **Machiya_L2** | **Interactive Townhouse Building.** Second townhouse on left street flank (Left Rear). |
+| **14** | **Machiya_R1** | **Interactive Townhouse Building.** Townhouse on right street flank with mirrored orientation (Right Front). |
+| **15** | **Machiya_R2** | **Interactive Townhouse Building.** Second townhouse on right street flank (Right Rear). |
 
 ---
 

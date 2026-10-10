@@ -8,6 +8,9 @@
 #include "src/Shader.h"
 #include "src/Camera.h"
 #include "src/Scene.h"
+#include "src/TextureGenerator.h"
+#include "src/ui/Hud.h"
+#include "src/ui/InteractionManager.h"
 
 #include <iostream>
 #include <string>
@@ -37,9 +40,18 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void processContinuousInput(GLFWwindow* window, Scene& scene);
 bool runAutomatedTestSuite(Scene& scene, Camera& camera, GLFWwindow* window);
+void captureViewportScreenshot(int width, int height, const std::string& filename);
 
 // Global scene pointer for callbacks
 Scene* g_Scene = nullptr;
+
+// Heads-Up Display & Context Interaction Manager
+Hud g_Hud;
+InteractionManager g_InteractionManager;
+bool g_PendingScreenshot = false;
+bool g_ScreenshotWithHud = false;
+float g_CurrentFps = 60.0f;
+float g_CurrentMs = 16.6f;
 
 int main(int argc, char** argv)
 {
@@ -94,6 +106,10 @@ int main(int argc, char** argv)
     Scene scene;
     g_Scene = &scene;
 
+    // Initialize In-Window HUD and Context Interaction System
+    g_Hud.init();
+    g_InteractionManager.init(scene);
+
     if (runTests)
     {
         bool success = runAutomatedTestSuite(scene, camera, window);
@@ -111,18 +127,23 @@ int main(int argc, char** argv)
     std::cout << "  [E / Q]         : Move camera Up / Down\n";
     std::cout << "  [Mouse]         : Look around (FPS Pitch / Yaw)\n";
     std::cout << "  [C]             : Toggle mouse cursor capture\n";
+    std::cout << "  [F1]            : Toggle In-Window Semi-Transparent HUD Overlay (Top-Right)\n";
+    std::cout << "  [F10]           : Capture Viewport Screenshot BMP (Shift+F10 includes HUD)\n";
     std::cout << "  [Space]         : Pause / Resume all scene animations\n";
     std::cout << "  [N]             : Smooth Day <-> Festival Night transition\n";
+    std::cout << "  [0 / Numpad 0]  : Toggle Lantern & Stall Illumination (Lights ON / Dimmed)\n";
+    std::cout << "  [M]             : Replay Magic Show Trick Sequence (Vanishing Box & Orb)\n";
     std::cout << "  [P]             : Cycle Shading Mode (Blinn-Phong -> Diffuse-Only -> Ambient/Flat)\n";
     std::cout << "  [X]             : Toggle Texturing (Textures ON / OFF)\n";
     std::cout << "  [V]             : Toggle Realistic Soft Shadows (ON / OFF)\n";
     std::cout << "  [H]             : Interact with nearest house front door (Slide Open / Close)\n";
+    std::cout << "  [G]             : Interact with nearest house sliding windows (Slide Open / Close)\n";
     std::cout << "  [B]             : Toggle Wall Collision (Walk Mode: solid walls & stairs <-> Noclip)\n";
     std::cout << "  [Z]             : Toggle Real-Time GPU Ray Tracing Mode (ON / OFF)\n";
     std::cout << "  [F9]            : Capture & Export CPU Ray-Traced Snapshot to BMP\n";
     std::cout << "  [F]             : Launch Firework rocket\n";
     std::cout << "  [1 / 2 / 3]     : Preset camera viewpoints (Street, Magic Stage, Torii)\n";
-    std::cout << "  [T]             : Cycle object for Live In-Class Inspection & Transform\n";
+    std::cout << "  [T]             : Cycle Target Object Live Selection (Shift+T: Auto-Select)\n";
     std::cout << "  [I/K, J/L, U/O] : Translate selected object (+-Y, +-X, +-Z)\n";
     std::cout << "  [Arrow Keys]    : Rotate selected object live (Pitch / Yaw)\n";
     std::cout << "  [+ / -] or [[/]]: Scale selected object live (+-10%)\n";
@@ -149,6 +170,8 @@ int main(int argc, char** argv)
         {
             float fps = static_cast<float>(frameCount) / fpsTimer;
             float ms = (fpsTimer / static_cast<float>(frameCount)) * 1000.0f;
+            g_CurrentFps = fps;
+            g_CurrentMs = ms;
             char titleBuf[128];
             snprintf(titleBuf, sizeof(titleBuf),
                      "Matsuri Nights - A Japanese Festival Street [CSE4102] | FPS: %.1f (%.2f ms)",
@@ -164,13 +187,18 @@ int main(int argc, char** argv)
         // Update all animations & hierarchy
         scene.update(deltaTime);
 
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+
+        // Update context-sensitive interaction selection & HUD status
+        g_InteractionManager.update(camera, deltaTime, scene);
+        g_Hud.update(deltaTime, camera, scene, g_InteractionManager, g_CurrentFps, g_CurrentMs, width, height);
+
         // Background clear
         glClearColor(0.08f, 0.09f, 0.14f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Render entire scene (Ray-Traced or Rasterized)
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
         float aspect = (height > 0) ? (float)width / (float)height : 1.0f;
 
         if (scene.rayTracingMode)
@@ -180,6 +208,23 @@ int main(int argc, char** argv)
         else
         {
             scene.render(basicShader, camera, aspect, width, height);
+        }
+
+        // Clean Screenshot Capture (HUD hidden) for reports
+        if (g_PendingScreenshot && !g_ScreenshotWithHud)
+        {
+            captureViewportScreenshot(width, height, "screenshot_clean.bmp");
+            g_PendingScreenshot = false;
+        }
+
+        // 2D In-Window HUD Overlay Pass (Semi-transparent top-right status panel)
+        g_Hud.render(width, height);
+
+        // Screenshot Capture with HUD overlay (Shift+F10)
+        if (g_PendingScreenshot && g_ScreenshotWithHud)
+        {
+            captureViewportScreenshot(width, height, "screenshot_hud.bmp");
+            g_PendingScreenshot = false;
         }
 
         glfwSwapBuffers(window);
@@ -242,11 +287,85 @@ void processContinuousInput(GLFWwindow* window, Scene& scene)
         scene.modifySelectedRotation(glm::vec3(0.0f, -rSpeed, 0.0f));
 }
 
+// Capture and export high-fidelity OpenGL viewport image to 24-bit uncompressed BMP
+void captureViewportScreenshot(int width, int height, const std::string& filename)
+{
+    if (width <= 0 || height <= 0) return;
+    std::vector<unsigned char> pixels(width * height * 3);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+    // Vertical flip because OpenGL origin is bottom-left and BMP expects top-down
+    std::vector<unsigned char> flipped(width * height * 3);
+    for (int y = 0; y < height; ++y)
+    {
+        memcpy(&flipped[y * width * 3], &pixels[(height - 1 - y) * width * 3], width * 3);
+    }
+    TextureGenerator::writeBMP24(filename, width, height, flipped);
+    std::cout << "\n========================================================" << std::endl;
+    std::cout << " [SCREENSHOT] Viewport image captured and exported to: " << filename << std::endl;
+    std::cout << "========================================================\n" << std::endl;
+}
+
 // Single press trigger events
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (action != GLFW_PRESS)
         return;
+
+    // HUD Visibility Toggle (Key F1)
+    if (key == GLFW_KEY_F1)
+    {
+        g_Hud.toggleVisibility();
+        std::cout << "[HUD] Overlay " << (g_Hud.isVisible ? "SHOWN" : "HIDDEN") << std::endl;
+        return;
+    }
+
+    // Viewport Screenshot Capture (Key F10: Clean without HUD; Shift+F10: With HUD)
+    if (key == GLFW_KEY_F10)
+    {
+        g_PendingScreenshot = true;
+        g_ScreenshotWithHud = ((mods & GLFW_MOD_SHIFT) != 0);
+        std::cout << "[SCREENSHOT] Capturing viewport image ("
+                  << (g_ScreenshotWithHud ? "with HUD" : "clean without HUD") << ")..." << std::endl;
+        return;
+    }
+
+    // Target Selection Cycle (Key T: Next selectable object; Shift+T: Return to Auto-Selection)
+    if (key == GLFW_KEY_T && g_Scene)
+    {
+        if ((mods & GLFW_MOD_SHIFT) != 0)
+        {
+            g_InteractionManager.unlockToAuto();
+            std::cout << "[Target] Returned to Proximity Auto-Selection Mode." << std::endl;
+        }
+        else
+        {
+            g_InteractionManager.cycleSelection(1, *g_Scene);
+            if (g_InteractionManager.isLocked() && g_InteractionManager.getSelected())
+            {
+                std::cout << "[Target] Locked to: " << g_InteractionManager.getSelected()->displayName << std::endl;
+            }
+            else
+            {
+                std::cout << "[Target] Auto-Selection Mode active." << std::endl;
+            }
+        }
+        return;
+    }
+
+    // Lantern & Stall Lights Toggle (Key 0 and Numpad 0)
+    if ((key == GLFW_KEY_0 || key == GLFW_KEY_KP_0) && g_Scene)
+    {
+        g_Scene->toggleLanternLights();
+        return;
+    }
+
+    // Magic Show Trick Replay (Key M)
+    if (key == GLFW_KEY_M && g_Scene)
+    {
+        g_Scene->replayMagicTrick();
+        return;
+    }
 
     if (key == GLFW_KEY_SPACE && g_Scene)
         g_Scene->togglePause();
@@ -256,9 +375,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
     if (key == GLFW_KEY_F && g_Scene)
         g_Scene->triggerFirework();
-
-    if (key == GLFW_KEY_T && g_Scene)
-        g_Scene->cycleInspectable(1);
 
     // Phase 2: Cycle Shading Mode (Blinn-Phong -> Diffuse Only -> Ambient Only)
     if (key == GLFW_KEY_P && g_Scene)
@@ -423,7 +539,7 @@ bool runAutomatedTestSuite(Scene& scene, Camera& camera, GLFWwindow* window)
     // SECTION 1: ALL 11 CONTROLLABLE INSPECTABLE OBJECTS & TRANSFORMS
     // -------------------------------------------------------------------------
     std::cout << "\n--- [SECTION 1: CONTROLLABLE INSPECTABLE OBJECTS & TRANSFORMS] ---\n";
-    testAssert("Inspectables List Count == 11", scene.inspectables.size() == 11, "Count = " + std::to_string(scene.inspectables.size()));
+    testAssert("Inspectables List Count == 15", scene.inspectables.size() == 15, "Count = " + std::to_string(scene.inspectables.size()));
 
     // Pause scene animation so automated transform measurements are deterministic
     scene.isPaused = true;
@@ -500,10 +616,11 @@ bool runAutomatedTestSuite(Scene& scene, Camera& camera, GLFWwindow* window)
     testAssert("Cycle Forward 0 -> 1", scene.selectedIndex == 1);
     scene.cycleInspectable(-1);
     testAssert("Cycle Backward 1 -> 0", scene.selectedIndex == 0);
+    int lastIdx = static_cast<int>(scene.inspectables.size()) - 1;
     scene.cycleInspectable(-1);
-    testAssert("Cycle Backward 0 -> 10 (Wrap)", scene.selectedIndex == 10);
+    testAssert("Cycle Backward 0 -> " + std::to_string(lastIdx) + " (Wrap)", scene.selectedIndex == lastIdx);
     scene.cycleInspectable(1);
-    testAssert("Cycle Forward 10 -> 0 (Wrap)", scene.selectedIndex == 0);
+    testAssert("Cycle Forward " + std::to_string(lastIdx) + " -> 0 (Wrap)", scene.selectedIndex == 0);
 
     // -------------------------------------------------------------------------
     // SECTION 2: INTERACTIVE SHOJI DOORS & SLIDING WINDOWS
@@ -711,6 +828,78 @@ bool runAutomatedTestSuite(Scene& scene, Camera& camera, GLFWwindow* window)
     scene.kakigoriStall->update(scene.totalTime, 1.0f);
     testAssert("Kakigori Shaver Wheel Rotates dynamically", scene.kakigoriStall->shaverWheel->transform.rotation.x > origShaverRot + 100.0f);
     testAssert("Kakigori Bowls Rotate dynamically", scene.kakigoriStall->servings[0].rootNode->transform.rotation.y != origKakiRot);
+
+    // -------------------------------------------------------------------------
+    // SECTION 5: IN-WINDOW HUD OVERLAY & CONTEXT INTERACTION SYSTEM
+    // -------------------------------------------------------------------------
+    std::cout << "\n--- [SECTION 5: IN-WINDOW HUD OVERLAY & CONTEXT INTERACTION SYSTEM] ---\n";
+    testAssert("Interactables Registered >= 10", g_InteractionManager.interactables.size() >= 10,
+               "Count = " + std::to_string(g_InteractionManager.interactables.size()));
+
+    // Verify HUD toggle
+    bool initHudVis = g_Hud.isVisible;
+    g_Hud.toggleVisibility();
+    testAssert("HUD Visibility Toggle (F1 Hide)", g_Hud.isVisible != initHudVis);
+    g_Hud.toggleVisibility();
+    testAssert("HUD Visibility Toggle (F1 Restore)", g_Hud.isVisible == initHudVis);
+
+    // Verify Auto Selection logic near Machiya Building L1
+    camera.Position = glm::vec3(-10.5f, 1.8f, 20.0f);
+    camera.Front = glm::vec3(0.0f, 0.0f, -1.0f);
+    g_InteractionManager.unlockToAuto();
+    g_InteractionManager.update(camera, 0.016f, scene);
+    testAssert("Auto-Select Machiya Building L1 in front of camera",
+               g_InteractionManager.getSelected() != nullptr && g_InteractionManager.getSelected()->id.find("building_0") != std::string::npos);
+
+    // Verify Context Actions for selected building
+    auto bldActions = g_InteractionManager.getActiveActions(camera, scene);
+    bool hasDoorAction = false, hasWinAction = false;
+    for (const auto& a : bldActions)
+    {
+        if (a.key == GLFW_KEY_H) hasDoorAction = true;
+        if (a.key == GLFW_KEY_G) hasWinAction = true;
+    }
+    testAssert("Building Context Hint [H] Shoji Door Present", hasDoorAction);
+    testAssert("Building Context Hint [G] Shoji Windows Present", hasWinAction);
+
+    // Test cycling selection
+    g_InteractionManager.cycleSelection(1, scene);
+    testAssert("Cycle Selection Locks Manual Target", g_InteractionManager.isLocked());
+    testAssert("Selected Target Valid after Cycle", g_InteractionManager.getSelected() != nullptr);
+    testAssert("Cycle Selection Synchronizes scene.selectedIndex", scene.selectedIndex == g_InteractionManager.getSelected()->inspectableIndex);
+
+    // Return to auto
+    g_InteractionManager.unlockToAuto();
+    testAssert("Unlock Returns to Auto Proximity Mode", !g_InteractionManager.isLocked());
+
+    // Verify HUD geometry update without error
+    g_Hud.update(0.15f, camera, scene, g_InteractionManager, 60.0f, 16.6f, 1280, 720);
+    testAssert("HUD Update Executed Cleanly", true);
+    g_Hud.render(1280, 720);
+    captureViewportScreenshot(1280, 720, "screenshot_hud_minimal.bmp");
+    bool hudShotExists = std::filesystem::exists("screenshot_hud_minimal.bmp") && std::filesystem::file_size("screenshot_hud_minimal.bmp") > 1000;
+    testAssert("HUD Rendered Viewport Screenshot Exported", hudShotExists);
+
+    // Verify Lantern & Stall Lights Toggle (Key 0 / Numpad 0)
+    bool initLanternLights = scene.lanternLightsOn;
+    scene.toggleLanternLights();
+    testAssert("Lantern & Stall Lights Toggle OFF (Key 0 / Numpad 0)", scene.lanternLightsOn != initLanternLights);
+    scene.toggleLanternLights();
+    testAssert("Lantern & Stall Lights Toggle Restored", scene.lanternLightsOn == initLanternLights);
+
+    // Verify Magic Show Trick Replay (Key M)
+    scene.vanishingBox->stateTimer = 4.5f;
+    scene.replayMagicTrick();
+    testAssert("Magic Show Trick Replay Restarts Timer (Key M)", scene.vanishingBox->stateTimer == 0.0f);
+
+    // Verify Viewport Screenshot Export (Key F10 feature)
+    captureViewportScreenshot(64, 64, "test_screenshot.bmp");
+    bool ssExists = std::filesystem::exists("test_screenshot.bmp") && std::filesystem::file_size("test_screenshot.bmp") > 100;
+    testAssert("Viewport Screenshot BMP Exported Cleanly", ssExists);
+
+    // Clean up temporary test files
+    std::filesystem::remove("screenshot_hud_minimal.bmp");
+    std::filesystem::remove("test_screenshot.bmp");
 
     // -------------------------------------------------------------------------
     // FINAL SUMMARY

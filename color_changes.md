@@ -43,6 +43,9 @@ Every visual mesh in the project belongs to a `SceneNode` in the hierarchical sc
      * Inner cutoff angle $\cos(15^\circ)$ and outer cutoff angle $\cos(20^\circ)$ for smooth penumbra falloff.
   4. **Indoor Indirect Skylight Bounce:**
      * Secondary photon bounce through Shoji windows and doors (`indoorBounce = mix(0.48, 0.18, dayNightFactor)`), ensuring rooms are vibrantly illuminated without dark shadow blackouts.
+  5. **Interactive Festival Lighting Toggle (<kbd>0</kbd> / <kbd>NumPad 0</kbd>):**
+     * Dynamically toggles all festival street lanterns, stall lighting, and decorative point lights on and off for live lighting comparison.
+     * *(Note: Remapped from <kbd>L</kbd> to <kbd>0</kbd> / <kbd>KP_0</kbd> to avoid conflicting with continuous <kbd>J</kbd>/<kbd>L</kbd> object translation).*
 * **Realistic Soft Shadow Mapping (PCF Filtered):**
   * **Depth Pass:** Uses a $2048 \times 2048$ resolution depth framebuffer (`depthMapFBO`) to capture orthographic light-space depth values across the entire festival promenade.
   * **Adaptive Depth Bias:** Applies a slope-scaled normal bias $\text{bias} = \max(0.0035 \times (1.0 - \mathbf{N} \cdot \mathbf{L}), 0.0006)$ eliminating surface shadow acne while preserving crisp shadow contact.
@@ -431,3 +434,30 @@ After modifying any color values in `src/Objects.h` or shaders:
    ```powershell
    & "Matsuri Nights — A Japanese Festival Street\x64\Debug\Matsuri Nights - A Japanese Festival Street.exe"
    ```
+
+---
+
+## 6. Live Interactive Hotkeys for Visual & Lighting Inspection
+
+| Key Binding | Function / Visual Effect | Purpose |
+|---|---|---|
+| <kbd>F1</kbd> | **Toggle Minimal HUD Overlay** | Displays active FPS, selected object, and contextual hints in top-right corner. |
+| <kbd>0</kbd> / <kbd>KP_0</kbd> | **Toggle Festival Lights** | Turns all 12 festival point lights and street lanterns on/off. |
+| <kbd>N</kbd> | **Toggle Day / Night** | Blends between daytime sunlight and nighttime moonlight/starlight. |
+| <kbd>P</kbd> | **Cycle Shading Modes** | Cycles Blinn-Phong $\to$ Pure Diffuse $\to$ Pure Ambient to inspect lighting terms. |
+| <kbd>V</kbd> | **Toggle PCF Soft Shadows** | Toggles 16-sample soft shadow mapping on/off. |
+| <kbd>X</kbd> | **Toggle Texture Mapping** | Toggles procedural textures on/off to evaluate base vertex colors. |
+| <kbd>Z</kbd> | **Toggle Real-Time GPU Ray Tracer** | Switches between rasterized Blinn-Phong and analytical Whitted ray tracing. |
+| <kbd>T</kbd> | **Cycle Selected Target Object** | Cycles through all 15 inspectable objects (including all 4 Machiya townhouses). |
+| <kbd>H</kbd> / <kbd>G</kbd> | **Toggle Doors & Windows** | Opens/closes Shoji doors (<kbd>H</kbd>) and sliding windows (<kbd>G</kbd>) within interaction range. |
+| <kbd>F</kbd> | **Launch Fireworks Rocket** | Launches high-altitude rocket that explodes into brilliant sky colors. |
+| <kbd>M</kbd> | **Replay Magic Trick** | Triggers the magician's levitating orb and disappearing treasure box trick. |
+| <kbd>I</kbd> / <kbd>K</kbd> | **Translate Target $\pm Z$** | Moves selected object forward / backward along the street. |
+| <kbd>J</kbd> / <kbd>L</kbd> | **Translate Target $\pm X$** | Moves selected object left / right across the street. |
+| <kbd>U</kbd> / <kbd>O</kbd> | **Translate Target $\pm Y$** | Moves selected object up / down. |
+| <kbd>Numpad 8</kbd> / <kbd>2</kbd> | **Pitch Target $\pm X$-axis** | Tilts selected object forward / backward. |
+| <kbd>Numpad 4</kbd> / <kbd>6</kbd> | **Yaw Target $\pm Y$-axis** | Rotates selected object horizontally. |
+| <kbd>+</kbd> / <kbd>-</kbd> | **Scale Target Up / Down** | Scales selected object up (1.1x) or down (0.9x). |
+| <kbd>F9</kbd> | **CPU Software Ray Tracer** | Renders high-fidelity offline still to `raytraced_snapshot.bmp`. |
+| <kbd>Screenshot</kbd> | **Clean Screenshot** | Press <kbd>P</kbd> (or <kbd>Shift</kbd>+<kbd>P</kbd> to include HUD) to save BMP snapshot. |
+

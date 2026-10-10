@@ -2088,6 +2088,12 @@ public:
 
     void update(float dt)
     {
+        if (root)
+        {
+            worldPos = root->transform.position;
+            rotationY = root->transform.rotation.y;
+        }
+
         // Smoothly animate the sliding Shoji front door along its track
         doorSlideProgress = glm::mix(doorSlideProgress, isDoorOpen ? 1.0f : 0.0f, glm::clamp(dt * 5.0f, 0.0f, 1.0f));
         if (slidingDoorGroup)

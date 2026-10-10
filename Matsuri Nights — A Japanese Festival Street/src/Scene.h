@@ -72,6 +72,9 @@ public:
     bool targetNight = false;
     float dayNightSpeed = 1.5f;
 
+    // Lantern & Stall lighting control (Key L)
+    bool lanternLightsOn = true;
+
     // Animation control
     bool isPaused = false;
     float totalTime = 0.0f;
@@ -761,7 +764,8 @@ public:
         }
 
         // 3. Point Lights 1 & 2: Stalls
-        float stallNightBoost = glm::mix(0.25f, 1.15f, dayNightFactor);
+        float lightScale = lanternLightsOn ? 1.0f : 0.05f;
+        float stallNightBoost = glm::mix(0.25f, 1.15f, dayNightFactor) * lightScale;
         pointLights[1].diffuse = glm::vec3(1.0f, 0.60f, 0.22f) * stallNightBoost;
         pointLights[1].specular = glm::vec3(1.0f, 0.70f, 0.30f) * stallNightBoost;
 
@@ -769,7 +773,7 @@ public:
         pointLights[2].specular = glm::vec3(0.5f, 0.95f, 1.0f) * stallNightBoost;
 
         // 4. Point Lights 3 & 4: Street Lanterns (track swinging lantern bodies!)
-        float lanternNightBoost = glm::mix(0.20f, 1.20f, dayNightFactor);
+        float lanternNightBoost = glm::mix(0.20f, 1.20f, dayNightFactor) * lightScale;
         if (lanternSpans.size() > 1 && !lanternSpans[1]->lanterns.empty())
         {
             pointLights[3].position = lanternSpans[1]->lanterns[0]->lanternBody->getWorldPosition();
@@ -837,6 +841,13 @@ public:
         inspectables.push_back({ "9. Torii Gate (Grand Entrance)", toriiGate->root, "Static shrine gate anchor at street terminus" });
         inspectables.push_back({ "10. Sakura Blossom Tree", sakuraTree->root, "Tree with hierarchical branches and falling petals" });
         inspectables.push_back({ "11. Crowd Walker #1", crowd->walkers[0].root, "Figure walking down street with leg cycle" });
+        if (buildings.size() >= 4)
+        {
+            inspectables.push_back({ "12. Machiya_L1 (Townhouse Building)", buildings[0]->root, "Traditional townhouse with sliding Shoji door and windows" });
+            inspectables.push_back({ "13. Machiya_L2 (Townhouse Building)", buildings[1]->root, "Traditional townhouse with sliding Shoji door and windows" });
+            inspectables.push_back({ "14. Machiya_R1 (Townhouse Building)", buildings[2]->root, "Traditional townhouse with sliding Shoji door and windows" });
+            inspectables.push_back({ "15. Machiya_R2 (Townhouse Building)", buildings[3]->root, "Traditional townhouse with sliding Shoji door and windows" });
+        }
     }
 
     void cycleInspectable(int dir = 1)
@@ -910,6 +921,38 @@ public:
     {
         fireworks->triggerBurstNow();
         std::cout << "[Scene] Manual Firework Launched!" << std::endl;
+    }
+
+    void toggleLanternLights()
+    {
+        lanternLightsOn = !lanternLightsOn;
+        for (auto& l : lanterns)
+        {
+            if (l && l->lanternBody)
+            {
+                for (auto& ch : l->lanternBody->children)
+                {
+                    if (ch && ch->name.find("Paper") != std::string::npos)
+                    {
+                        ch->isEmissive = lanternLightsOn;
+                    }
+                }
+            }
+        }
+        std::cout << "\n========================================================" << std::endl;
+        std::cout << " [LIGHTS] Lantern & Stall Illuminations: " << (lanternLightsOn ? "LIT (Active Glow)" : "OFF (Dimmed)") << std::endl;
+        std::cout << "========================================================\n" << std::endl;
+    }
+
+    void replayMagicTrick()
+    {
+        if (vanishingBox)
+        {
+            vanishingBox->stateTimer = 0.0f;
+        }
+        std::cout << "\n========================================================" << std::endl;
+        std::cout << " [MAGIC SHOW] Magic Show Trick Sequence RESTARTED from Phase 1!" << std::endl;
+        std::cout << "========================================================\n" << std::endl;
     }
 
     void cycleShadingMode()
